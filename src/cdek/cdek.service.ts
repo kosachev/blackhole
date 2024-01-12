@@ -6,11 +6,12 @@ import {
   UpdatePrintForm,
 } from "cdek/src/types/api/webhook";
 
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class CdekService {
+  private readonly logger = new Logger(CdekService.name);
   private instance: Cdek;
 
   constructor(private readonly config: ConfigService) {
@@ -22,10 +23,10 @@ export class CdekService {
       ),
     });
 
-    this.instance.on("ORDER_STATUS", this.order_status);
-    this.instance.on("PRINT_FORM", this.print_form);
-    this.instance.on("DOWNLOAD_PHOTO", this.download_photo);
-    this.instance.on("PREALERT_CLOSED", this.prealert_closed);
+    this.instance.on("ORDER_STATUS", (ctx: UpdateOrderStatus) => this.order_status(ctx));
+    this.instance.on("PRINT_FORM", (ctx: UpdatePrintForm) => this.print_form(ctx));
+    this.instance.on("DOWNLOAD_PHOTO", (ctx: UpdateDownloadPhoto) => this.download_photo(ctx));
+    this.instance.on("PREALERT_CLOSED", (ctx: UpdatePrealertClosed) => this.prealert_closed(ctx));
   }
 
   get client(): Cdek {
@@ -34,21 +35,21 @@ export class CdekService {
 
   // TODO: implement logic
   private order_status(ctx: UpdateOrderStatus): void {
-    console.log(`order ${ctx.attributes.cdek_number} => status ${ctx.attributes.code}`);
+    this.logger.log(`order ${ctx.attributes.cdek_number} => status ${ctx.attributes.code}`);
   }
 
   // TODO: implement logic
   private print_form(ctx: UpdatePrintForm): void {
-    console.log(`print_form ${ctx}`);
+    this.logger.log(`print_form ${ctx}`);
   }
 
   // TODO: implement logic
   private download_photo(ctx: UpdateDownloadPhoto): void {
-    console.log(`download_photo ${ctx}`);
+    this.logger.log(`download_photo ${ctx}`);
   }
 
   // TODO: implement logic
   private prealert_closed(ctx: UpdatePrealertClosed): void {
-    console.log(`prealert_closed ${ctx}`);
+    this.logger.log(`prealert_closed ${ctx}`);
   }
 }

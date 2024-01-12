@@ -21,8 +21,6 @@ describe("App e2e", () => {
     await app.close();
   });
 
-  it.todo("should pass");
-
   describe("CDEK", () => {
     describe("webhook", () => {
       const test_order = {
@@ -42,7 +40,7 @@ describe("App e2e", () => {
       it("should return 201", () => {
         return pactum
           .spec()
-          .post("http://localhost:6969/cdek/webhook")
+          .post(`http://localhost:${process.env.PORT}/cdek/webhook`)
           .withBody(test_order)
           .expectStatus(201);
       });
@@ -83,7 +81,7 @@ describe("App e2e", () => {
 
         return pactum
           .spec()
-          .post("http://localhost:6969/amo/webhook")
+          .post(`http://localhost:${process.env.PORT}/amo/webhook`)
           .withBody(test_task)
           .expectStatus(201);
       });

@@ -1,11 +1,12 @@
 import { Amo, Lead } from "@shevernitskiy/amo";
 import { readFileSync, writeFileSync } from "node:fs";
 
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class AmoService {
+  private readonly logger = new Logger(AmoService.name);
   private instance: Amo;
 
   constructor(private readonly config: ConfigService) {
@@ -25,7 +26,7 @@ export class AmoService {
       },
     );
 
-    this.instance.on("leads:add", this.lead_add);
+    this.instance.on("leads:add", (ctx: Lead) => this.lead_add(ctx));
   }
 
   get client(): Amo {
@@ -34,6 +35,6 @@ export class AmoService {
 
   // TODO: implement logic
   private lead_add(data: Lead) {
-    console.log("lead_add", data);
+    this.logger.log("lead_add", data);
   }
 }
