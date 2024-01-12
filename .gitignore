@@ -36,6 +36,7 @@ lerna-debug.log*
 
 # env
 .env*
+!.env.example
 
 # Amo
 amo_token.json
