@@ -1,13 +1,13 @@
 import { Controller, Post } from "@nestjs/common";
-import { CdekService } from "./cdek.service";
+import { AmoService } from "./amo.service";
 import { FetchRequest } from "../utils/fetch-request.decorator";
 
-@Controller("cdek")
-export class CdekController {
+@Controller("amo")
+export class AmoController {
   private handler: (request: Request) => Promise<Response>;
 
-  constructor(private cdek: CdekService) {
-    this.handler = cdek.client.webhookHandler();
+  constructor(private amo: AmoService) {
+    this.handler = amo.client.webhookHandler();
   }
 
   @Post("webhook")
