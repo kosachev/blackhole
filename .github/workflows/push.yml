@@ -1,0 +1,66 @@
+name: Push & PR
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "src/**"
+      - "package.json"
+      - "tsconfig.json"
+      - "tsconfig.build.json"
+      - ".github/workflows/**"
+
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "src/**"
+      - "package.json"
+      - "tsconfig.json"
+      - "tsconfig.build.json"
+      - ".github/workflows/**"
+
+jobs:
+  prettier:
+    name: Check format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Prettier check
+        uses: creyD/prettier_action@v4.3
+        with:
+          dry: true
+
+  lint-build:
+    name: Lint & Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - uses: pnpm/action-setup@v2
+        name: Install pnpm
+        with:
+          version: latest
+          run_install: true
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Test
+        run: pnpm run test:e2e

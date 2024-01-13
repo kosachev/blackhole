@@ -10,7 +10,7 @@ export class AmoService {
   private instance: Amo;
 
   constructor(private readonly config: ConfigService) {
-    const token = JSON.parse(readFileSync("./amo_token.json", "utf-8"));
+    const token = JSON.parse(readFileSync(this.config.get<string>("AMO_TOKEN_PATH"), "utf-8"));
 
     this.instance = new Amo(
       this.config.get<string>("AMO_DOMAIN"),
@@ -22,7 +22,11 @@ export class AmoService {
       },
       {
         on_token: (new_token) =>
-          writeFileSync("./amo_token.json", JSON.stringify(new_token, null, 2), "utf-8"),
+          writeFileSync(
+            this.config.get<string>("AMO_TOKEN_PATH"),
+            JSON.stringify(new_token, null, 2),
+            "utf-8",
+          ),
       },
     );
 

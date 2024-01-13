@@ -12,7 +12,7 @@ import { CronService } from "./cron/cron.service";
     AmoModule,
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({
-      envFilePath: [".env.dev", ".env.prod"],
+      envFilePath: [".env.dev", ".env.prod", ".env.example"],
       isGlobal: true,
     }),
   ],
