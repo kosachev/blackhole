@@ -34,7 +34,7 @@ jobs:
           dry: true
 
   lint-build:
-    name: Lint & Build
+    name: Lint & Build & Test
     runs-on: ubuntu-latest
 
     steps:
@@ -59,3 +59,6 @@ jobs:
 
       - name: Build
         run: pnpm run build
+
+      - name: Test
+        run: pnpm run test:e2e
