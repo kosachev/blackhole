@@ -2,6 +2,7 @@ name: Push & PR
 
 on:
   push:
+    branches: ["main"]
     paths:
       - "src/**"
       - "package.json"
@@ -10,6 +11,7 @@ on:
       - ".github/workflows/**"
 
   pull_request:
+    branches: ["main"]
     paths:
       - "src/**"
       - "package.json"
