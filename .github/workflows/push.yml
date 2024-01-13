@@ -34,22 +34,22 @@ jobs:
           dry: true
 
   lint-build:
-    - name: Lint & Build
-      runs-on: ubuntu-latest
+    name: Lint & Build
+    runs-on: ubuntu-latest
 
-      steps:
-        - name: Install Node.js
-          uses: actions/setup-node@v3
-          with:
-            node-version: 20
+    steps:
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
 
-        - uses: pnpm/action-setup@v2
-          name: Install pnpm
-          with:
-            run_install: true
+      - uses: pnpm/action-setup@v2
+        name: Install pnpm
+        with:
+          run_install: true
 
-        - name: Lint
-          run: pnpm run lint
+      - name: Lint
+        run: pnpm run lint
 
-        - name: Build
-          run: pnpm run build
+      - name: Build
+        run: pnpm run build
