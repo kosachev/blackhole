@@ -19,6 +19,9 @@ on:
       - "tsconfig.build.json"
       - ".github/workflows/**"
 
+env:
+  FORCE_COLOR: true
+
 jobs:
   prettier:
     name: Check format
