@@ -8,20 +8,23 @@ export class LoggerMiddleware implements NestMiddleware {
   use(request: Request, response: Response, next: NextFunction): void {
     const start = Date.now();
 
-    const { ip, method, originalUrl, body } = request;
-    const user_agent = request.get("user-agent") ?? "";
-
     response.on("finish", () => {
-      const { statusCode } = response;
-      const content_length = response.get("content-length");
-      this.logger.log(
-        `${method} ${originalUrl} ${statusCode} ${content_length} - ${user_agent} ${ip} ${
-          Date.now() - start
-        }ms`,
-      );
-      if (method !== "GET" && body) {
-        this.logger.debug(body);
-      }
+      this.logger.log({
+        data: {
+          request: {
+            method: request.method,
+            originalUrl: request.originalUrl,
+            headers: request.headers,
+            ip: request.ip,
+            body: request.body ?? null,
+          },
+          response: {
+            statusCode: response.statusCode,
+            contentLength: response.get("content-length"),
+            responseTime: Date.now() - start,
+          },
+        },
+      });
     });
 
     next();
