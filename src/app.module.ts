@@ -5,6 +5,8 @@ import { CdekModule } from "./cdek/cdek.module";
 import { LoggerMiddleware } from "./utils/logger.middleware";
 import { AmoModule } from "./amo/amo.module";
 import { CronService } from "./cron/cron.service";
+import { TelegramModule } from "./telegram/telegram.module";
+import { TelegramService } from "./telegram/telegram.service";
 
 @Module({
   imports: [
@@ -15,9 +17,10 @@ import { CronService } from "./cron/cron.service";
       envFilePath: [".env.dev", ".env.prod", ".env.example"],
       isGlobal: true,
     }),
+    TelegramModule,
   ],
   controllers: [],
-  providers: [CronService],
+  providers: [CronService, TelegramService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
