@@ -7,7 +7,7 @@ export class CdekController {
   private handler: (request: Request) => Promise<Response>;
 
   constructor(private cdek: CdekService) {
-    this.handler = cdek.client.webhookHandler();
+    this.handler = this.cdek.client.webhookHandler();
   }
 
   @Post("webhook")
