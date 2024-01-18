@@ -4,6 +4,8 @@
 - cd: деплой
 - thunder client/postman collection
 - моки для тестов
+- Почтовая библиотека (Nodemailer / или другая)
+- Google таблицы библиотека 
 
 # DONE
 
