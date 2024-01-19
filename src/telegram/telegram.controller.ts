@@ -1,7 +1,6 @@
 import { webhookCallback } from "grammy";
-import { Request } from "express";
 
-import { Controller, Post } from "@nestjs/common";
+import { Controller, Post, Req } from "@nestjs/common";
 import { TelegramService } from "./telegram.service";
 
 @Controller("telegram")
@@ -13,7 +12,7 @@ export class TelegramController {
   }
 
   @Post("webhook")
-  async handle(request: Request): Promise<string> {
+  async handle(@Req() request: Request): Promise<string> {
     this.handler(request);
     return "OK";
   }
