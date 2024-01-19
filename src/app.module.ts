@@ -4,7 +4,7 @@ import { ScheduleModule } from "@nestjs/schedule";
 import { CdekModule } from "./cdek/cdek.module";
 import { LoggerMiddleware } from "./utils/logger.middleware";
 import { AmoModule } from "./amo/amo.module";
-import { CronService } from "./cron/cron.service";
+import { CronModule } from "./cron/cron.module";
 import { TelegramModule } from "./telegram/telegram.module";
 import { TelegramService } from "./telegram/telegram.service";
 
@@ -18,9 +18,10 @@ import { TelegramService } from "./telegram/telegram.service";
       isGlobal: true,
     }),
     TelegramModule,
+    CronModule,
   ],
   controllers: [],
-  providers: [CronService, TelegramService],
+  providers: [TelegramService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
