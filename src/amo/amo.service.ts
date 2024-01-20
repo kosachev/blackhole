@@ -1,4 +1,4 @@
-import { Amo, Lead } from "@shevernitskiy/amo";
+import { Amo } from "@shevernitskiy/amo";
 import { readFileSync, writeFileSync } from "node:fs";
 
 import { Injectable, Logger } from "@nestjs/common";
@@ -29,16 +29,9 @@ export class AmoService {
           ),
       },
     );
-
-    this.instance.on("leads:add", (ctx: Lead) => this.lead_add(ctx));
   }
 
   get client(): Amo {
     return this.instance;
-  }
-
-  // TODO: implement logic
-  private lead_add(data: Lead) {
-    this.logger.log("lead_add", data);
   }
 }

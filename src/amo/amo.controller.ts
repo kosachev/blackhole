@@ -1,18 +1,14 @@
-import { Controller, Post } from "@nestjs/common";
-import { AmoService } from "./amo.service";
-import { FetchRequest } from "../utils/fetch-request.decorator";
+import { Body, Controller, Post } from "@nestjs/common";
+import { LeadAddWebhook } from "./webhooks/lead-add.webhook";
 
 @Controller("amo")
 export class AmoController {
-  private handler: (request: Request) => Promise<Response>;
+  constructor(private readonly lead_add: LeadAddWebhook) {}
 
-  constructor(private amo: AmoService) {
-    this.handler = amo.client.webhookHandler();
-  }
-
-  @Post("webhook")
-  async handle(@FetchRequest() request: Request): Promise<string> {
-    this.handler(request);
+  // TODO: dto here to deserialization?
+  @Post("lead-add")
+  async leadAdd(@Body() data: any): Promise<string> {
+    this.lead_add.handle(data);
     return "OK";
   }
 }
