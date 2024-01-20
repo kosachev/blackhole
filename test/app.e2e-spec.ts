@@ -39,11 +39,11 @@ describe("App e2e", () => {
   });
 
   describe("AMO", () => {
-    describe("webhook", () => {
+    describe("lead-add", () => {
       it("should return 201", () => {
         return pactum
           .spec()
-          .post(`http://localhost:${process.env.PORT}/amo/webhook`)
+          .post(`http://localhost:${process.env.PORT}/amo/lead-add`)
           .withBody(task)
           .expectStatus(201);
       });
