@@ -21,11 +21,11 @@ dependencies:
     specifier: ^4.0.0
     version: 4.0.0(@nestjs/common@10.3.0)(@nestjs/core@10.3.0)(reflect-metadata@0.1.14)
   '@shevernitskiy/amo':
-    specifier: ^0.1.16
-    version: 0.1.16
+    specifier: ^0.1.17
+    version: 0.1.17
   cdek:
-    specifier: ^1.0.4
-    version: 1.0.4
+    specifier: ^1.0.5
+    version: 1.0.5
   grammy:
     specifier: ^1.20.3
     version: 1.20.3
@@ -1183,8 +1183,8 @@ packages:
     resolution: {integrity: sha512-oZLYFEAzUKyi3SKnXvj32ZCEGH6RDnao7COuCVhDydMS9NrCSVXhM79VaKyP5+Zc33m0QXEd2DN3UkU7OsHcfw==}
     dev: true
 
-  /@shevernitskiy/amo@0.1.16:
-    resolution: {integrity: sha512-Qu/ulqpkgiQxuSlNr4WW7uy1GTATRqYnYcf6tPpylE9Jw028tuwcPplRyR8n6hb5/4mXGJQSiO23MIW02tbxlQ==}
+  /@shevernitskiy/amo@0.1.17:
+    resolution: {integrity: sha512-rEt+fCd1AGAyZ0recb0vj28msUZJ73XrsqwMLM5Pl0onUOjcMZpWxeuRGCBOI/xGEZTzdCP6CGaMHqR8M9J2jA==}
     engines: {node: '>= 18'}
     dev: false
 
@@ -2303,8 +2303,8 @@ packages:
     resolution: {integrity: sha512-ff5BdakGe2P3SQsMsiqmt1Lc8221NR1VzHj5jXN5vBny9A6fpze94HiVV/n7XRosOlsShJcvMv5mdnpjOGCEgg==}
     dev: true
 
-  /cdek@1.0.4:
-    resolution: {integrity: sha512-C58t9rh744QN7S+lDf9DdLYZW46Eq+xugium6PEdSA2/ywpir51oex3KiTcHeOSYb5gRAjmxm3l28omKyLyWig==}
+  /cdek@1.0.5:
+    resolution: {integrity: sha512-fbj7gIksSol8SwAkFGqNss9YU8t/AXSd1Nvq4a5uNW8vPAedYDfsUarfxRPWryd9hfMJWyUD9YdePcr00QsnCQ==}
     engines: {node: '>= 18'}
     dependencies:
       ts-mixer: 6.0.3
