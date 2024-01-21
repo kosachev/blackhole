@@ -21,6 +21,7 @@ export class CdekService {
       url_base: this.config.get<"https://api.edu.cdek.ru/v2" | "https://api.cdek.ru/v2">(
         "CDEK_URL_BASE",
       ),
+      on_error: (error) => this.logger.error(error),
     });
 
     this.instance.on("ORDER_STATUS", (ctx: UpdateOrderStatus) => this.order_status(ctx));

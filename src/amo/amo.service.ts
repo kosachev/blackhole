@@ -27,6 +27,7 @@ export class AmoService {
             JSON.stringify(new_token, null, 2),
             "utf-8",
           ),
+        on_error: (error) => this.logger.error(error),
       },
     );
   }
