@@ -1,4 +1,4 @@
-import { Amo } from "@shevernitskiy/amo";
+import { Amo, ApiError, AuthError, HttpError, NoContentError } from "@shevernitskiy/amo";
 import { readFileSync, writeFileSync } from "node:fs";
 
 import { Injectable, Logger } from "@nestjs/common";
@@ -27,7 +27,15 @@ export class AmoService {
             JSON.stringify(new_token, null, 2),
             "utf-8",
           ),
-        on_error: (error) => this.logger.error(error),
+        on_error: (error) => {
+          if (error instanceof ApiError || error instanceof AuthError) {
+            this.logger.error(error.response);
+          } else if (error instanceof NoContentError || error instanceof HttpError) {
+            this.logger.error(error.message);
+          } else {
+            this.logger.error(error);
+          }
+        },
       },
     );
   }
