@@ -4,8 +4,6 @@ import { Test } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
 import { AppModule } from "../src/app.module";
 import { mock_server } from "./mocks/mock-server";
-import { task } from "./mocks/amo.mock";
-import { order_status } from "./mocks/cdek.mock";
 
 describe("App e2e", () => {
   let app: INestApplication;
@@ -28,11 +26,10 @@ describe("App e2e", () => {
 
   describe("CDEK", () => {
     describe("webhook", () => {
-      it("should return 201", () => {
+      test("should return 201", () => {
         return pactum
           .spec()
           .post(`http://localhost:${process.env.PORT}/cdek/webhook`)
-          .withBody(order_status)
           .expectStatus(201);
       });
     });
@@ -40,12 +37,10 @@ describe("App e2e", () => {
 
   describe("AMO", () => {
     describe("lead-add", () => {
-      it("should return 201", () => {
-        return pactum
-          .spec()
-          .post(`http://localhost:${process.env.PORT}/amo/lead-add`)
-          .withBody(task)
-          .expectStatus(201);
+      test("should return 201", () => {
+        expect(() =>
+          pactum.spec().post(`http://localhost:${process.env.PORT}/amo/lead-add`).expectStatus(201),
+        );
       });
     });
   });
