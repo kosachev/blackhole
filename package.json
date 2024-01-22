@@ -54,7 +54,7 @@
     "pactum": "^3.6.0",
     "prettier": "^3.2.4",
     "source-map-support": "^0.5.21",
-    "ts-jest": "^29.1.0",
+    "ts-jest": "^29.1.2",
     "ts-loader": "^9.4.3",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.2.0",
