@@ -14,19 +14,19 @@ export class CdekController {
   ) {}
 
   @Post("webhook")
-  handle(@Body() data: any): string {
+  async handle(@Body() data: any): Promise<string> {
     switch (data.type) {
       case "ORDER_STATUS":
-        this.order_status.handle(data);
+        await this.order_status.handle(data);
         break;
       case "PRINT_FORM":
-        this.print_form.handle(data);
+        await this.print_form.handle(data);
         break;
       case "DOWNLOAD_PHOTO":
-        this.download_photo.handle(data);
+        await this.download_photo.handle(data);
         break;
       case "PREALERT_CLOSED":
-        this.prealert_close.handle(data);
+        await this.prealert_close.handle(data);
         break;
     }
     return "OK";

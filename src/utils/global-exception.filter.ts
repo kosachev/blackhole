@@ -1,0 +1,30 @@
+import {
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
+  HttpException,
+  HttpStatus,
+  Logger,
+} from "@nestjs/common";
+
+@Catch()
+export class GlobalExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(GlobalExceptionFilter.name);
+
+  catch(exception: HttpException, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const status = exception.getStatus();
+    const req = ctx.getRequest();
+    const res = ctx.getResponse();
+
+    if (status === HttpStatus.NOT_IMPLEMENTED) {
+      this.logger.error(`${req.url} - not implemented call`);
+    }
+
+    res.status(status).json({
+      statusCode: status,
+      timestamp: new Date().toISOString(),
+      path: req.url,
+    });
+  }
+}
