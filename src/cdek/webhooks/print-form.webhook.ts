@@ -1,5 +1,5 @@
 import { UpdatePrintForm } from "cdek/src/types/api/webhook";
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotImplementedException } from "@nestjs/common";
 import { AbstractWebhook } from "./abstract.webhook";
 
 @Injectable()
@@ -8,5 +8,6 @@ export class PrintFormWebhook extends AbstractWebhook {
     this.logger.debug("incoming webhook print-form");
     this.logger.debug({ data });
     // this.amo, this.cdek is avaible here
+    throw new NotImplementedException("PrintFormWebhook handler not implemented");
   }
 }

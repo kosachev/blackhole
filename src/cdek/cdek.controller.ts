@@ -6,8 +6,6 @@ import { PrintFormWebhook } from "./webhooks/print-form.webhook";
 
 @Controller("cdek")
 export class CdekController {
-  private handler: (request: Request) => Promise<Response>;
-
   constructor(
     private readonly order_status: OrderStatusWebhook,
     private readonly print_form: PrintFormWebhook,
