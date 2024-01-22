@@ -1,4 +1,4 @@
-import * as pactum from "pactum";
+import { spec } from "pactum";
 
 import { Test } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
@@ -27,10 +27,7 @@ describe("App e2e", () => {
   describe("CDEK", () => {
     describe("webhook", () => {
       test("should return 201", () => {
-        return pactum
-          .spec()
-          .post(`http://localhost:${process.env.PORT}/cdek/webhook`)
-          .expectStatus(201);
+        spec().post(`http://localhost:${process.env.PORT}/cdek/webhook`).expectStatus(201);
       });
     });
   });
@@ -39,7 +36,7 @@ describe("App e2e", () => {
     describe("lead-add", () => {
       test("should return 201", () => {
         expect(() =>
-          pactum.spec().post(`http://localhost:${process.env.PORT}/amo/lead-add`).expectStatus(201),
+          spec().post(`http://localhost:${process.env.PORT}/amo/lead-add`).expectStatus(201),
         );
       });
     });
