@@ -1,12 +1,12 @@
 import { Amo } from "@shevernitskiy/amo";
 import { Cdek } from "cdek";
 import { Injectable, Logger } from "@nestjs/common";
-import { AmoService } from "../amo.service";
-import { CdekService } from "../../cdek/cdek.service";
+import { AmoService } from "../../amo/amo.service";
+import { CdekService } from "../cdek.service";
 
 @Injectable()
 export abstract class AbstractWebhook {
-  protected readonly logger: Logger = new Logger(AmoService.name);
+  protected readonly logger: Logger = new Logger(CdekService.name);
   protected readonly amo: Amo;
   protected readonly cdek: Cdek;
 

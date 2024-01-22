@@ -6,7 +6,6 @@ import { LoggerMiddleware } from "./utils/logger.middleware";
 import { AmoModule } from "./amo/amo.module";
 import { CronModule } from "./cron/cron.module";
 import { TelegramModule } from "./telegram/telegram.module";
-import { TelegramService } from "./telegram/telegram.service";
 
 @Module({
   imports: [
@@ -21,7 +20,7 @@ import { TelegramService } from "./telegram/telegram.service";
     CronModule,
   ],
   controllers: [],
-  providers: [TelegramService],
+  providers: [],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

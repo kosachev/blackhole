@@ -7,6 +7,6 @@ export class LeadAddWebhook extends AbstractWebhook {
   async handle(data: Lead) {
     this.logger.debug("incoming webhook lead_add");
     this.logger.debug({ data });
-    // this.amo is avaible here
+    // this.amo, this.cdek is avaible here
   }
 }
