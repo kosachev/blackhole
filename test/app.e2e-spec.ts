@@ -1,4 +1,5 @@
 import { spec } from "pactum";
+import { describe, test, beforeAll, afterAll, expect } from "vitest";
 
 import { Test } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
