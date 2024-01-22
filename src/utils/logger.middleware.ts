@@ -10,9 +10,8 @@ export class LoggerMiddleware implements NestMiddleware {
 
     const old_send = res.send;
     res.send = (value) => {
-      const data = value;
-      res.locals.body = data;
-      return old_send.call(res, data);
+      res.locals.body = value;
+      return old_send.call(res, value);
     };
 
     res.on("finish", () => {
