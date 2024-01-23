@@ -1,6 +1,7 @@
+import { Bot, Api, GrammyError, HttpError } from "grammy";
+import { Message } from "grammy/types";
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { Bot, Api, GrammyError, HttpError } from "grammy";
 
 @Injectable({})
 export class TelegramService {
@@ -13,7 +14,7 @@ export class TelegramService {
 
       TelegramService.instance.catch((err) => {
         if (err.error instanceof GrammyError) {
-          this.logger.error("Error in request:", err.error.description);
+          this.logger.error(`Error in request: ${err.error.description}`, err.error);
         } else if (err.error instanceof HttpError) {
           this.logger.error("Could not contact Telegram:", err.error);
         } else {
@@ -33,5 +34,9 @@ export class TelegramService {
 
   get bot(): Bot {
     return TelegramService.instance;
+  }
+
+  textToAdmin(text: string): Promise<Message.TextMessage> {
+    return this.api.sendMessage(this.config.get<number>("TELEGRAM_ADMIN_ID"), text);
   }
 }

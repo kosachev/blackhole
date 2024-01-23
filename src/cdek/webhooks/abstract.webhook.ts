@@ -3,6 +3,7 @@ import { Cdek } from "cdek";
 import { Injectable, Logger } from "@nestjs/common";
 import { AmoService } from "../../amo/amo.service";
 import { CdekService } from "../cdek.service";
+import { TelegramService } from "../../telegram/telegram.service";
 
 @Injectable()
 export abstract class AbstractWebhook {
@@ -13,6 +14,7 @@ export abstract class AbstractWebhook {
   constructor(
     private readonly amo_service: AmoService,
     private readonly cdek_service: CdekService,
+    protected readonly telegram: TelegramService,
   ) {
     this.amo = this.amo_service.client;
     this.cdek = this.cdek_service.client;
