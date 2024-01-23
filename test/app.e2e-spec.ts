@@ -1,5 +1,5 @@
 import { spec } from "pactum";
-import { describe, test, beforeAll, afterAll, expect } from "vitest";
+import { describe, test, beforeAll, afterAll } from "vitest";
 
 import { Test } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
@@ -28,17 +28,25 @@ describe("App e2e", () => {
   describe("CDEK", () => {
     describe("webhook", () => {
       test("should return 201", () => {
-        spec().post(`http://localhost:${process.env.PORT}/cdek/webhook`).expectStatus(201);
+        return spec()
+          .post(`http://localhost:${process.env.PORT}/cdek/webhook`)
+          .expectStatus(201)
+          .expectBody("OK");
       });
     });
   });
 
   describe("AMO", () => {
     describe("lead-add", () => {
-      test("should return 201", () => {
-        expect(() =>
-          spec().post(`http://localhost:${process.env.PORT}/amo/lead-add`).expectStatus(201),
-        );
+      test("should return 501, not implemented", () => {
+        return spec()
+          .post(`http://localhost:${process.env.PORT}/amo/lead-add`)
+          .expectStatus(501)
+          .expectJson({
+            error: "Not Implemented",
+            message: "LeadAddWebhook handler not implemented",
+            statusCode: 501,
+          });
       });
     });
   });

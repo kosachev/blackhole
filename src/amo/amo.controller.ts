@@ -8,7 +8,7 @@ export class AmoController {
   // TODO: dto here to deserialization?
   @Post("lead-add")
   async leadAdd(@Body() data: any): Promise<string> {
-    this.lead_add.handle(data);
+    await this.lead_add.handle(data);
     return "OK";
   }
 }
