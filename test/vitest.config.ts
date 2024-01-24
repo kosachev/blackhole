@@ -13,7 +13,7 @@ export default defineConfig({
       reporter: ["text", "html"],
       reportOnFailure: true,
     },
-    reporters: "default",
+    reporters: "verbose",
     include: ["**/*.(e2e-spec|spec).ts"],
   },
   root: ".",
