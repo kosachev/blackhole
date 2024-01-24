@@ -10,7 +10,8 @@ export default defineConfig({
     environment: "node",
     coverage: {
       provider: "v8",
-      reporter: ["text", "html"],
+      reporter: ["text", "html", "json-summary", "json"],
+      reportOnFailure: true,
     },
     reporters: "default",
     include: ["**/*.(e2e-spec|spec).ts"],
