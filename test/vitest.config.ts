@@ -11,8 +11,9 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
+      reportOnFailure: true,
     },
-    reporters: "default",
+    reporters: "verbose",
     include: ["**/*.(e2e-spec|spec).ts"],
   },
   root: ".",
