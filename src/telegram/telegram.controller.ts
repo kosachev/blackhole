@@ -12,8 +12,7 @@ export class TelegramController {
   }
 
   @Post("webhook")
-  async handle(@Req() request: Request): Promise<string> {
-    this.handler(request);
-    return "OK";
+  async handle(@Req() request: Request): Promise<Response> {
+    return await this.handler(request);
   }
 }
