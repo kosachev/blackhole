@@ -38,15 +38,11 @@ describe("App e2e", () => {
 
   describe("AMO", () => {
     describe("lead-add", () => {
-      test("should return 501, not implemented", () => {
+      test("should return 200, auto ok", () => {
         return spec()
           .post(`http://localhost:${process.env.PORT}/amo/lead-add`)
-          .expectStatus(501)
-          .expectJson({
-            error: "Not Implemented",
-            message: "LeadAddWebhook handler not implemented",
-            statusCode: 501,
-          });
+          .expectStatus(200)
+          .expectBody("OK");
       });
     });
   });
