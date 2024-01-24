@@ -10,7 +10,7 @@ export default defineConfig({
     environment: "node",
     coverage: {
       provider: "v8",
-      reporter: ["text", "html", "json-summary", "json"],
+      reporter: ["text", "html"],
       reportOnFailure: true,
     },
     reporters: "default",
