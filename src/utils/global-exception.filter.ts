@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
 } from "@nestjs/common";
+import { Response, Request } from "express";
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -14,12 +15,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   catch(exception: HttpException, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const status = exception.getStatus();
-    const req = ctx.getRequest();
-    const res = ctx.getResponse();
+    const req = ctx.getRequest<Request>();
+    const res = ctx.getResponse<Response>();
 
     if (status === HttpStatus.NOT_IMPLEMENTED) {
       this.logger.error(`${req.url} - not implemented call`);
     }
+
+    if (res.headersSent) return;
 
     res.status(status).json({
       statusCode: status,
