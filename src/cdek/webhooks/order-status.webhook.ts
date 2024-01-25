@@ -134,9 +134,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
         break;
     }
 
-    const promises = [];
-
-    promises.push(
+    const promises: Promise<unknown>[] = [
       this.amo.lead.updateLeadById(Number(data.attributes.number), {
         updated_at: Math.round(Date.now() / 1000),
         status_id: parsed.status,
@@ -152,7 +150,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
           }),
         },
       }),
-    );
+    ];
 
     if (parsed.note) {
       promises.push(
