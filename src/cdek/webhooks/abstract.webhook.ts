@@ -20,5 +20,5 @@ export abstract class AbstractWebhook {
     this.cdek = this.cdek_service.client;
   }
 
-  abstract handle(data: unknown): void | Promise<void>;
+  abstract handle(data: unknown): unknown;
 }
