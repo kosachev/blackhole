@@ -1,3 +1,25 @@
+import { Amo } from "@shevernitskiy/amo";
+
+export class AmoServiceMock {
+  client: Amo = {
+    lead: {
+      updateLeadById(id: any, lead: any): unknown {
+        return [id, lead];
+      },
+    },
+    note: {
+      addNotes(entity_type: any, notes: any[]): unknown {
+        return [entity_type, notes];
+      },
+    },
+    task: {
+      addTasks(tasks: any[]): unknown {
+        return [tasks];
+      },
+    },
+  } as Amo;
+}
+
 export const task = {
   task: {
     update: [
