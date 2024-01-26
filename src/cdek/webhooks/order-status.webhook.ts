@@ -49,9 +49,9 @@ const task_return: (number: string) => Partial<Task> = (number) => {
 
 type ParsedWebhook = {
   note?: string;
-  tag: number[];
+  tag: (typeof AMO.TAG)[keyof typeof AMO.TAG][];
   task?: Partial<Task>;
-  status?: number;
+  status?: (typeof AMO.STATUS)[keyof typeof AMO.STATUS];
   custom_fields: [number, string][];
 };
 
@@ -75,7 +75,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
         status_id: parsed.status,
         custom_fields_values: parsed.custom_fields.map((item) => {
           return {
-            field_id: item[0],
+            field_id: item[0], // or id?
             values: [{ value: item[1] }],
           };
         }),
