@@ -56,7 +56,7 @@ type ParsedWebhook = {
 
 @Injectable()
 export class OrderStatusWebhook extends AbstractWebhook {
-  async handle(data: UpdateOrderStatus): Promise<ParsedWebhook> {
+  async handle(data: UpdateOrderStatus) {
     if (
       !data.attributes.cdek_number ||
       !data.attributes.status_code ||
@@ -66,6 +66,49 @@ export class OrderStatusWebhook extends AbstractWebhook {
       return;
     }
 
+    const parsed = this.parse(data);
+
+    const promises: Promise<unknown>[] = [
+      this.amo.lead.updateLeadById(Number(data.attributes.number), {
+        updated_at: Math.round(Date.now() / 1000),
+        status_id: parsed.status,
+        custom_fields_values: parsed.custom_fields.map((item) => {
+          return {
+            field_id: item[0],
+            values: [{ value: item[1] }],
+          };
+        }),
+        _embedded: {
+          tags: parsed.tag.map((item) => {
+            return { id: item };
+          }),
+        },
+      }),
+    ];
+
+    if (parsed.note) {
+      promises.push(
+        this.amo.note.addNotes("leads", [
+          {
+            entity_id: Number(data.attributes.number),
+            created_by: AMO.USER.ADMIN,
+            note_type: "common",
+            params: {
+              text: parsed.note,
+            },
+          },
+        ]),
+      );
+    }
+
+    if (parsed.task) {
+      promises.push(this.amo.task.addTasks([parsed.task]));
+    }
+
+    await Promise.all(promises);
+  }
+
+  parse(data: UpdateOrderStatus): ParsedWebhook {
     const parsed: ParsedWebhook = {
       tag: [],
       custom_fields: [
@@ -134,44 +177,6 @@ export class OrderStatusWebhook extends AbstractWebhook {
         break;
     }
 
-    const promises: Promise<unknown>[] = [
-      this.amo.lead.updateLeadById(Number(data.attributes.number), {
-        updated_at: Math.round(Date.now() / 1000),
-        status_id: parsed.status,
-        custom_fields_values: parsed.custom_fields.map((item) => {
-          return {
-            field_id: item[0],
-            values: [{ value: item[1] }],
-          };
-        }),
-        _embedded: {
-          tags: parsed.tag.map((item) => {
-            return { id: item };
-          }),
-        },
-      }),
-    ];
-
-    if (parsed.note) {
-      promises.push(
-        this.amo.note.addNotes("leads", [
-          {
-            entity_id: Number(data.attributes.number),
-            created_by: AMO.USER.ADMIN,
-            note_type: "common",
-            params: {
-              text: parsed.note,
-            },
-          },
-        ]),
-      );
-    }
-
-    if (parsed.task) {
-      promises.push(this.amo.task.addTasks([parsed.task]));
-    }
-
-    await Promise.all(promises);
     return parsed;
   }
 }

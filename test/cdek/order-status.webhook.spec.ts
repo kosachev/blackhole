@@ -20,8 +20,8 @@ describe("CDEK OrderStatusWebhook", () => {
     );
   });
 
-  test("1/20", async () => {
-    expect(await service.handle(order_status_factory(1, 20))).toStrictEqual({
+  test("1/20", () => {
+    expect(service.parse(order_status_factory(1, 20))).toStrictEqual({
       custom_fields: [
         [1997433, `1/20, Набережные Челны, ${new Date().toLocaleString("ru-RU")}`],
         [1430854, "1197739374"],
@@ -32,8 +32,8 @@ describe("CDEK OrderStatusWebhook", () => {
     });
   });
 
-  test("3/22", async () => {
-    expect(await service.handle(order_status_factory(3, 20))).toStrictEqual({
+  test("3/22", () => {
+    expect(service.parse(order_status_factory(3, 20))).toStrictEqual({
       tag: [],
       custom_fields: [[1997433, `3/20, Набережные Челны, ${new Date().toLocaleString("ru-RU")}`]],
       note: "ℹ СДЭК: посылка принята на склад отправителя (3)",
@@ -41,8 +41,8 @@ describe("CDEK OrderStatusWebhook", () => {
     });
   });
 
-  test("5/15", async () => {
-    expect(await service.handle(order_status_factory(5, 15))).toStrictEqual({
+  test("5/15", () => {
+    expect(service.parse(order_status_factory(5, 15))).toStrictEqual({
       tag: [AMO.TAG.RETURN],
       custom_fields: [[1997433, `5/15, Набережные Челны, ${new Date().toLocaleString("ru-RU")}`]],
       note: "ℹ СДЭК: посылка не вручена адресату (5) по причине отказа из-за того, что не устроили сроки (15)",
@@ -50,8 +50,8 @@ describe("CDEK OrderStatusWebhook", () => {
     });
   });
 
-  test("5/20", async () => {
-    expect(await service.handle(order_status_factory(5, 20))).toStrictEqual({
+  test("5/20", () => {
+    expect(service.parse(order_status_factory(5, 20))).toStrictEqual({
       tag: [AMO.TAG.RETURN],
       custom_fields: [[1997433, `5/20, Набережные Челны, ${new Date().toLocaleString("ru-RU")}`]],
       note: "ℹ СДЭК: посылка не вручена адресату (5) по причине частичной доставки (20)",
@@ -67,8 +67,8 @@ describe("CDEK OrderStatusWebhook", () => {
     });
   });
 
-  test("4", async () => {
-    expect(await service.handle(order_status_factory(4))).toStrictEqual({
+  test("4", () => {
+    expect(service.parse(order_status_factory(4))).toStrictEqual({
       tag: [],
       custom_fields: [[1997433, `4, Набережные Челны, ${new Date().toLocaleString("ru-RU")}`]],
       note: "✔ СДЭК: посылка успешно вручена адресату (4)",
@@ -76,8 +76,8 @@ describe("CDEK OrderStatusWebhook", () => {
     });
   });
 
-  test("4/20", async () => {
-    expect(await service.handle(order_status_factory(4, 20))).toStrictEqual({
+  test("4/20", () => {
+    expect(service.parse(order_status_factory(4, 20))).toStrictEqual({
       tag: [AMO.TAG.RETURN],
       custom_fields: [[1997433, `4/20, Набережные Челны, ${new Date().toLocaleString("ru-RU")}`]],
       note: "✔ СДЭК: частичный выкуп товаров адресатом (4/20)",

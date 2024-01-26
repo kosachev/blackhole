@@ -14,7 +14,7 @@ export default defineConfig({
       reportOnFailure: true,
     },
     reporters: "verbose",
-    include: ["**/*.(e2e-spec|spec).ts"],
+    include: ["**/*.e2e-spec.ts", "**/*.spec.ts"],
   },
   root: ".",
 });
