@@ -1,6 +1,7 @@
-import { Task } from "@shevernitskiy/amo";
 import { UpdateOrderStatus } from "cdek/src/types/api/webhook";
+
 import { Injectable } from "@nestjs/common";
+import { Task } from "@shevernitskiy/amo";
 import { AbstractWebhook } from "./abstract.webhook";
 import { AMO } from "../../amo/amo.constants";
 
@@ -58,9 +59,9 @@ type ParsedWebhook = {
 export class OrderStatusWebhook extends AbstractWebhook {
   async handle(data: UpdateOrderStatus) {
     if (
-      !data.attributes.cdek_number ||
-      !data.attributes.status_code ||
-      !data.attributes.number ||
+      !data?.attributes?.cdek_number ||
+      !data?.attributes?.status_code ||
+      !data?.attributes?.number ||
       Number(data.attributes.number) <= 99999
     ) {
       return;
