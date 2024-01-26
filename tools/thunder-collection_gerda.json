@@ -1,0 +1,52 @@
+{
+    "client": "Thunder Client",
+    "collectionName": "gerda",
+    "dateExported": "2024-01-26T17:52:31.292Z",
+    "version": "1.1",
+    "folders": [],
+    "requests": [
+        {
+            "_id": "f1ea871a-1937-4f46-9a4c-cd9f41be5942",
+            "colId": "3fa22c41-312a-49b0-af7f-87014d1f9292",
+            "containerId": "",
+            "name": "cdek/webhook",
+            "url": "cdek/webhook",
+            "method": "POST",
+            "sortNum": 20000,
+            "created": "2024-01-11T11:38:01.450Z",
+            "modified": "2024-01-25T07:48:38.395Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\r\n    \"type\": \"ORDER_STATUS\",\r\n    \"date_time\": \"2020-09-07T16:24:56+0700\",\r\n    \"uuid\": \"72753031-01e2-434f-b5a8-a4dbb3278101\",\r\n    \"attributes\": {\r\n        \"is_return\": false,\r\n        \"cdek_number\": \"1197739374\",\r\n        \"number\": \"31045357\",\r\n        \"status_code\": \"5\",\r\n        \"status_reason_code\": \"20\",\r\n        \"status_date_time\": \"2020-09-07T16:24:56+0700\",\r\n        \"city_name\": \"Набережные Челны\",\r\n        \"cityCode\": \"433\"\r\n    }\r\n}",
+                "form": []
+            },
+            "tests": []
+        },
+        {
+            "_id": "a1e0058f-03c6-41bb-aa41-366da8e86725",
+            "colId": "3fa22c41-312a-49b0-af7f-87014d1f9292",
+            "containerId": "",
+            "name": "amo/lead-add",
+            "url": "amo/lead-add",
+            "method": "POST",
+            "sortNum": 30000,
+            "created": "2024-01-20T18:20:07.607Z",
+            "modified": "2024-01-20T18:20:32.222Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"test\": 123\n}",
+                "form": []
+            },
+            "tests": []
+        }
+    ],
+    "settings": {
+        "options": {
+            "baseUrl": "http://localhost:6969/"
+        }
+    }
+}
