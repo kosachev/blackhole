@@ -2,8 +2,6 @@
 
 - метрики, логгинг в прометеус?
 - cd: деплой
-- thunder client/postman collection
-- Почтовая библиотека (Nodemailer / или другая + Handlebars для темплейтов)
 - Google таблицы библиотека
 
 # DONE
@@ -17,3 +15,5 @@
 - ci: билд и тест
 - логгинг в файлы
 - телеграм сервис для уведомлений
+- Почтовая библиотека (Nodemailer / или другая + Handlebars для темплейтов)
+- thunder client/postman collection
