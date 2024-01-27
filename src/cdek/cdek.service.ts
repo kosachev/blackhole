@@ -1,4 +1,5 @@
 import { Cdek } from "cdek";
+
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
@@ -14,7 +15,7 @@ export class CdekService {
       url_base: this.config.get<"https://api.edu.cdek.ru/v2" | "https://api.cdek.ru/v2">(
         "CDEK_URL_BASE",
       ),
-      on_error: (error) => this.logger.error(error),
+      on_error: (error) => this.logger.error(error.message, error.stack),
     });
   }
 

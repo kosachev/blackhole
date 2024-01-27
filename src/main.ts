@@ -1,8 +1,9 @@
-import winston from "winston";
 import { WinstonModule } from "nest-winston";
+import winston from "winston";
 
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
+
 import { GlobalExceptionFilter } from "./utils/global-exception.filter";
 
 async function bootstrap() {
@@ -15,10 +16,8 @@ async function bootstrap() {
             winston.format.colorize({ all: true }),
             winston.format.timestamp(),
             winston.format.printf(
-              ({ timestamp, level, context, message, data }) =>
-                `${timestamp} ${level} ${context ? "[" + context + "]" : ""}: ${message ?? ""}${
-                  data ? "\n" + JSON.stringify(data, null, 2) : ""
-                }`,
+              (item) =>
+                `${item.timestamp} ${item.level} ${item.context ? "[" + item.context + "]" : ""}: ${item.message ?? ""}${item.data ? "\n" + JSON.stringify(item.data, null, 2) : ""}${item.stack ? "\n" + JSON.stringify(item.stack, null, 2) : ""}`,
             ),
           ),
         }),

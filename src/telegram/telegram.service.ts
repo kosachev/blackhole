@@ -15,11 +15,11 @@ export class TelegramService {
 
       TelegramService.instance.catch((err) => {
         if (err.error instanceof GrammyError) {
-          this.logger.error(`Error in request: ${err.error.description}`, err.error);
+          this.logger.error(`Error in request: ${err.error.description}`, err.error.stack);
         } else if (err.error instanceof HttpError) {
-          this.logger.error("Could not contact Telegram:", err.error);
+          this.logger.error("Could not contact Telegram", err.error.stack);
         } else {
-          this.logger.error("Unknown error:", err.error);
+          this.logger.error("Unknown error", err.error);
         }
       });
 
