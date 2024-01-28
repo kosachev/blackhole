@@ -1,23 +1,36 @@
-import { describe, test, expect, beforeAll } from "vitest";
+import { mockAmoService } from "test/mocks/amo.mock";
+import { order_status_factory } from "test/mocks/cdek.mock";
+import { mockMailService } from "test/mocks/mail.mock";
+import { describe, test, expect, beforeAll, afterAll, vi } from "vitest";
 
-import { OrderStatusWebhook } from "src/cdek/webhooks/order-status.webhook";
-import { CdekServiceMock, order_status_factory } from "test/mocks/cdek.mock";
-import { AmoServiceMock } from "test/mocks/amo.mock";
-import { TelegramServiceMock } from "test/mocks/telegram.mock";
-import { AmoService } from "src/amo/amo.service";
-import { CdekService } from "src/cdek/cdek.service";
-import { TelegramService } from "src/telegram/telegram.service";
+import { INestApplication } from "@nestjs/common";
+import { Test } from "@nestjs/testing";
+import { AppModule } from "../../src/app.module";
+import { OrderStatusWebhook } from "../../src/cdek/webhooks/order-status.webhook";
+
 import { AMO } from "src/amo/amo.constants";
 
 describe("CDEK OrderStatusWebhook", () => {
+  let app: INestApplication;
   let service: OrderStatusWebhook;
 
+  mockAmoService();
+  mockMailService();
+
   beforeAll(async () => {
-    service = new OrderStatusWebhook(
-      new AmoServiceMock() as unknown as AmoService,
-      new CdekServiceMock() as unknown as CdekService,
-      new TelegramServiceMock() as unknown as TelegramService,
-    );
+    const module_ref = await Test.createTestingModule({
+      imports: [AppModule],
+      providers: [OrderStatusWebhook],
+    }).compile();
+
+    app = module_ref.createNestApplication();
+    service = module_ref.get<OrderStatusWebhook>(OrderStatusWebhook);
+
+    await app.init();
+  });
+
+  afterAll(async () => {
+    await app.close();
   });
 
   test("1/20", () => {

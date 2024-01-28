@@ -1,24 +1,26 @@
-import { Amo } from "@shevernitskiy/amo";
+import { vi } from "vitest";
 
-export class AmoServiceMock {
-  client: Amo = {
-    lead: {
-      updateLeadById(id: any, lead: any): unknown {
-        return [id, lead];
-      },
-    },
-    note: {
-      addNotes(entity_type: any, notes: any[]): unknown {
-        return [entity_type, notes];
-      },
-    },
-    task: {
-      addTasks(tasks: any[]): unknown {
-        return [tasks];
-      },
-    },
-  } as Amo;
-}
+export const mockAmoService = () => {
+  vi.mock("../../src/amo/amo.service", () => {
+    return {
+      AmoService: vi.fn().mockImplementation(() => {
+        return {
+          client: {
+            lead: {
+              updateLeadById: vi.fn((id: any, lead: any) => {}),
+            },
+            note: {
+              addNotes: vi.fn((entity_type: any, notes: any[]) => {}),
+            },
+            task: {
+              addTasks: vi.fn((tasks: any[]) => {}),
+            },
+          },
+        };
+      }),
+    };
+  });
+};
 
 export const task = {
   task: {

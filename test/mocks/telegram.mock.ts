@@ -1,1 +1,1 @@
-export class TelegramServiceMock {}
+export const mockTelegramService = () => {};

@@ -1,12 +1,18 @@
-import { UpdateOrderStatus } from "cdek/src/types/api/webhook";
-
 import { Cdek } from "cdek";
+import { UpdateOrderStatus } from "cdek/src/types/api/webhook";
+import { vi } from "vitest";
 
-export class CdekServiceMock {
-  client(): Cdek {
-    return null as Cdek;
-  }
-}
+export const mockCdekService = () => {
+  vi.mock("../../src/cdek/cdek.service", () => {
+    return {
+      CdekService: vi.fn().mockImplementation(() => {
+        return {
+          client: {},
+        };
+      }),
+    };
+  });
+};
 
 export const order_status_static: UpdateOrderStatus = {
   type: "ORDER_STATUS",

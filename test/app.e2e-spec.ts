@@ -1,13 +1,15 @@
 import { spec } from "pactum";
+import { mockAmoService } from "test/mocks/amo.mock";
 import { describe, test, beforeAll, afterAll } from "vitest";
 
-import { Test } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
+import { Test } from "@nestjs/testing";
 import { AppModule } from "../src/app.module";
-import { mock_server } from "./mocks/mock-server";
 
 describe("App e2e", () => {
   let app: INestApplication;
+
+  mockAmoService();
 
   beforeAll(async () => {
     const module_ref = await Test.createTestingModule({
@@ -17,12 +19,11 @@ describe("App e2e", () => {
     app = module_ref.createNestApplication();
 
     await app.init();
-    await Promise.all([mock_server.listen(), app.listen(process.env.PORT ?? 6969)]);
+    await app.listen(process.env.PORT ?? 6969);
   });
 
   afterAll(async () => {
     await app.close();
-    await Promise.all([mock_server.close(), app.close()]);
   });
 
   describe("CDEK", () => {
