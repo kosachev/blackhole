@@ -7,13 +7,13 @@ export const mockAmoService = () => {
         return {
           client: {
             lead: {
-              updateLeadById: vi.fn((id: any, lead: any) => {}),
+              updateLeadById: vi.fn((id: any, lead: any) => [id, lead]),
             },
             note: {
-              addNotes: vi.fn((entity_type: any, notes: any[]) => {}),
+              addNotes: vi.fn((entity_type: any, notes: any[]) => [entity_type, notes]),
             },
             task: {
-              addTasks: vi.fn((tasks: any[]) => {}),
+              addTasks: vi.fn((tasks: any[]) => [tasks]),
             },
           },
         };

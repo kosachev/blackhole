@@ -1,4 +1,3 @@
-import { Cdek } from "cdek";
 import { UpdateOrderStatus } from "cdek/src/types/api/webhook";
 import { vi } from "vitest";
 

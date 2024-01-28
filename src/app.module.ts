@@ -6,7 +6,7 @@ import { LoggerMiddleware } from "./utils/logger.middleware";
 import { AmoModule } from "./amo/amo.module";
 import { CronModule } from "./cron/cron.module";
 import { TelegramModule } from "./telegram/telegram.module";
-import { MailModule } from './mail/mail.module';
+import { MailModule } from "./mail/mail.module";
 
 @Module({
   imports: [

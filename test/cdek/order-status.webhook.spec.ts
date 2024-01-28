@@ -1,7 +1,7 @@
 import { mockAmoService } from "test/mocks/amo.mock";
 import { order_status_factory } from "test/mocks/cdek.mock";
 import { mockMailService } from "test/mocks/mail.mock";
-import { describe, test, expect, beforeAll, afterAll, vi } from "vitest";
+import { describe, test, expect, beforeAll, afterAll } from "vitest";
 
 import { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";

@@ -5,7 +5,7 @@ export const mockMailService = () => {
     return {
       MailService: vi.fn().mockImplementation(() => {
         return {
-          sendWelcome: vi.fn((email: string, url: string) => {}),
+          sendWelcome: vi.fn((email: string, url: string) => [email, url]),
         };
       }),
     };
