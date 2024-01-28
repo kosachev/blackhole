@@ -21,12 +21,14 @@ export class AmoService {
         redirect_uri: this.config.get<string>("AMO_REDIRECT_URI"),
       },
       {
-        on_token: (new_token) =>
+        on_token: (new_token) => {
           writeFileSync(
             this.config.get<string>("AMO_TOKEN_PATH"),
             JSON.stringify(new_token, null, 2),
             "utf-8",
-          ),
+          );
+          this.logger.log("Token refreshed");
+        },
         on_error: (error) => {
           if (error instanceof ApiError || error instanceof AuthError) {
             this.logger.error(error.message, error.response);
