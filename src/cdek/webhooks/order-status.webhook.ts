@@ -39,7 +39,7 @@ const task_return: (number: string) => Partial<Task> = (number) => {
   return {
     entity_id: Number(number),
     entity_type: "leads",
-    duration: 3600,
+    complete_till: ~~(Date.now() / 1000) + 3600,
     task_type_id: AMO.TASK.PROCESS,
     responsible_user_id: AMO.USER.EKATERINA,
     created_by: AMO.USER.ADMIN,
