@@ -44,5 +44,5 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           password: ${{ secrets.DEPLOY_PASSWORD }}
           port: 2200
-          source: /*
+          source: ${{ env.GITHUB_WORKSPACE }}/*
           target: /volume1/web/blackhole
