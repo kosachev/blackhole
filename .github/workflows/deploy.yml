@@ -37,6 +37,15 @@ jobs:
           generate_release_notes: true
           draft: true
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+          run_install: true
+
+      - name: Build
+        run: pnpm build
+
       - name: copy file via ssh password
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -44,5 +53,5 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           password: ${{ secrets.DEPLOY_PASSWORD }}
           port: 2200
-          source: ${{ env.GITHUB_WORKSPACE }}/*
+          source: dist/*
           target: /volume1/web/blackhole
