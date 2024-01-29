@@ -46,4 +46,4 @@ jobs:
           remote_host: amoapi.online
           remote_port: 2200
           remote_user: ${{ secrets.DEPLOY_USER }}
-          remote_key_pass: ${{ secrets.DEPLOY_PASSWORD }}
+          remote_key: ${{ secrets.DEPLOY_KEY }}
