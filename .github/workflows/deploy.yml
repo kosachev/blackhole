@@ -36,3 +36,14 @@ jobs:
           tag_name: ${{ env.VERSION }}
           generate_release_notes: true
           draft: true
+
+      - name: rsync deployments
+        uses: burnett01/rsync-deployments@6.0.0
+        with:
+          switches: -avzr --delete --exclude="" --include="" --filter=""
+          path: src/
+          remote_path: /volume1/web/blackhole
+          remote_host: amoapionline.ru
+          remote_port: 2200
+          remote_user: ${{ secrets.DEPLOY_USER }}
+          remote_key_pass: ${{ secrets.DEPLOY_PASSWORD }}
