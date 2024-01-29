@@ -36,13 +36,13 @@ jobs:
           tag_name: ${{ env.VERSION }}
           generate_release_notes: true
           draft: true
-      - name: rsync deployments
-        uses: burnett01/rsync-deployments@6.0.0
+
+      - name: copy file via ssh password
+        uses: appleboy/scp-action@v0.1.7
         with:
-          switches: -avzr --delete --exclude="" --include="" --filter=""
-          path: src/
-          remote_path: /volume1/web/blackhole
-          remote_host: amoapi.online
-          remote_port: 2200
-          remote_user: ${{ secrets.DEPLOY_USER }}
-          remote_key: ${{ secrets.DEPLOY_KEY }}
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          password: ${{ secrets.DEPLOY_PASSWORD }}
+          port: 2200
+          source: src/*
+          target: /volume1/web/blackhole
