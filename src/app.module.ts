@@ -1,12 +1,14 @@
 import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
-import { CdekModule } from "./cdek/cdek.module";
-import { LoggerMiddleware } from "./utils/logger.middleware";
 import { AmoModule } from "./amo/amo.module";
+import { CdekModule } from "./cdek/cdek.module";
 import { CronModule } from "./cron/cron.module";
-import { TelegramModule } from "./telegram/telegram.module";
 import { MailModule } from "./mail/mail.module";
+import { TelegramModule } from "./telegram/telegram.module";
+import { YandexDiskModule } from "./yandex-disk/yandex-disk.module";
+
+import { LoggerMiddleware } from "./utils/logger.middleware";
 
 @Module({
   imports: [
@@ -20,6 +22,7 @@ import { MailModule } from "./mail/mail.module";
     TelegramModule,
     CronModule,
     MailModule,
+    YandexDiskModule,
   ],
   controllers: [],
   providers: [],
