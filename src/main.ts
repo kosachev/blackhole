@@ -1,5 +1,6 @@
 import { WinstonModule } from "nest-winston";
 import winston from "winston";
+import "winston-daily-rotate-file";
 
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
@@ -21,10 +22,10 @@ async function bootstrap() {
             ),
           ),
         }),
-        new winston.transports.File({
-          filename: "logs/combined.log",
-          level: "info",
-          format: winston.format.json(),
+        new winston.transports.DailyRotateFile({
+          filename: "%DATE%.log",
+          dirname: "./logs",
+          level: "debug",
         }),
       ],
     }),
