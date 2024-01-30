@@ -15,7 +15,7 @@ export class ArchiveLogsJob extends CronService {
     date.setMonth(date.getMonth() - 1);
     const prev_month = `${date.getFullYear()}-${date.getMonth() + 1 < 10 ? "0" : ""}${date.getMonth() + 1}`;
     const archive = fs.createWriteStream(
-      `${this.config.get<string>("LOG_ARCHIVE_PATH")}/${prev_month}.tar.gz`,
+      path.join(this.config.get<string>("LOG_ARCHIVE_PATH"), `${prev_month}.tar.gz`),
     );
     const gzip = zlib.createGzip();
     gzip.pipe(archive);
