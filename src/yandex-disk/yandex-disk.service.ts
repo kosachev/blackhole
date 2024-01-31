@@ -1,16 +1,19 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { YandexDiskClient } from "./yandex-disk.lib";
 
 @Injectable()
 export class YandexDiskService {
+  private readonly logger = new Logger(YandexDiskService.name);
   private client: YandexDiskClient;
 
   constructor(private readonly config: ConfigService) {
-    this.client = new YandexDiskClient(this.config.get("YANDEX_DISK_TOKEN"));
+    this.client = new YandexDiskClient(this.config.get("YANDEX_DISK_TOKEN"), (error) =>
+      this.logger.error(error),
+    );
   }
 
   // upload local file by path
