@@ -40,9 +40,26 @@ type Post7p112ep = {
   sum: number;
 };
 
+type Invoice = {
+  lead_id: number;
+  customer_name: string;
+  customer_phone: string;
+  customer_address: string;
+  delivery_time?: string;
+  payment_type?: string;
+  goods: {
+    name: string;
+    price: number;
+    quantity: number;
+  }[];
+};
+
 @Injectable()
 export class PDFService {
-  private readonly builder: PDFBuilder = new PDFBuilder("./assets/roboto.ttf");
+  private readonly builder: PDFBuilder = new PDFBuilder(
+    "./assets/roboto.ttf",
+    "./assets/roboto-bold.ttf",
+  );
 
   constructor(private readonly config: ConfigService) {}
 
@@ -137,5 +154,21 @@ export class PDFService {
     ]);
 
     return (await this.builder.mergePdf(pdfs)).save();
+  }
+
+  async invoice(params: Invoice): Promise<Uint8Array> {
+    return this.builder.fillInvoice({
+      header: `Продавец: ${this.config.get<string>("OWNER_SELLER_NAME")}
+ИП ${this.config.get<string>("OWNER_SHORT_NAME")}, ИНН ${this.config.get<string>("OWNER_INN")}
+Адрес: ${this.config.get<string>("OWNER_SHOP_ADDRESS")}`,
+      id: params.lead_id,
+      date: new Date().toLocaleDateString(),
+      lead: `Покупатель: ${params.customer_name}
+Телефон: ${params.customer_phone}
+Адрес: ${params.customer_address}
+Время доставки: ${params.delivery_time ?? ""}
+Способ оплаты: ${params.payment_type ?? ""}`,
+      goods: params.goods,
+    });
   }
 }
