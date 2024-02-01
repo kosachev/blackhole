@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import { PDFDocument } from "pdf-lib";
 
 import fontkit from "@pdf-lib/fontkit";
+import { Post112ep, post112p } from "./post112ep.form";
 import { Post7p, post7p } from "./post7p.form";
 
 export type FieldsMap<T> = Record<keyof T, { font_size: number; field_name: string }>;
@@ -49,5 +50,17 @@ export class PDFBuilder {
 
   async fillPost7p(params: Post7p): Promise<Uint8Array> {
     return (await this.fillPdf<Post7p>(params, post7p.fileds_map, await post7p.data)).save();
+  }
+
+  async fillPost112ep(params: Post112ep): Promise<Uint8Array> {
+    return (await this.fillPdf<Post112ep>(params, post112p.fileds_map, await post112p.data)).save();
+  }
+
+  async fillPost7pDoc(params: Post7p): Promise<PDFDocument> {
+    return this.fillPdf<Post7p>(params, post7p.fileds_map, await post7p.data);
+  }
+
+  async fillPost112epDoc(params: Post112ep): Promise<PDFDocument> {
+    return this.fillPdf<Post112ep>(params, post112p.fileds_map, await post112p.data);
   }
 }
