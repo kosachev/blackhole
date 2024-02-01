@@ -5,6 +5,7 @@ import { AmoModule } from "./amo/amo.module";
 import { CdekModule } from "./cdek/cdek.module";
 import { CronModule } from "./cron/cron.module";
 import { MailModule } from "./mail/mail.module";
+import { PDFModule } from "./pdf/pdf.module";
 import { TelegramModule } from "./telegram/telegram.module";
 import { YandexDiskModule } from "./yandex-disk/yandex-disk.module";
 
@@ -23,6 +24,7 @@ import { LoggerMiddleware } from "./utils/logger.middleware";
     CronModule,
     MailModule,
     YandexDiskModule,
+    PDFModule,
   ],
   controllers: [],
   providers: [],
