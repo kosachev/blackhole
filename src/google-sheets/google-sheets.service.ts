@@ -18,7 +18,9 @@ export class GoogleSheetsService {
       }),
     );
     // hope service will not be called before loadInfo ends, or do it in every method
-    this.doc.loadInfo();
+    if (process.env.NODE_ENV !== "testing") {
+      this.doc.loadInfo();
+    }
   }
 
   async addSell(data: any): Promise<void> {
