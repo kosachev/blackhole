@@ -1,5 +1,6 @@
 import { mockAmoService } from "test/mocks/amo.mock";
 import { order_status_factory } from "test/mocks/cdek.mock";
+import { mockGoogleSheetsService } from "test/mocks/google-sheets.mock";
 import { mockMailService } from "test/mocks/mail.mock";
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
 
@@ -16,6 +17,7 @@ describe("CDEK OrderStatusWebhook", () => {
 
   mockAmoService();
   mockMailService();
+  mockGoogleSheetsService();
 
   beforeAll(async () => {
     const module_ref = await Test.createTestingModule({

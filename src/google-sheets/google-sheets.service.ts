@@ -9,8 +9,6 @@ export class GoogleSheetsService {
   private doc: GoogleSpreadsheet;
 
   constructor(private readonly config: ConfigService) {
-    if (this.config.get<string>("NODE_ENV") === "testing") return;
-
     this.doc = new GoogleSpreadsheet(
       this.config.get<string>("GOOGLE_SPREADSHEET_ID"),
       new JWT({
@@ -20,7 +18,6 @@ export class GoogleSheetsService {
       }),
     );
     // hope service will not be called before loadInfo ends, or do it in every method
-
     this.doc.loadInfo();
   }
 
