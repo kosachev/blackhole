@@ -1,5 +1,7 @@
 import { spec } from "pactum";
 import { mockAmoService } from "test/mocks/amo.mock";
+import { mockGoogleSheetsService } from "test/mocks/google-sheets.mock";
+import { mockMailService } from "test/mocks/mail.mock";
 import { describe, test, beforeAll, afterAll } from "vitest";
 
 import { INestApplication } from "@nestjs/common";
@@ -10,6 +12,8 @@ describe("App e2e", () => {
   let app: INestApplication;
 
   mockAmoService();
+  mockMailService();
+  mockGoogleSheetsService();
 
   beforeAll(async () => {
     const module_ref = await Test.createTestingModule({

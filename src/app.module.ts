@@ -4,6 +4,7 @@ import { ScheduleModule } from "@nestjs/schedule";
 import { AmoModule } from "./amo/amo.module";
 import { CdekModule } from "./cdek/cdek.module";
 import { CronModule } from "./cron/cron.module";
+import { GoogleSheetsModule } from "./google-sheets/google-sheets.module";
 import { MailModule } from "./mail/mail.module";
 import { PDFModule } from "./pdf/pdf.module";
 import { TelegramModule } from "./telegram/telegram.module";
@@ -25,6 +26,7 @@ import { LoggerMiddleware } from "./utils/logger.middleware";
     MailModule,
     YandexDiskModule,
     PDFModule,
+    GoogleSheetsModule,
   ],
   controllers: [],
   providers: [],
