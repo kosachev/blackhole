@@ -1,13 +1,128 @@
-import { CustomFieldsValue, Embedded, Lead, Tag } from "@shevernitskiy/amo";
+import { CustomFieldsValue, Embedded, Lead, Tag, Amo } from "@shevernitskiy/amo";
 import { RequestUpdateLead } from "@shevernitskiy/amo/src/api/lead/types";
 
-export abstract class AbstractLeadHelper {
-  lead: Partial<Lead>;
-  protected abstract custom_fields: Map<number, string>;
-  protected abstract tags: Set<number>;
+type Options = {
+  load_goods?: boolean;
+};
 
-  constructor(private data: any) {
-    this.lead = data;
+// need name and price?
+type Good = {
+  quantity: number;
+};
+
+export class LeadHelper {
+  custom_fields: Map<number, string>;
+  tags: Set<number>;
+  goods: Map<number, Good>;
+  old_status_id?: number;
+  account_id?: number;
+
+  constructor(
+    private readonly client: Amo,
+    public lead: Partial<Lead> & { id: number },
+    params?: {
+      custom_fields?: Map<number, string>;
+      tags?: Set<number>;
+      goods?: Map<number, Good>;
+      old_status_id?: number;
+      account_id?: number;
+    },
+  ) {
+    this.custom_fields = params?.custom_fields ?? new Map();
+    this.tags = params?.tags ?? new Set();
+    this.goods = params?.goods ?? new Map();
+    this.old_status_id = params?.old_status_id;
+    this.account_id = params?.account_id;
+  }
+
+  static async createFromWebhook(client: Amo, data: any, options?: Options) {
+    console.log(data.custom_fields);
+    const custom_fields = new Map<number, string>(
+      data.custom_fields.map((item: CustomFieldsValue) => [
+        item.field_id ?? item.id,
+        item.values?.at(0)?.value,
+      ]),
+    );
+    const tags = new Set<number>(data.tags?.map((item: Tag) => item.id));
+    let goods;
+    if (options?.load_goods && data.id) {
+      goods = await LeadHelper.loadGoods(data.id, client);
+    }
+
+    const old_status_id = data.old_status_id;
+    const account_id = data.account_id;
+    delete data.old_status_id;
+    delete data.account_id;
+    delete data.custom_fields;
+    delete data.tags;
+
+    return new LeadHelper(client, data, {
+      custom_fields,
+      tags,
+      goods,
+      old_status_id,
+      account_id,
+    });
+  }
+
+  static async createFromApi(
+    client: Amo,
+    data: Partial<Lead> & { id: number } & {
+      _embedded?: Pick<
+        Embedded,
+        "loss_reason" | "tags" | "contacts" | "companies" | "catalog_elements"
+      >;
+    },
+    options?: Options,
+  ) {
+    const custom_fields = data.custom_fields_values
+      ? new Map<number, string>(
+          data.custom_fields_values.map((item: CustomFieldsValue) => [
+            item.field_id ?? item.id!,
+            item.values?.at(0)?.value ?? "unknown",
+          ]),
+        )
+      : new Map<number, string>();
+    const tags = new Set<number>(data._embedded?.tags?.map((item: Partial<Tag>) => item?.id ?? 0));
+    let goods;
+    if (options?.load_goods && data.id) {
+      goods = await LeadHelper.loadGoods(data.id, client);
+    }
+
+    delete data._embedded;
+
+    return new LeadHelper(client, data, {
+      custom_fields,
+      tags,
+      goods,
+    });
+  }
+
+  static async createFromId(client: Amo, id: number, options?: Options) {
+    const data = await client.lead.getLeadById(id, {
+      with: [
+        "catalog_elements",
+        "is_price_modified_by_robot",
+        "loss_reason",
+        "contacts",
+        "only_deleted",
+        "source_id",
+      ],
+    });
+    return LeadHelper.createFromApi(client, data, options);
+  }
+
+  private static async loadGoods(id: number, client: Amo): Promise<Map<number, Good>> {
+    const res = await client.link.getLinksByEntityId(id, "leads", {
+      filter: (filter) => filter.single("to_catalog_id", 6969),
+    });
+    const goods = new Map<number, Good>();
+    for (const link of res._embedded.links) {
+      goods.set(link.to_entity_id, {
+        quantity: link.metadata?.quantity ?? 1,
+      });
+    }
+    return goods;
   }
 
   toApi = {
@@ -33,50 +148,36 @@ export abstract class AbstractLeadHelper {
       },
     }),
   };
-}
 
-export class WebhookLeadHelper extends AbstractLeadHelper {
-  readonly old_status_id?: number;
-  readonly account_id?: number;
-  protected custom_fields: Map<number, string>;
-  protected tags: Set<number>;
-
-  constructor(data: any) {
-    super(data);
-
-    this.old_status_id = data.old_status_id;
-    this.account_id = data.account_id;
-
-    this.custom_fields = new Map<number, string>(
-      data.custom_fields.map((item: CustomFieldsValue) => [
-        item.field_id ?? item.id,
-        item.values?.at(0)?.value,
-      ]),
-    );
-    this.tags = new Set<number>(data.tags?.map((item: Tag) => item.id));
+  async update(): Promise<any> {
+    const reqs: Promise<any>[] = [
+      this.client.lead.updateLeadById(this.lead.id, this.toApi.updateLeadRequest()),
+    ];
+    return Promise.all(reqs);
   }
-}
 
-export class ApiLeadHelper extends AbstractLeadHelper {
-  readonly account_id?: number;
-  protected custom_fields: Map<number, string>;
-  protected tags: Set<number>;
+  async addGood(id: number, good: Good) {
+    this.goods.set(id, good);
+    this.client.link.addLinksByEntityId(this.lead.id, "leads", [
+      {
+        to_entity_id: id,
+        metadata: { quantity: good.quantity },
+      },
+    ]);
 
-  constructor(
-    data: Lead &
-      Pick<Embedded, "loss_reason" | "tags" | "contacts" | "companies" | "catalog_elements">,
-  ) {
-    super(data);
+    throw new Error("Method not implemented.");
+  }
 
-    this.custom_fields = data.custom_fields_values
-      ? new Map<number, string>(
-          data.custom_fields_values.map((item: CustomFieldsValue) => [
-            item.field_id ?? item.id ?? 0,
-            item.values?.at(0)?.value ?? "",
-          ]),
-        )
-      : new Map<number, string>();
+  async delGood(id: number) {
+    this.goods.delete(id);
+    this.client.link.deleteLinksByEntityId(this.lead.id, "leads", [{ to_entity_id: id }]);
+  }
 
-    this.tags = new Set<number>(data.tags?.map((item: Partial<Tag>) => item?.id ?? 0));
+  note(text: string[] | string) {
+    throw new Error(`Method not implemented. ${text}`);
+  }
+
+  task(text: string, responsible_user_id: number) {
+    throw new Error(`Method not implemented. ${text} ${responsible_user_id}`);
   }
 }
