@@ -17,7 +17,7 @@ export class LeadHelper {
   old_status_id?: number;
   account_id?: number;
 
-  constructor(
+  private constructor(
     private readonly client: Amo,
     public lead: Partial<Lead> & { id: number },
     params?: {
