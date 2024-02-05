@@ -83,11 +83,7 @@ export class PartialReturnService {
           values: [{ value: item.value }],
         })),
         _embedded: {
-          contacts: [
-            {
-              id: data.contact_id,
-            },
-          ],
+          contacts: [{ id: data.contact_id }],
         },
       },
     ]);
