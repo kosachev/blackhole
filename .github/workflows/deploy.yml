@@ -1,0 +1,71 @@
+name: DEPLOY
+on:
+  workflow_dispatch:
+    inputs:
+      bump-type:
+        type: choice
+        description: "Select the version bump type"
+        required: true
+        default: "patch"
+        options: ["patch", "minor", "major"]
+  push:
+    branches:
+      - deploy
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Chekout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20.x"
+
+      - name: Bump
+        run: |
+          npm version ${{ inputs.bump-type }} --no-git-tag-version
+          echo "VERSION=$(npm pkg get version)" >> $GITHUB_ENV
+
+      - name: Commit version bump
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git add .
+          git commit -m "Bump version to ${{ env.VERSION }}"
+          git push origin deploy
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: ${{ env.VERSION }}
+          tag_name: ${{ env.VERSION }}
+          generate_release_notes: true
+          draft: true
+
+      - name: RSYNC
+        uses: burnett01/rsync-deployments@6.0.0
+        with:
+          switches: -avzr --delete --exclude '.git' --exclude '.github' --exclude '.gitignore'  --exclude '/node_modules'
+          path: /
+          remote_path: ${{ secrets.DEPLOY_PATH }}
+          remote_host: ${{ secrets.DEPLOY_HOST }}
+          remote_port: ${{ secrets.DEPLOY_PORT }}
+          remote_user: ${{ secrets.DEPLOY_USER }}
+          remote_key: ${{ secrets.DEPLOY_KEY }}
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.6.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+
+      - name: Add host key to known hosts
+        run: ssh-keyscan -p ${{ secrets.DEPLOY_PORT }} -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Execute SSH command
+        run: ssh -p ${{ secrets.DEPLOY_PORT }} ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "cd ${{ secrets.DEPLOY_PATH }}; /usr/local/bin/node /usr/local/lib/node_modules/pnpm/bin/pnpm.cjs i"
