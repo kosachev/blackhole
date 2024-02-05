@@ -27,6 +27,10 @@ jobs:
         with:
           node-version: "20.x"
 
+      - name: Install pnpm
+        run: |
+          - npm install -g pnp
+
       - name: Bump
         run: |
           if [ -z "${{ inputs.bump-type }}" ]; then
