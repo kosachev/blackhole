@@ -29,7 +29,12 @@ jobs:
 
       - name: Bump
         run: |
-          npm version ${{ inputs.bump-type }} --no-git-tag-version
+          if [ -z "${{ inputs.bump-type }}" ]; then
+            BUMP_TYPE="patch"
+          else
+            BUMP_TYPE="${{ inputs.bump-type }}"
+          fi
+          npm version $BUMP_TYPE --no-git-tag-version
           echo "VERSION=$(npm pkg get version)" >> $GITHUB_ENV
 
       - name: Commit version bump
