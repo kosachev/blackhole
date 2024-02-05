@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
+import { EntityLink } from "@shevernitskiy/amo";
 import { AMO } from "../amo/amo.constants";
 import { AmoService } from "../amo/amo.service";
 
@@ -94,14 +95,9 @@ export class PartialReturnService {
     if (!return_lead) throw new BadRequestException("Unable to crate return lead");
 
     const return_lead_id = return_lead._embedded.leads[0].id;
-    const return_goods_links = data.return.map((item) => ({
+    const return_goods_links: Partial<EntityLink>[] = data.return.map((item) => ({
       to_entity_id: item.id,
-      to_entity_type: "catalog_elements" as
-        | "leads"
-        | "contacts"
-        | "companies"
-        | "customers"
-        | "catalog_elements",
+      to_entity_type: "catalog_elements",
       metadata: {
         catalog_id: data.catalog_id,
       },
