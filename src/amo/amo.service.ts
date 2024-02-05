@@ -30,9 +30,11 @@ export class AmoService {
           this.logger.log("Token refreshed");
         },
         on_error: (error) => {
-          if (error instanceof ApiError || error instanceof AuthError) {
+          if (error instanceof NoContentError) {
+            return;
+          } else if (error instanceof ApiError || error instanceof AuthError) {
             this.logger.error(error.message, error.response);
-          } else if (error instanceof NoContentError || error instanceof HttpError) {
+          } else if (error instanceof HttpError) {
             this.logger.error(error.message, error.stack);
           } else {
             this.logger.error("Unknown error", error);
