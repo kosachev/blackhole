@@ -53,6 +53,9 @@ jobs:
           generate_release_notes: true
           draft: true
 
+      - name: Install dependencies
+        run: pnpm install
+
       - name: Install Nest CLI
         run: npm install -g @nestjs/cli
 
