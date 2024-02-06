@@ -1,6 +1,7 @@
 import { WinstonModule } from "nest-winston";
 import winston from "winston";
 import "winston-daily-rotate-file";
+import path from "path";
 
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
