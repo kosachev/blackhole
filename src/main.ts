@@ -24,7 +24,7 @@ async function bootstrap() {
         }),
         new winston.transports.DailyRotateFile({
           filename: "%DATE%.log",
-          dirname: "./logs",
+          dirname: "logs",
           level: "debug",
         }),
       ],
