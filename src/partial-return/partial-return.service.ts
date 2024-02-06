@@ -84,6 +84,7 @@ export class PartialReturnService {
         })),
         _embedded: {
           contacts: [{ id: data.contact_id }],
+          tags: [{ id: AMO.TAG.RETURN }],
         },
       },
     ]);
