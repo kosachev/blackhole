@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { EntityLink } from "@shevernitskiy/amo";
 import { AMO } from "../amo/amo.constants";
 import { AmoService } from "../amo/amo.service";
@@ -89,7 +89,7 @@ export class PartialReturnService {
       },
     ]);
 
-    if (!return_lead) throw new BadRequestException("Unable to crate return lead");
+    if (!return_lead) throw new InternalServerErrorException("Unable to crate return lead");
 
     const return_lead_id = return_lead._embedded.leads[0].id;
     const return_goods_links: Partial<EntityLink>[] = data.return.map((item) => ({
