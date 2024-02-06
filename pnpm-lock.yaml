@@ -30,8 +30,8 @@ dependencies:
     specifier: ^0.1.17
     version: 0.1.17
   cdek:
-    specifier: ^1.0.5
-    version: 1.0.5
+    specifier: ^1.0.6
+    version: 1.0.6
   google-auth-library:
     specifier: ^9.6.1
     version: 9.6.1
@@ -2246,8 +2246,8 @@ packages:
     resolution: {integrity: sha512-ff5BdakGe2P3SQsMsiqmt1Lc8221NR1VzHj5jXN5vBny9A6fpze94HiVV/n7XRosOlsShJcvMv5mdnpjOGCEgg==}
     dev: true
 
-  /cdek@1.0.5:
-    resolution: {integrity: sha512-fbj7gIksSol8SwAkFGqNss9YU8t/AXSd1Nvq4a5uNW8vPAedYDfsUarfxRPWryd9hfMJWyUD9YdePcr00QsnCQ==}
+  /cdek@1.0.6:
+    resolution: {integrity: sha512-qT5Eca1932uaaveIGtUXbOTVcSkSd+iF6BESFZCjw7Q5gyEJx4p3nXYS1HSB/zzXSVvz6ZWbSV6Bu5xC+qJjkw==}
     engines: {node: '>= 18'}
     dependencies:
       ts-mixer: 6.0.3
