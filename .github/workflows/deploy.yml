@@ -84,5 +84,5 @@ jobs:
       - name: Add host key to known hosts
         run: ssh-keyscan -p ${{ secrets.DEPLOY_PORT }} -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Execute SSH command
+      - name: Execute SSH commands
         run: ssh -p ${{ secrets.DEPLOY_PORT }} ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} ${{ secrets.DEPLOY_SSH }}
