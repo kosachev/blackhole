@@ -85,3 +85,7 @@ jobs:
 
       - name: Test
         run: pnpm run test:cov
+
+      - name: Report Coverage
+        if: always()
+        uses: davelosert/vitest-coverage-report-action@v2
