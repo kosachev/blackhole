@@ -114,7 +114,7 @@ describe("CDEK OrderStatusWebhook", () => {
       loss_reason: AMO.LOSS_REASON.CDEK_PARTIAL_RETURN,
       pipeline: AMO.PIPELINE.RETURN,
       custom_fields: [[1997433, `4/20, Набережные Челны, ${new Date().toLocaleString("ru-RU")}`]],
-      note: "✔ СДЭК: возврат получен (4)",
+      note: "✔ СДЭК ВОЗВРАТ: возврат получен (4)",
       task: {
         entity_id: 666777,
         entity_type: "leads",
