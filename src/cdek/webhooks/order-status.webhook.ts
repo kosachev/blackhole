@@ -298,6 +298,9 @@ export class OrderStatusWebhook extends AbstractWebhook {
         },
       },
     ]);
+    if (!return_lead) {
+      throw new InternalServerErrorException("Unable to create return lead");
+    }
 
     await Promise.all([
       this.amo.link.deleteLinksByEntityId(direct_lead.id, "leads", return_goods),
