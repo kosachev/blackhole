@@ -27,8 +27,8 @@ dependencies:
     specifier: ^1.1.1
     version: 1.1.1
   '@shevernitskiy/amo':
-    specifier: ^0.1.17
-    version: 0.1.17
+    specifier: ^0.2.4
+    version: 0.2.4
   cdek:
     specifier: ^1.0.6
     version: 1.0.6
@@ -1096,8 +1096,8 @@ packages:
       selderee: 0.11.0
     dev: false
 
-  /@shevernitskiy/amo@0.1.17:
-    resolution: {integrity: sha512-rEt+fCd1AGAyZ0recb0vj28msUZJ73XrsqwMLM5Pl0onUOjcMZpWxeuRGCBOI/xGEZTzdCP6CGaMHqR8M9J2jA==}
+  /@shevernitskiy/amo@0.2.4:
+    resolution: {integrity: sha512-/NOeTip17QLjZxSli9yq1B/fF+4VlHN/XGJU931D0T0/emWg9vBrL6HosWd3gL1jzo0OvPOjsp7Djii2kqsJsA==}
     engines: {node: '>= 18'}
     dev: false
 
