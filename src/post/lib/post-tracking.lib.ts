@@ -1,7 +1,7 @@
 const tracking_parse_pattern =
   /<ns3:historyRecord>.*?<ns3:OperationAddress>.*?<ns3:Index>(.*?)<\/ns3:Index>.*?<ns3:Description>(.*?)<\/ns3:Description>.*?<\/ns3:OperationAddress>.*?<ns3:OperType>.*?<ns3:Name>(.*?)<\/ns3:Name><\/ns3:OperType>.*?<ns3:OperDate>(.*?)<\/ns3:OperDate>.*?<\/ns3:historyRecord>/gm;
 
-type TrackingHistory = {
+export type TrackingHistory = {
   last_operation: string;
   duration: number;
   history: {
