@@ -26,8 +26,8 @@ export class PostTrackingService {
     );
   }
 
-  // execcute in 19:05 everyday
-  //@Cron("0 5 19 * * *")
+  // executes in 19:05 everyday
+  // @Cron("0 5 19 * * *")
   async handler(): Promise<void> {
     const leads = await this.getLeadsInPostDelivery();
     const histories = await Promise.all(leads.map((lead) => this.client.tracking(lead.trackcode)));
@@ -62,6 +62,10 @@ export class PostTrackingService {
     }
 
     await Promise.all(promises);
+
+    this.logger.log(
+      `Result: ${to_update.notes.length} notes, ${to_update.delivered.length} delivered`,
+    );
   }
 
   // fetch leads with status AMO.STATUS.SENT, delivery type "Почта России" and existing trackcode
@@ -75,19 +79,19 @@ export class PostTrackingService {
       .filter(
         (lead) =>
           lead.custom_fields_values.find(
-            (item) => item.field_id === AMO.CUSTOM_FIELD.TRACK_NUMBER && item.values[0].value,
+            (item) => item.field_id === AMO.CUSTOM_FIELD.TRACK_NUMBER && item.values?.at(0)?.value,
           ) &&
           lead.custom_fields_values.find(
             (item) =>
               item.field_id === AMO.CUSTOM_FIELD.DELIVERY_TYPE &&
-              item.values[0].value === "Почта России",
+              item.values?.at(0)?.value === "Почта России",
           ),
       )
       .map((lead) => ({
         lead_id: lead.id,
-        trackcode: +lead.custom_fields_values.find(
-          (item) => item.field_id === AMO.CUSTOM_FIELD.TRACK_NUMBER,
-        ).values[0].value,
+        trackcode: +lead.custom_fields_values
+          .find((item) => item.field_id === AMO.CUSTOM_FIELD.TRACK_NUMBER)
+          .values?.at(0)?.value,
       }));
 
     return active_leads;
