@@ -126,7 +126,7 @@ export class PostTrackingService {
       if (history.last_operation === "Вручение") {
         out.notes.push({
           lead_id,
-          text: `✔ Почта: заказ доставлен почтой в и переведен в реализованные автоматически`,
+          text: `✔ Почта: заказ доставлен почтой и переведен в реализованные автоматически`,
         });
         out.delivered.push(lead_id);
       }
