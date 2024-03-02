@@ -19,4 +19,4 @@ updates:
           - "pdf-lib"
           - "tar-fs"
           - "winston"
-          - "winston-daily-rotate-file":
+          - "winston-daily-rotate-file"
