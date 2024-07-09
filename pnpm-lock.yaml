@@ -30,14 +30,14 @@ dependencies:
     specifier: ^0.2.4
     version: 0.2.4
   cdek:
-    specifier: ^1.0.8
-    version: 1.0.9
+    specifier: 1.0.8
+    version: 1.0.8
   google-auth-library:
-    specifier: ^9.7.0
-    version: 9.11.0
+    specifier: 9.7.0
+    version: 9.7.0
   google-spreadsheet:
-    specifier: ^4.1.1
-    version: 4.1.1(google-auth-library@9.11.0)
+    specifier: 4.1.1
+    version: 4.1.1(google-auth-library@9.7.0)
   grammy:
     specifier: ^1.20.3
     version: 1.20.3
@@ -2246,8 +2246,8 @@ packages:
     resolution: {integrity: sha512-ff5BdakGe2P3SQsMsiqmt1Lc8221NR1VzHj5jXN5vBny9A6fpze94HiVV/n7XRosOlsShJcvMv5mdnpjOGCEgg==}
     dev: true
 
-  /cdek@1.0.9:
-    resolution: {integrity: sha512-XUrLVMB0Ghj3Qn3wZraMN2AngDmPlas3O0NUBAK656UHFKpKJ1ap6NAO+pZkfMzECp3u3nkL0Zw45QU4IHZRrQ==}
+  /cdek@1.0.8:
+    resolution: {integrity: sha512-ucUEcUrY+3PFiCDBWV/tquK1fioLh8yvqGIZQgcpPPvEZIlvq5f0Iq5x3MVL7jEYKcVHqAjOWEehvZ4iB5+0Gg==}
     engines: {node: '>= 18'}
     dev: false
 
@@ -3696,8 +3696,8 @@ packages:
       slash: 3.0.0
     dev: true
 
-  /google-auth-library@9.11.0:
-    resolution: {integrity: sha512-epX3ww/mNnhl6tL45EQ/oixsY8JLEgUFoT4A5E/5iAR4esld9Kqv6IJGk7EmGuOgDvaarwF95hU2+v7Irql9lw==}
+  /google-auth-library@9.7.0:
+    resolution: {integrity: sha512-I/AvzBiUXDzLOy4iIZ2W+Zq33W4lcukQv1nl7C8WUA6SQwyQwUwu3waNmWNAvzds//FG8SZ+DnKnW/2k6mQS8A==}
     engines: {node: '>=14'}
     dependencies:
       base64-js: 1.5.1
@@ -3711,7 +3711,7 @@ packages:
       - supports-color
     dev: false
 
-  /google-spreadsheet@4.1.1(google-auth-library@9.11.0):
+  /google-spreadsheet@4.1.1(google-auth-library@9.7.0):
     resolution: {integrity: sha512-Npk/xAMTgxEt/m/X9EXIqdY6CEYGiqUHrSuiLnNSKli5H+wiOQLSLsnfMxcdNPH6aSh6GttZm6QJhrnsxjwpZQ==}
     peerDependencies:
       google-auth-library: ^8.8.0 || ^9.0.0
@@ -3720,7 +3720,7 @@ packages:
         optional: true
     dependencies:
       axios: 1.6.7
-      google-auth-library: 9.11.0
+      google-auth-library: 9.7.0
       lodash: 4.17.21
     transitivePeerDependencies:
       - debug
