@@ -1,3 +1,4 @@
+import { UpdateOrderStatus } from "cdek/src/types/api/webhook";
 import { mockAmoService } from "test/mocks/amo.mock";
 import { order_status_factory } from "test/mocks/cdek.mock";
 import { mockGoogleSheetsService } from "test/mocks/google-sheets.mock";
@@ -61,7 +62,8 @@ describe("CDEK OrderStatusWebhook", () => {
       tag: [AMO.TAG.RETURN],
       custom_fields: [[1997433, `5/15, Набережные Челны, ${new Date().toLocaleString("ru-RU")}`]],
       note: "ℹ СДЭК: посылка не вручена адресату (5) по причине отказа из-за того, что не устроили сроки (15)",
-      status: AMO.STATUS.RETURN,
+      // status: AMO.STATUS.CLOSED,
+      // loss_reason: AMO.LOSS_REASON.RETURN,
     });
   });
 
@@ -70,15 +72,6 @@ describe("CDEK OrderStatusWebhook", () => {
       tag: [AMO.TAG.RETURN],
       custom_fields: [[1997433, `5/20, Набережные Челны, ${new Date().toLocaleString("ru-RU")}`]],
       note: "ℹ СДЭК: посылка не вручена адресату (5) по причине частичной доставки (20)",
-      task: {
-        entity_id: 31045357,
-        entity_type: "leads",
-        complete_till: ~~(Date.now() / 1000) + 3600,
-        task_type_id: AMO.TASK.PROCESS,
-        responsible_user_id: AMO.USER.EKATERINA,
-        created_by: AMO.USER.ADMIN,
-        text: "Посылка вручена адресату частично, обработать частичный возврат",
-      },
     });
   });
 
@@ -96,14 +89,40 @@ describe("CDEK OrderStatusWebhook", () => {
       tag: [AMO.TAG.RETURN],
       custom_fields: [[1997433, `4/20, Набережные Челны, ${new Date().toLocaleString("ru-RU")}`]],
       note: "✔ СДЭК: частичный выкуп товаров адресатом (4/20)",
+    });
+  });
+
+  test("4 return", () => {
+    expect(
+      service.parse({
+        type: "ORDER_STATUS",
+        date_time: "2020-09-07T16:24:56+0700",
+        uuid: "RETURN31-86cc-497b-a1cf-a76f59065cb5a",
+        attributes: {
+          is_return: true,
+          cdek_number: "2197739374",
+          number: "666777",
+          status_code: "4",
+          status_reason_code: "20",
+          status_date_time: "2020-09-07T16:24:56+0700",
+          city_name: "Набережные Челны",
+        },
+      } as UpdateOrderStatus),
+    ).toStrictEqual({
+      tag: [],
+      status: AMO.STATUS.CLOSED,
+      loss_reason: AMO.LOSS_REASON.CDEK_PARTIAL_RETURN,
+      pipeline: AMO.PIPELINE.RETURN,
+      custom_fields: [[1997433, `4/20, Набережные Челны, ${new Date().toLocaleString("ru-RU")}`]],
+      note: "✔ СДЭК ВОЗВРАТ: возврат получен (4)",
       task: {
-        entity_id: 31045357,
+        entity_id: 666777,
         entity_type: "leads",
         complete_till: ~~(Date.now() / 1000) + 3600,
         task_type_id: AMO.TASK.PROCESS,
-        responsible_user_id: AMO.USER.EKATERINA,
+        responsible_user_id: AMO.USER.ADMIN,
         created_by: AMO.USER.ADMIN,
-        text: "Посылка вручена адресату частично, обработать частичный возврат",
+        text: "Принять возврат",
       },
     });
   });
