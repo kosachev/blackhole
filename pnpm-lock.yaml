@@ -27,11 +27,11 @@ dependencies:
     specifier: ^1.1.1
     version: 1.1.1
   '@shevernitskiy/amo':
-    specifier: ^0.2.4
-    version: 0.2.4
+    specifier: ^0.2.6
+    version: 0.2.6
   cdek:
-    specifier: ^1.0.8
-    version: 1.0.8
+    specifier: ^1.0.9
+    version: 1.0.9
   google-auth-library:
     specifier: ^9.7.0
     version: 9.7.0
@@ -1096,8 +1096,8 @@ packages:
       selderee: 0.11.0
     dev: false
 
-  /@shevernitskiy/amo@0.2.4:
-    resolution: {integrity: sha512-/NOeTip17QLjZxSli9yq1B/fF+4VlHN/XGJU931D0T0/emWg9vBrL6HosWd3gL1jzo0OvPOjsp7Djii2kqsJsA==}
+  /@shevernitskiy/amo@0.2.6:
+    resolution: {integrity: sha512-PnQkWJRzsUEuFpoEtUC7iG6efPBaIIxl5+ZNmlDwcbwpoJ/lX94cEHNIaFX/X+SvQp+dV4IoPLZYYbhMYZYKNQ==}
     engines: {node: '>= 18'}
     dev: false
 
@@ -2357,13 +2357,12 @@ packages:
     resolution: {integrity: sha512-ff5BdakGe2P3SQsMsiqmt1Lc8221NR1VzHj5jXN5vBny9A6fpze94HiVV/n7XRosOlsShJcvMv5mdnpjOGCEgg==}
     dev: true
 
-
   /caniuse-lite@1.0.30001603:
     resolution: {integrity: sha512-iL2iSS0eDILMb9n5yKQoTBim9jMZ0Yrk8g0N9K7UzYyWnfIKzXBZD5ngpM37ZcL/cv0Mli8XtVMRYMQAfFpi5Q==}
     dev: true
 
-  /cdek@1.0.8:
-    resolution: {integrity: sha512-ucUEcUrY+3PFiCDBWV/tquK1fioLh8yvqGIZQgcpPPvEZIlvq5f0Iq5x3MVL7jEYKcVHqAjOWEehvZ4iB5+0Gg==}
+  /cdek@1.0.9:
+    resolution: {integrity: sha512-XUrLVMB0Ghj3Qn3wZraMN2AngDmPlas3O0NUBAK656UHFKpKJ1ap6NAO+pZkfMzECp3u3nkL0Zw45QU4IHZRrQ==}
     engines: {node: '>= 18'}
     dev: false
 
