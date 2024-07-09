@@ -30,14 +30,14 @@ dependencies:
     specifier: ^0.2.4
     version: 0.2.4
   cdek:
-    specifier: ^1.0.6
-    version: 1.0.6
+    specifier: ^1.0.8
+    version: 1.0.9
   google-auth-library:
-    specifier: ^9.6.1
-    version: 9.6.1
+    specifier: ^9.7.0
+    version: 9.11.0
   google-spreadsheet:
     specifier: ^4.1.1
-    version: 4.1.1(google-auth-library@9.6.1)
+    version: 4.1.1(google-auth-library@9.11.0)
   grammy:
     specifier: ^1.20.3
     version: 1.20.3
@@ -2246,11 +2246,9 @@ packages:
     resolution: {integrity: sha512-ff5BdakGe2P3SQsMsiqmt1Lc8221NR1VzHj5jXN5vBny9A6fpze94HiVV/n7XRosOlsShJcvMv5mdnpjOGCEgg==}
     dev: true
 
-  /cdek@1.0.6:
-    resolution: {integrity: sha512-qT5Eca1932uaaveIGtUXbOTVcSkSd+iF6BESFZCjw7Q5gyEJx4p3nXYS1HSB/zzXSVvz6ZWbSV6Bu5xC+qJjkw==}
+  /cdek@1.0.9:
+    resolution: {integrity: sha512-XUrLVMB0Ghj3Qn3wZraMN2AngDmPlas3O0NUBAK656UHFKpKJ1ap6NAO+pZkfMzECp3u3nkL0Zw45QU4IHZRrQ==}
     engines: {node: '>= 18'}
-    dependencies:
-      ts-mixer: 6.0.3
     dev: false
 
   /centra@2.6.0:
@@ -3698,8 +3696,8 @@ packages:
       slash: 3.0.0
     dev: true
 
-  /google-auth-library@9.6.1:
-    resolution: {integrity: sha512-rPL44wV0yJnA11+ggxA348ylUY1o7mkcHLwlZNlLZsKROPLl7q3LgMU5nM65h1QpxhJu/shk2FLml7173XIthA==}
+  /google-auth-library@9.11.0:
+    resolution: {integrity: sha512-epX3ww/mNnhl6tL45EQ/oixsY8JLEgUFoT4A5E/5iAR4esld9Kqv6IJGk7EmGuOgDvaarwF95hU2+v7Irql9lw==}
     engines: {node: '>=14'}
     dependencies:
       base64-js: 1.5.1
@@ -3713,7 +3711,7 @@ packages:
       - supports-color
     dev: false
 
-  /google-spreadsheet@4.1.1(google-auth-library@9.6.1):
+  /google-spreadsheet@4.1.1(google-auth-library@9.11.0):
     resolution: {integrity: sha512-Npk/xAMTgxEt/m/X9EXIqdY6CEYGiqUHrSuiLnNSKli5H+wiOQLSLsnfMxcdNPH6aSh6GttZm6QJhrnsxjwpZQ==}
     peerDependencies:
       google-auth-library: ^8.8.0 || ^9.0.0
@@ -3722,7 +3720,7 @@ packages:
         optional: true
     dependencies:
       axios: 1.6.7
-      google-auth-library: 9.6.1
+      google-auth-library: 9.11.0
       lodash: 4.17.21
     transitivePeerDependencies:
       - debug
@@ -6553,10 +6551,6 @@ packages:
       typescript: 5.3.3
       webpack: 5.89.0(@swc/core@1.3.107)
     dev: true
-
-  /ts-mixer@6.0.3:
-    resolution: {integrity: sha512-k43M7uCG1AkTyxgnmI5MPwKoUvS/bRvLvUb7+Pgpdlmok8AoqmUaZxUUw8zKM5B1lqZrt41GjYgnvAi0fppqgQ==}
-    dev: false
 
   /ts-node@10.9.2(@swc/core@1.3.107)(@types/node@20.11.5)(typescript@5.3.3):
     resolution: {integrity: sha512-f0FFpIdcHgn8zcPSbf1dRevwt047YMnaiJM3u2w2RewrB+fob/zePZcrOyQoLMMO7aBIddLcQIEK5dYjkLnGrQ==}
