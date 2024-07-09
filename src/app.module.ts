@@ -6,11 +6,13 @@ import { CdekModule } from "./cdek/cdek.module";
 import { CronModule } from "./cron/cron.module";
 import { GoogleSheetsModule } from "./google-sheets/google-sheets.module";
 import { MailModule } from "./mail/mail.module";
+import { PartialReturnModule } from "./partial-return/partial-return.module";
 import { PDFModule } from "./pdf/pdf.module";
 import { TelegramModule } from "./telegram/telegram.module";
 import { YandexDiskModule } from "./yandex-disk/yandex-disk.module";
 
 import { LoggerMiddleware } from "./utils/logger.middleware";
+import { PostModule } from "./post/post.module";
 
 @Module({
   imports: [
@@ -27,6 +29,8 @@ import { LoggerMiddleware } from "./utils/logger.middleware";
     YandexDiskModule,
     PDFModule,
     GoogleSheetsModule,
+    PartialReturnModule,
+    PostModule,
   ],
   controllers: [],
   providers: [],

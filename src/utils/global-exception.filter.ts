@@ -1,3 +1,5 @@
+import { Response, Request } from "express";
+
 import {
   ExceptionFilter,
   Catch,
@@ -6,13 +8,17 @@ import {
   HttpStatus,
   Logger,
 } from "@nestjs/common";
-import { Response, Request } from "express";
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
 
   catch(exception: HttpException, host: ArgumentsHost) {
+    if (exception instanceof TypeError) {
+      this.logger.error(exception);
+      return;
+    }
+
     const ctx = host.switchToHttp();
     const status = exception.getStatus();
     const req = ctx.getRequest<Request>();
