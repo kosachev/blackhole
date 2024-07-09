@@ -12,6 +12,7 @@ import { TelegramModule } from "./telegram/telegram.module";
 import { YandexDiskModule } from "./yandex-disk/yandex-disk.module";
 
 import { LoggerMiddleware } from "./utils/logger.middleware";
+import { PostModule } from "./post/post.module";
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { LoggerMiddleware } from "./utils/logger.middleware";
     PDFModule,
     GoogleSheetsModule,
     PartialReturnModule,
+    PostModule,
   ],
   controllers: [],
   providers: [],
