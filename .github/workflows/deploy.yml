@@ -54,7 +54,7 @@ jobs:
           generate_release_notes: true
           draft: true # Черновик
 
-      - name: RSYNC #RSYNC 1
+      - name: RSYNC #RSYNC 2
         uses: burnett01/rsync-deployments@7.0.1
         with:
           switches: -avzr --delete --exclude '.git' --exclude '.github' --exclude '.gitignore'
