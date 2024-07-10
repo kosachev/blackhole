@@ -1,6 +1,7 @@
-name: SSH DEPLOY
+name: Simple SSH Deploy
+
 on:
-  workflow_dispatch:
+  workflow_dispatch: # При запуске вручную
     inputs:
       bump-type:
         type: choice
@@ -9,63 +10,68 @@ on:
         default: "patch"
         options: ["patch", "minor", "major"]
   push:
-    branches:
+    branches: #Ветка
       - deploy
+
 jobs:
   deploy:
     name: Deploy
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # Виртуальная машина Ubuntu
 
     steps:
-      - name: Chekout
+      - name: Echo Bump Type # Вывод выбора при ручном запуске
+        run: echo ${{ inputs.bump-type }}
+
+      - name: Set default bump-type if not set
+        run: echo "BUMP_TYPE=${{ github.event.inputs.bump-type || 'patch' }}" >> $GITHUB_ENV
+
+      - name: Checkout #Шаг клонирования репозитория
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
 
       - name: Use Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "20.x"
+          node-version: "22.x"
 
-      - name: Bump
+      - name: Bump #Поднимаем версию
         run: |
-          npm version ${{ inputs.bump-type }} --no-git-tag-version
+          npm version ${{ env.BUMP_TYPE }} --no-git-tag-version
           echo "VERSION=$(npm pkg get version)" >> $GITHUB_ENV
 
-      - name: Commit version bump
+      - name: Commit version bump #Коммитим новую версию
         run: |
-          git config --global user.email "actions@github.com"
-          git config --global user.name "GitHub Actions"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
           git add .
           git commit -m "Bump version to ${{ env.VERSION }}"
           git push origin deploy
 
-      - name: Release
-        uses: softprops/action-gh-release@v1
+      - name: Release #Делаем релиз
+        uses: softprops/action-gh-release@v2
         with:
           name: ${{ env.VERSION }}
           tag_name: ${{ env.VERSION }}
           generate_release_notes: true
-          draft: true
+          draft: true # Черновик
 
-      - name: RSYNC
-        uses: burnett01/rsync-deployments@6.0.0
+      - name: RSYNC #RSYNC 7.0
+        uses: burnett01/rsync-deployments@7.0.1
         with:
-          switches: -avzr --delete --exclude '.git' --exclude '.github' --exclude '.gitignore'  --exclude '/node_modules'
+          switches: -avzr --delete --exclude '.git' --exclude '.github' --exclude '.gitignore'
           path: /
           remote_path: ${{ secrets.DEPLOY_PATH }}
           remote_host: ${{ secrets.DEPLOY_HOST }}
           remote_port: ${{ secrets.DEPLOY_PORT }}
           remote_user: ${{ secrets.DEPLOY_USER }}
-          remote_key: ${{ secrets.DEPLOY_KEY }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.6.0
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Add host key to known hosts
         run: ssh-keyscan -p ${{ secrets.DEPLOY_PORT }} -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
 
       - name: Execute SSH command
-        run: ssh -p ${{ secrets.DEPLOY_PORT }} ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "cd ${{ secrets.DEPLOY_PATH }}; /usr/local/bin/node /usr/local/lib/node_modules/pnpm/bin/pnpm.cjs i"
+        run: ssh -p ${{ secrets.DEPLOY_PORT }} ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "cd ${{ secrets.DEPLOY_PATH }}; /usr/local/bin/node /usr/local/lib/node_modules/pnpm/bin/pnpm.cjs i; sudo systemctl restart nest"
