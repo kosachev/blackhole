@@ -18,7 +18,7 @@
     "test:e2e": "vitest run --config ./test/vitest.config.ts"
   },
   "dependencies": {
-    "@nestjs-modules/mailer": "^1.10.3",
+    "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/common": "^10.3.1",
     "@nestjs/config": "^3.1.1",
     "@nestjs/core": "^10.3.10",
