@@ -19,20 +19,17 @@ jobs:
       - name: Echo Bump Type # Вывод выбора при ручном запуске
         run: echo ${{ inputs.bump-type }}
 
-      - name: Set default bump-type if not set
-        run: echo "BUMP_TYPE=${{ github.event.inputs.bump-type || 'patch' }}" >> $GITHUB_ENV
-
       - name: Checkout #Клонируем репозиторий
         uses: actions/checkout@v4
 
       - name: Use Node.js #Устанавливаем NodeJS
         uses: actions/setup-node@v4
         with:
-          node-version: "22.x"
+          node-version: "20.x"
 
       - name: Bump #Поднимаем версию
         run: |
-          npm version ${{ env.BUMP_TYPE }} --no-git-tag-version
+          npm version  ${{ inputs.bump-type }} --no-git-tag-version
           echo "VERSION=$(npm pkg get version)" >> $GITHUB_ENV
 
       - name: Commit version bump #Коммитим новую версию
