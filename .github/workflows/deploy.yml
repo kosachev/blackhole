@@ -51,7 +51,7 @@ jobs:
       - name: RSYNC #RSYNC 7.0.1 с исключениями
         uses: burnett01/rsync-deployments@7.0.1
         with:
-          switches: -avzr --delete --exclude='**/.env.prod' --exclude 'logs' --exclude='data/amo_token.json --exclude='**/privkey.pem --exclude='**/cert.pem'
+          switches: -avzr --delete --exclude='**/.env.prod' --exclude 'logs' --exclude='data/amo_token.json' --exclude='ssl'
           path: /
           remote_path: ${{ secrets.DEPLOY_PATH }}
           remote_host: ${{ secrets.DEPLOY_HOST }}
