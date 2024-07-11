@@ -15,7 +15,8 @@
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "vitest run --config ./test/vitest.config.ts",
     "test:cov": "vitest run --coverage --config ./test/vitest.config.ts",
-    "test:e2e": "vitest run --config ./test/vitest.config.ts"
+    "test:e2e": "vitest run --config ./test/vitest.config.ts",
+    "boilerplate": "vitest run --config ./test/vitest.boilerplate.config.ts ./test/boilerplate.spec.ts"
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^2.0.2",
