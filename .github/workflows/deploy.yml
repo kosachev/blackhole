@@ -30,7 +30,7 @@ jobs:
       - name: Bump #Поднимаем версию
         run: |
           npm version  ${{ inputs.bump-type }} --no-git-tag-version
-          echo VERSION=$(npm pkg get version) >> $GITHUB_ENV
+          echo VERSION=$(npm pkg get version | tr -d '"') >> $GITHUB_ENV
 
       - name: Commit version bump #Коммитим новую версию
         run: |
