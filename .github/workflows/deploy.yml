@@ -1,0 +1,74 @@
+name: SSH Deploy
+
+on:
+  workflow_dispatch: # При запуске вручную
+    inputs:
+      bump-type:
+        type: choice
+        description: "Select the version bump type"
+        required: true
+        default: "patch"
+        options: ["patch", "minor", "major"]
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest # Виртуальная машина Ubuntu
+
+    steps:
+      - name: Echo Bump Type # Вывод выбора при ручном запуске
+        run: echo ${{ inputs.bump-type }}
+
+      - name: Set default bump-type if not set
+        run: echo "BUMP_TYPE=${{ github.event.inputs.bump-type || 'patch' }}" >> $GITHUB_ENV
+
+      - name: Checkout #Клонируем репозиторий
+        uses: actions/checkout@v4
+
+      - name: Use Node.js #Устанавливаем NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+
+      - name: Bump #Поднимаем версию
+        run: |
+          npm version ${{ env.BUMP_TYPE }} --no-git-tag-version
+          echo "VERSION=$(npm pkg get version)" >> $GITHUB_ENV
+
+      - name: Commit version bump #Коммитим новую версию
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add .
+          git commit -m "Bump version to ${{ env.VERSION }}"
+          git push origin main
+
+      - name: Release #Делаем релиз
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ env.VERSION }}
+          tag_name: ${{ env.VERSION }}
+          generate_release_notes: true
+          draft: true # Черновик
+
+      - name: RSYNC #RSYNC 7.0.1 с исключениями
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avzr --delete --exclude='**/.env.prod' --exclude 'logs' --exclude='data/amo_token.json'
+          path: /
+          remote_path: ${{ secrets.DEPLOY_PATH }}
+          remote_host: ${{ secrets.DEPLOY_HOST }}
+          remote_port: ${{ secrets.DEPLOY_PORT }}
+          remote_user: ${{ secrets.DEPLOY_USER }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add host key to known hosts
+        run: ssh-keyscan -p ${{ secrets.DEPLOY_PORT }} -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Execute SSH command
+        run: ssh -p ${{ secrets.DEPLOY_PORT }} ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "cd ${{ secrets.DEPLOY_PATH }}; ${{ secrets.SSH_CODE }}"
