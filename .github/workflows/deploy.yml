@@ -30,7 +30,7 @@ jobs:
       - name: Bump #Поднимаем версию
         run: |
           npm version  ${{ inputs.bump-type }} --no-git-tag-version
-          echo "VERSION=$(npm pkg get version)" >> $GITHUB_ENV
+          echo VERSION=$(npm pkg get version) >> $GITHUB_ENV
 
       - name: Commit version bump #Коммитим новую версию
         run: |
@@ -51,7 +51,7 @@ jobs:
       - name: RSYNC #RSYNC 7.0.1 с исключениями
         uses: burnett01/rsync-deployments@7.0.1
         with:
-          switches: -avzr --delete --exclude='**/.env.prod' --exclude 'logs' --exclude='data/amo_token.json'
+          switches: -avzr --delete --exclude='**/.env.prod' --exclude 'logs' --exclude='data/amo_token.json --exclude='**/privkey.pem --exclude='**/cert.pem'
           path: /
           remote_path: ${{ secrets.DEPLOY_PATH }}
           remote_host: ${{ secrets.DEPLOY_HOST }}
