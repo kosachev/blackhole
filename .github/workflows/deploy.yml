@@ -46,7 +46,7 @@ jobs:
           name: ${{ env.VERSION }}
           tag_name: ${{ env.VERSION }}
           generate_release_notes: true
-          draft: true # Черновик
+          draft: false # Черновик
 
       - name: RSYNC #RSYNC 7.0.1 с исключениями
         uses: burnett01/rsync-deployments@7.0.1
