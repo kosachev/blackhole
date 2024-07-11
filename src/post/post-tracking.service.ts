@@ -3,7 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { AmoService } from "../amo/amo.service";
 import { AMO } from "../amo/amo.constants";
 import { PostTrackingClient, TrackingHistory } from "./lib/post-tracking.lib";
-// import { Cron } from "@nestjs/schedule";
+import { Cron } from "@nestjs/schedule";
 
 type ParsedHistories = {
   notes: { lead_id: number; text: string }[];
@@ -27,7 +27,7 @@ export class PostTrackingService {
   }
 
   // executes in 19:05 everyday
-  // @Cron("0 5 19 * * *")
+  @Cron("0 5 19 * * *")
   async handler(): Promise<void> {
     const leads = await this.getLeadsInPostDelivery();
     const histories = await Promise.all(leads.map((lead) => this.client.tracking(lead.trackcode)));
