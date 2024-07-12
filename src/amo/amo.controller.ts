@@ -1,16 +1,15 @@
 import { Body, Controller, Post, UseInterceptors } from "@nestjs/common";
-import { LeadAddWebhook } from "./webhooks/lead-add.webhook";
+import { LeadStatusWebhook } from "./webhooks/lead-status.webhook";
 import { AutoOkResponse } from "../utils/auto-ok-response.interceptor";
 
 @UseInterceptors(AutoOkResponse)
 @Controller("amo")
 export class AmoController {
-  constructor(private readonly lead_add: LeadAddWebhook) {}
+  constructor(private readonly lead_status: LeadStatusWebhook) {}
 
-  // TODO: dto here to deserialization?
-  @Post("lead-add")
+  @Post("lead_status")
   async leadAdd(@Body() data: any): Promise<string> {
-    await this.lead_add.handle(data);
+    await this.lead_status.handle(data);
     return "OK";
   }
 }

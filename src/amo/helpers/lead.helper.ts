@@ -23,7 +23,7 @@ export class LeadHelper {
 
   private constructor(
     private readonly client: Amo,
-    public lead: Partial<Lead> & { id: number },
+    public data: Partial<Lead> & { id: number },
     params?: {
       custom_fields?: Map<number, string | number>;
       tags?: Set<number>;
@@ -177,7 +177,7 @@ export class LeadHelper {
       return [...this.tags.values()].map((item) => ({ id: item }));
     },
     updateLeadRequest: (): RequestUpdateLead => ({
-      ...this.lead,
+      ...this.data,
       custom_fields_values: this.toApi.customFields(),
       _embedded: {
         tags: this.toApi.tags(),
@@ -186,12 +186,12 @@ export class LeadHelper {
   };
 
   async saveToAmo() {
-    this.client.lead.updateLeadById(this.lead.id, this.toApi.updateLeadRequest());
+    this.client.lead.updateLeadById(this.data.id, this.toApi.updateLeadRequest());
   }
 
   async addGoods(goods: { id: number; quantity: number }[]) {
     await this.client.link.addLinksByEntityId(
-      this.lead.id,
+      this.data.id,
       "leads",
       goods.map((item) => ({
         to_entity_id: item.id,
@@ -201,8 +201,8 @@ export class LeadHelper {
     );
 
     // TODO: bad, should be tracked by instance as well to eliminate double loading
-    this.goods = await LeadHelper.loadGoods(this.lead.id, this.client);
-    this.lead.price = this.totalPrice();
+    this.goods = await LeadHelper.loadGoods(this.data.id, this.client);
+    this.data.price = this.totalPrice();
   }
 
   async delGoods(goods_id: number[]) {
@@ -213,7 +213,7 @@ export class LeadHelper {
     }
 
     await this.client.link.deleteLinksByEntityId(
-      this.lead.id,
+      this.data.id,
       "leads",
       valid_ids.map((id) => ({
         to_entity_id: id,
@@ -221,7 +221,7 @@ export class LeadHelper {
         metadata: { catalog_id: AMO.CATALOG.GOODS },
       })),
     );
-    this.lead.price = this.totalPrice();
+    this.data.price = this.totalPrice();
   }
 
   private totalPrice(): number {
@@ -233,7 +233,7 @@ export class LeadHelper {
     await this.client.note.addNotes(
       "leads",
       text_arr.map((text) => ({
-        entity_id: this.lead.id,
+        entity_id: this.data.id,
         created_by: AMO.USER.ADMIN,
         note_type: "common",
         params: { text: text },
