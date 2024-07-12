@@ -119,7 +119,7 @@ export class PostTrackingService {
         if (diff < 60 * 60 * 24) {
           out.notes.push({
             lead_id,
-            text: `ℹ Почта: ${operation} в ${place}, ${datetime.toISOString()}`,
+            text: `ℹ Почта: ${operation} в ${place}, ${datetime.toLocaleString("ru-RU")}`,
           });
         }
       }
