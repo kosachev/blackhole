@@ -2,7 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AmoService } from "../amo/amo.service";
 import { AMO } from "../amo/amo.constants";
-import { PostTrackingClient, TrackingHistory } from "./lib/post-tracking.lib";
+import { PostTracking, TrackingHistory } from "@shevernitskiy/post-tracking";
 import { Cron } from "@nestjs/schedule";
 
 type ParsedHistories = {
@@ -13,15 +13,16 @@ type ParsedHistories = {
 @Injectable()
 export class PostTrackingService {
   private readonly logger = new Logger(PostTrackingService.name);
-  private client: PostTrackingClient;
+  private client: PostTracking;
 
   constructor(
     private readonly config: ConfigService,
     private readonly amo: AmoService,
   ) {
-    this.client = new PostTrackingClient(
+    this.client = new PostTracking(
       this.config.get<string>("POST_TRACKING_LOGIN"),
       this.config.get<string>("POST_TRACKING_PASSWORD"),
+      { language: "RUS" },
       (error) => this.logger.error(error.message, error.stack),
     );
   }

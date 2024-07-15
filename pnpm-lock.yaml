@@ -29,6 +29,9 @@ dependencies:
   '@shevernitskiy/amo':
     specifier: ^0.2.6
     version: 0.2.6
+  '@shevernitskiy/post-tracking':
+    specifier: ^0.1.1
+    version: 0.1.1
   cdek:
     specifier: ^1.0.9
     version: 1.0.9
@@ -1266,6 +1269,11 @@ packages:
 
   /@shevernitskiy/amo@0.2.6:
     resolution: {integrity: sha512-PnQkWJRzsUEuFpoEtUC7iG6efPBaIIxl5+ZNmlDwcbwpoJ/lX94cEHNIaFX/X+SvQp+dV4IoPLZYYbhMYZYKNQ==}
+    engines: {node: '>= 18'}
+    dev: false
+
+  /@shevernitskiy/post-tracking@0.1.1:
+    resolution: {integrity: sha512-p8SdiKZee+v8TFay1ueoyIUGzGK3g6YHIj32aUUI/qjTYyiq8SouJ9nSrry8FjJaZKqW9dAZX/7ZB3o7wC7Zsg==}
     engines: {node: '>= 18'}
     dev: false
 
