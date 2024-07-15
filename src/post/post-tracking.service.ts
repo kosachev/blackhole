@@ -114,13 +114,13 @@ export class PostTrackingService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const { history, lead_id, trackcode } of leads_with_history) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      for (const { index, place, operation, datetime } of history.history) {
+      for (const { index, place, operation_type, operation_desc, datetime } of history.history) {
         const diff = (Date.now() - datetime.getTime()) / 1000;
         // новые операции за последние сутки
         if (diff < 60 * 60 * 24) {
           out.notes.push({
             lead_id,
-            text: `ℹ Почта: ${operation} в ${place}, ${datetime.toLocaleString("ru-RU")}`,
+            text: `ℹ Почта: ${operation_type}, ${operation_desc} в ${place}, ${datetime.toLocaleString("ru-RU")}`,
           });
         }
       }

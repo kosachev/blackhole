@@ -30,8 +30,8 @@ dependencies:
     specifier: ^0.2.6
     version: 0.2.6
   '@shevernitskiy/post-tracking':
-    specifier: ^0.1.1
-    version: 0.1.1
+    specifier: ^0.1.2
+    version: 0.1.2
   cdek:
     specifier: ^1.0.9
     version: 1.0.9
@@ -1272,8 +1272,8 @@ packages:
     engines: {node: '>= 18'}
     dev: false
 
-  /@shevernitskiy/post-tracking@0.1.1:
-    resolution: {integrity: sha512-p8SdiKZee+v8TFay1ueoyIUGzGK3g6YHIj32aUUI/qjTYyiq8SouJ9nSrry8FjJaZKqW9dAZX/7ZB3o7wC7Zsg==}
+  /@shevernitskiy/post-tracking@0.1.2:
+    resolution: {integrity: sha512-kHAESz4XBDhbKAkZ9EcFQ3BYLKgw1Dh0qDbadxHXQusy2T4CbmBMav/veA9tlTw27s2Ato3xTRYuzca3D7prLw==}
     engines: {node: '>= 18'}
     dev: false
 
