@@ -72,6 +72,36 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "amo/webhook - lead add",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"account\": {\r\n        \"subdomain\": \"gerda\",\r\n        \"id\": 12470880,\r\n        \"_links\": {\r\n            \"self\": \"https://gerda.amocrm.ru\"\r\n        }\r\n    },\r\n    \"leads\": {\r\n        \"add\": [\r\n            {\r\n                \"id\": 38856817,\r\n                \"name\": \"Заявка с сайта 28146\",\r\n                \"status_id\": 12470886,\r\n                \"price\": 18900,\r\n                \"responsible_user_id\": 1092156,\r\n                \"last_modified\": 1721143199,\r\n                \"modified_user_id\": 0,\r\n                \"created_user_id\": 0,\r\n                \"date_create\": 1721143199,\r\n                \"pipeline_id\": 311787,\r\n                \"tags\": [\r\n                    {\r\n                        \"id\": 92650,\r\n                        \"name\": \"с сайта\"\r\n                    }\r\n                ],\r\n                \"account_id\": 12470880,\r\n                \"custom_fields\": [\r\n                    {\r\n                        \"id\": 2094409,\r\n                        \"name\": \"_ym_counter\",\r\n                        \"values\": [\r\n                            {\r\n                                \"value\": \"9918694\"\r\n                            }\r\n                        ],\r\n                        \"code\": \"_YM_COUNTER\"\r\n                    },\r\n                    {\r\n                        \"id\": 2094407,\r\n                        \"name\": \"_ym_uid\",\r\n                        \"values\": [\r\n                            {\r\n                                \"value\": \"172114315878777865\"\r\n                            }\r\n                        ],\r\n                        \"code\": \"_YM_UID\"\r\n                    },\r\n                    {\r\n                        \"id\": 1366662,\r\n                        \"name\": \"Номер заказа\",\r\n                        \"values\": [\r\n                            {\r\n                                \"value\": \"28146\"\r\n                            }\r\n                        ]\r\n                    },\r\n                    {\r\n                        \"id\": 1340240,\r\n                        \"name\": \"Комментарий клиента\",\r\n                        \"values\": [\r\n                            {\r\n                                \"value\": \"ТЕСТ\"\r\n                            }\r\n                        ]\r\n                    },\r\n                    {\r\n                        \"id\": 1337998,\r\n                        \"name\": \"Тип доставки\",\r\n                        \"values\": [\r\n                            {\r\n                                \"value\": \"Самовывоз\",\r\n                                \"enum\": 3528716\r\n                            }\r\n                        ]\r\n                    },\r\n                    {\r\n                        \"id\": 1334194,\r\n                        \"name\": \"Стоимость доставки\",\r\n                        \"values\": [\r\n                            {\r\n                                \"value\": \"0.00\"\r\n                            }\r\n                        ]\r\n                    },\r\n                    {\r\n                        \"id\": 1999999,\r\n                        \"name\": \"UTM\",\r\n                        \"values\": [\r\n                            {\r\n                                \"value\": \"yandex:cpc,{campaign_id},{gbid},{ad_id},{keyword},{region_name},{source}\"\r\n                            }\r\n                        ]\r\n                    },\r\n                    {\r\n                        \"id\": 1999991,\r\n                        \"name\": \"YM ClientID\",\r\n                        \"values\": [\r\n                            {\r\n                                \"value\": \"172114315878777865\"\r\n                            }\r\n                        ]\r\n                    },\r\n                    {\r\n                        \"id\": 2000003,\r\n                        \"name\": \"Дата первого визита\",\r\n                        \"values\": [\r\n                            {\r\n                                \"value\": \"13.02.24 05:08\"\r\n                            }\r\n                        ]\r\n                    },\r\n                    {\r\n                        \"id\": 2001451,\r\n                        \"name\": \"Площадка РСЯ\",\r\n                        \"values\": [\r\n                            {\r\n                                \"value\": \"{source}\"\r\n                            }\r\n                        ]\r\n                    },\r\n                    {\r\n                        \"id\": 2111151,\r\n                        \"name\": \"Устройство\",\r\n                        \"values\": [\r\n                            {\r\n                                \"value\": \"Mobile\"\r\n                            }\r\n                        ]\r\n                    }\r\n                ],\r\n                \"created_at\": 1721143199,\r\n                \"updated_at\": 1721143199\r\n            }\r\n        ]\r\n    }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:6969/amo/lead_add/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "6969",
+							"path": [
+								"amo",
+								"lead_add",
+								""
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
