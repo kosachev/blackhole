@@ -5,7 +5,7 @@ import { LeadHelper } from "../helpers/lead.helper";
 
 @Injectable()
 export class LeadAddWebhook extends AbstractWebhook {
-  async handle(data: Lead) {
+  async handle(data: unknown) {
     const lead = await LeadHelper.createFromWebhook(this.amo, data, { load_goods: true });
     const goods_total_price = lead.totalPrice();
     if (lead.data.price !== goods_total_price) {

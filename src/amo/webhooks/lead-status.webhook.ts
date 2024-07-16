@@ -4,7 +4,7 @@ import { AbstractWebhook } from "./abstract.webhook";
 
 @Injectable()
 export class LeadStatusWebhook extends AbstractWebhook {
-  async handle(data: Lead) {
+  async handle(data: unknown) {
     this.logger.debug({ data });
     // this.amo, this.cdek is avaible here
     throw new NotImplementedException("LeadStatusWebhook handler not implemented");
