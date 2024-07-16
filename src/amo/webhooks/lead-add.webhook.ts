@@ -1,4 +1,3 @@
-import { Lead } from "@shevernitskiy/amo";
 import { Injectable } from "@nestjs/common";
 import { AbstractWebhook } from "./abstract.webhook";
 import { LeadHelper } from "../helpers/lead.helper";
