@@ -96,10 +96,10 @@ describe("App e2e", () => {
   });
 
   describe("AMO", () => {
-    describe("lead-add", () => {
+    describe("lead-status", () => {
       test("should return 200, auto ok", () => {
         return spec()
-          .post(`http://localhost:${process.env.PORT}/amo/lead-add`)
+          .post(`http://localhost:${process.env.PORT}/amo/lead_status`)
           .expectStatus(200)
           .expectBody("OK");
       });

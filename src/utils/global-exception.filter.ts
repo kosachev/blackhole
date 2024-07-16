@@ -18,6 +18,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       this.logger.error(exception);
       return;
     }
+    // workaround for AutoOkResponseInterceptor
+    if ((exception as unknown as { code: string }).code === "ERR_HTTP_HEADERS_SENT") {
+      return;
+    }
 
     const ctx = host.switchToHttp();
     const status = exception.getStatus();

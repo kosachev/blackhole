@@ -2,12 +2,12 @@ import { Global, Module } from "@nestjs/common";
 import { AmoService } from "./amo.service";
 import { AmoController } from "./amo.controller";
 import { ConfigModule } from "@nestjs/config";
-import { LeadAddWebhook } from "./webhooks/lead-add.webhook";
+import { LeadStatusWebhook } from "./webhooks/lead-status.webhook";
 
 @Global()
 @Module({
   imports: [ConfigModule],
-  providers: [AmoService, LeadAddWebhook],
+  providers: [AmoService, LeadStatusWebhook],
   controllers: [AmoController],
   exports: [AmoService],
 })
