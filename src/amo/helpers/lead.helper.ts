@@ -229,7 +229,7 @@ export class LeadHelper {
   }
 
   totalPrice(): number {
-    return [...this.goods.values()].reduce((a, b) => a + b.price * b.quantity, 0);
+    return [...this.goods.values()].reduce((a, b) => a + (b.price ?? 0) * (b.quantity ?? 0), 0);
   }
 
   async note(text: string[] | string) {
