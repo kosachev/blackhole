@@ -139,6 +139,9 @@ export class LeadHelper {
         price: 0,
       });
     }
+    if (goods.size === 0) {
+      return goods;
+    }
     const cat_els = await client.catalog.getCatalogElementsByCatalogId(AMO.CATALOG.GOODS, {
       filter: (filter) => filter.multi("id", [...goods.keys()]),
     });
@@ -190,7 +193,7 @@ export class LeadHelper {
   };
 
   async saveToAmo() {
-    this.client.lead.updateLeadById(this.data.id, this.toApi.updateLeadRequest());
+    return this.client.lead.updateLeadById(this.data.id, this.toApi.updateLeadRequest());
   }
 
   async addGoods(goods: { id: number; quantity: number }[]) {
