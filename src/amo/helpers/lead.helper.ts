@@ -37,6 +37,7 @@ export class LeadHelper {
     this.goods = params?.goods ?? new Map();
     this.old_status_id = params?.old_status_id;
     this.account_id = params?.account_id;
+    this.data.price = this.data.price ?? 0;
   }
 
   static async createFromWebhook(client: Amo, data: any, options?: Options) {
