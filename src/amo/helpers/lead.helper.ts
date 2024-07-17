@@ -41,7 +41,10 @@ export class LeadHelper {
 
   static async createFromWebhook(client: Amo, data: any, options?: Options) {
     // get the lead data itself from the webhook metadata
-    const lead = Object.values(Object.values(data)[0])[0][0];
+    const lead = Object.values(data.leads)[0][0];
+    if (!lead) {
+      throw new Error("LeadHelper can't parse webhook data");
+    }
     const custom_fields = new Map<number, string>(
       lead.custom_fields.map((item: CustomFieldsValue) => [
         item.field_id ?? item.id,
@@ -224,7 +227,7 @@ export class LeadHelper {
     this.data.price = this.totalPrice();
   }
 
-  private totalPrice(): number {
+  totalPrice(): number {
     return [...this.goods.values()].reduce((a, b) => a + b.price * b.quantity, 0);
   }
 
