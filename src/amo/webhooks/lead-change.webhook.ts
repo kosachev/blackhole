@@ -105,7 +105,7 @@ export class LeadChangeWebhook extends AbstractWebhook {
         cdek_number: lead.custom_fields.get(AMO.CUSTOM_FIELD.TRACK_NUMBER) as number,
         intake_date: `${pickup_date.getFullYear()}-${String(pickup_date.getMonth() + 1).padStart(2, "0")}-${String(pickup_date.getDate()).padStart(2, "0")}`,
         intake_time_from: `${pickup_start}:00`,
-        intake_time_to: `${pickup_start}:00`,
+        intake_time_to: `${pickup_start + 3}:00`,
       });
       // TODO: check errors in result?
       lead.custom_fields.set(AMO.CUSTOM_FIELD.COURIER_CALLED, "да");
