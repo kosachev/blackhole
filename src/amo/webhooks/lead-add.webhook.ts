@@ -11,5 +11,12 @@ export class LeadAddWebhook extends AbstractWebhook {
       lead.data.price = goods_total_price;
       await lead.saveToAmo(); // if there will be more mutations later, place it in the end
     }
+
+    let message = `💰 Новый заказ: <a href="https://${this.config.get<string>("AMO_DOMAIN")}/leads/detail/${lead.data.id}">${lead.data.name}</a> (<b>${lead.data.price}</b> руб.)`;
+    if (lead.goods.size > 0) {
+      message += `\n\n${[...lead.goods.values()].map((item) => `${item.name} - ${item.quantity}шт`).join("\n")}`;
+    }
+
+    await this.telegram.textToAdmin(message);
   }
 }
