@@ -30,7 +30,7 @@ const fields_to_convert = [
 ] as const;
 
 export class LeadHelper {
-  custom_fields: Map<number, string | number>;
+  custom_fields: Map<number, string | number | number[]>;
   tags: Set<number>;
   goods: Map<number, Good>;
   old_status_id?: number;
@@ -40,7 +40,7 @@ export class LeadHelper {
     private readonly client: Amo,
     public data: Partial<Lead> & { id: number },
     params?: {
-      custom_fields?: Map<number, string | number>;
+      custom_fields?: Map<number, string | number | number[]>;
       tags?: Set<number>;
       goods?: Map<number, Good>;
       old_status_id?: number;
@@ -71,7 +71,7 @@ export class LeadHelper {
     if (!lead) {
       throw new Error("LeadHelper can't parse webhook data");
     }
-    const custom_fields = new Map<number, string>(
+    const custom_fields = new Map<number, number | string | number[]>(
       lead.custom_fields.map((item: CustomFieldsValue) => [
         +(item.field_id ?? item.id),
         item.values?.at(0)?.value ?? item.values,
@@ -111,17 +111,17 @@ export class LeadHelper {
     options?: Options,
   ) {
     const custom_fields = data.custom_fields_values
-      ? new Map<number, string | number>(
+      ? new Map<number, string | number | number[]>(
           data.custom_fields_values.map((item: CustomFieldsValue) => {
             return [
               item.field_id ?? item.id!,
-              (item.values?.at(0)?.value ?? item.values) as string | number,
+              (item.values?.at(0)?.value as string | number) ?? (item.values as number[]),
             ];
           }),
         )
-      : new Map<number, string | number>();
+      : new Map<number, string | number | number[]>();
     const tags = new Set<number>(data._embedded?.tags?.map((item: Partial<Tag>) => item?.id ?? 0));
-    let goods;
+    let goods: Map<number, Good> = new Map<number, Good>();
     if (options?.load_goods && data.id) {
       goods = await LeadHelper.loadGoods(data.id, client);
     }
@@ -194,16 +194,10 @@ export class LeadHelper {
 
   private toApi = {
     customFields: (): CustomFieldsValue[] => {
-      return [...this.custom_fields.entries()]
-        .filter((item) => typeof item[1] === "string" || typeof item[1] === "number") // TODO: fix it, some CF has number[] type (select)
-        .map((item) => ({
-          field_id: item[0], // field_id not id!
-          values: [
-            {
-              value: item[1],
-            },
-          ],
-        }));
+      return [...this.custom_fields.entries()].map((item) => ({
+        field_id: item[0], // field_id not id!
+        values: [{ value: Array.isArray(item[1]) ? item[1][0] : item[1] }],
+      }));
     },
     tags: (): Pick<Tag, "id">[] => {
       return [...this.tags.values()].map((item) => ({ id: item }));
