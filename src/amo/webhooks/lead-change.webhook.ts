@@ -52,42 +52,41 @@ export class LeadChangeWebhook extends AbstractWebhook {
   }
 
   private async cdekPickup([lead, save, notes]: CheckStep): Promise<CheckStep> {
-    const d = new Date();
-    const current_hour = d.getHours();
-    const current_day_of_week = d.getDay();
-
     if (
       lead.custom_fields.get(AMO.CUSTOM_FIELD.COURIER_CALLED) === "да" ||
       !lead.custom_fields.has(AMO.CUSTOM_FIELD.COURIER_PICKUP_DATE)
     ) {
       return [lead, save ?? false, notes];
     }
+
     const notes_size = notes.length;
+    const d = new Date();
+    const current_hour = d.getHours();
+    const current_day_of_week = d.getDay();
+
     if (
       !lead.custom_fields.get(AMO.CUSTOM_FIELD.TRACK_NUMBER) ||
       !lead.custom_fields.get(AMO.CUSTOM_FIELD.CDEK_UUID)
     ) {
       notes.push("✖ СДЕК: Нельзя вызвать курьера для сделки у которой нет трек кода или uuid");
     }
-    if (lead.custom_fields.has(AMO.CUSTOM_FIELD.COURIER_PICKUP_DATE)) {
-      const pickup_date = lead.custom_fields.get(AMO.CUSTOM_FIELD.COURIER_PICKUP_DATE)[0];
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      if (pickup_date < today.getTime() / 1000) {
-        notes.push("✖ СДЕК: Дата вызова курьера должна быть не раньше сегодняшнего дня");
-      }
-      if (pickup_date === today.getTime() / 1000 && current_hour >= 15) {
-        notes.push("✖ СДЕК: Уже поздно вызвать курьера сегодня, вызов доступен только до 15:00");
-      }
+
+    const pickup_timestamp = lead.custom_fields.get(AMO.CUSTOM_FIELD.COURIER_PICKUP_DATE)[0] * 1000;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (pickup_timestamp < today.getTime()) {
+      notes.push("✖ СДЕК: Дата вызова курьера должна быть не раньше сегодняшнего дня");
     }
+    if (pickup_timestamp === today.getTime() && current_hour >= 15) {
+      notes.push("✖ СДЕК: Уже поздно вызвать курьера сегодня, вызов доступен только до 15:00");
+    }
+
     // if some checks failed
     if (notes.length > notes_size) {
       return [lead, save ?? false, notes];
     }
 
-    const pickup_date = new Date(
-      lead.custom_fields.get(AMO.CUSTOM_FIELD.COURIER_PICKUP_DATE)[0] * 1000,
-    );
+    const pickup_date = new Date(pickup_timestamp);
     let pickup_start = defaultPickupStart[pickup_date.getDay()];
 
     if (
