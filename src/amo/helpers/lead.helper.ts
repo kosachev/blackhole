@@ -14,6 +14,21 @@ type Good = {
   price: number;
 };
 
+const fields_to_convert = [
+  "id",
+  "status_id",
+  "price",
+  "responsible_user_id",
+  "last_modified",
+  "modified_user_id",
+  "created_user_id",
+  "date_create",
+  "pipeline_id",
+  "created_at",
+  "updated_at",
+  "account_id",
+] as const;
+
 export class LeadHelper {
   custom_fields: Map<number, string | number>;
   tags: Set<number>;
@@ -37,7 +52,17 @@ export class LeadHelper {
     this.goods = params?.goods ?? new Map();
     this.old_status_id = params?.old_status_id;
     this.account_id = params?.account_id;
+    this.data = LeadHelper.convertFieldsToNumber(data);
     this.data.price = this.data.price ?? 0;
+  }
+
+  private static convertFieldsToNumber(data: any) {
+    for (const item of Object.entries(data)) {
+      if (fields_to_convert.includes(item[0] as any)) {
+        data[item[0] as any] = +item[1];
+      }
+    }
+    return data;
   }
 
   static async createFromWebhook(client: Amo, data: any, options?: Options) {
@@ -48,11 +73,11 @@ export class LeadHelper {
     }
     const custom_fields = new Map<number, string>(
       lead.custom_fields.map((item: CustomFieldsValue) => [
-        item.field_id ?? item.id,
+        +(item.field_id ?? item.id),
         item.values?.at(0)?.value ?? item.values,
       ]),
     );
-    const tags = new Set<number>(lead.tags?.map((item: Tag) => item.id));
+    const tags = new Set<number>(lead.tags?.map((item: Tag) => +item.id));
 
     const goods =
       options?.load_goods && lead.id
