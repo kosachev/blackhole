@@ -63,10 +63,14 @@ export class LeadChangeWebhook extends AbstractWebhook {
     const d = new Date();
     const current_hour = d.getHours();
     const current_day_of_week = d.getDay();
+    const track_code = lead.custom_fields.get(AMO.CUSTOM_FIELD.TRACK_NUMBER);
+    const uuid = lead.custom_fields.get(AMO.CUSTOM_FIELD.CDEK_UUID);
 
     if (
-      !(lead.custom_fields.get(AMO.CUSTOM_FIELD.TRACK_NUMBER)?.toString().length > 0) ||
-      !(lead.custom_fields.get(AMO.CUSTOM_FIELD.CDEK_UUID)?.toString().length > 0)
+      !track_code ||
+      !uuid ||
+      track_code?.toString().length === 0 ||
+      uuid?.toString().length === 0
     ) {
       notes.push("✖ СДЕК: Нельзя вызвать курьера для сделки у которой нет трек кода или uuid");
     }
@@ -103,13 +107,13 @@ export class LeadChangeWebhook extends AbstractWebhook {
 
     try {
       const result = await this.cdek.addCourier({
-        order_uuid: lead.custom_fields.get(AMO.CUSTOM_FIELD.CDEK_UUID) as string,
-        cdek_number: lead.custom_fields.get(AMO.CUSTOM_FIELD.TRACK_NUMBER) as number,
+        order_uuid: uuid as string,
+        cdek_number: track_code as number,
         intake_date: `${pickup_date.getFullYear()}-${String(pickup_date.getMonth() + 1).padStart(2, "0")}-${String(pickup_date.getDate()).padStart(2, "0")}`,
         intake_time_from: `${pickup_start}:00`,
         intake_time_to: `${pickup_start + 3}:00`,
       });
-      if (!result) throw new Error("CDEK: addCourier failed");
+      if (result === null) throw new Error("CDEK: addCourier failed");
       // TODO: check errors in result?
       lead.custom_fields.set(AMO.CUSTOM_FIELD.COURIER_CALLED, "да");
       notes.push(
