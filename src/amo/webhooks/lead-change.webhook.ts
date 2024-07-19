@@ -65,13 +65,14 @@ export class LeadChangeWebhook extends AbstractWebhook {
     const current_day_of_week = d.getDay();
 
     if (
-      !lead.custom_fields.get(AMO.CUSTOM_FIELD.TRACK_NUMBER) ||
-      !lead.custom_fields.get(AMO.CUSTOM_FIELD.CDEK_UUID)
+      !(lead.custom_fields.get(AMO.CUSTOM_FIELD.TRACK_NUMBER)?.toString().length > 0) ||
+      !(lead.custom_fields.get(AMO.CUSTOM_FIELD.CDEK_UUID)?.toString().length > 0)
     ) {
       notes.push("✖ СДЕК: Нельзя вызвать курьера для сделки у которой нет трек кода или uuid");
     }
 
-    const pickup_timestamp = lead.custom_fields.get(AMO.CUSTOM_FIELD.COURIER_PICKUP_DATE)[0] * 1000;
+    const pickup_timestamp =
+      +lead.custom_fields.get(AMO.CUSTOM_FIELD.COURIER_PICKUP_DATE)[0] * 1000;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (pickup_timestamp < today.getTime()) {
@@ -83,7 +84,8 @@ export class LeadChangeWebhook extends AbstractWebhook {
 
     // if some checks failed
     if (notes.length > notes_size) {
-      return [lead, save ?? false, notes];
+      lead.custom_fields.set(AMO.CUSTOM_FIELD.COURIER_PICKUP_DATE, null);
+      return [lead, true, notes];
     }
 
     const pickup_date = new Date(pickup_timestamp);
@@ -100,13 +102,14 @@ export class LeadChangeWebhook extends AbstractWebhook {
     }
 
     try {
-      await this.cdek.addCourier({
+      const result = await this.cdek.addCourier({
         order_uuid: lead.custom_fields.get(AMO.CUSTOM_FIELD.CDEK_UUID) as string,
         cdek_number: lead.custom_fields.get(AMO.CUSTOM_FIELD.TRACK_NUMBER) as number,
         intake_date: `${pickup_date.getFullYear()}-${String(pickup_date.getMonth() + 1).padStart(2, "0")}-${String(pickup_date.getDate()).padStart(2, "0")}`,
         intake_time_from: `${pickup_start}:00`,
         intake_time_to: `${pickup_start + 3}:00`,
       });
+      if (!result) throw new Error("CDEK: addCourier failed");
       // TODO: check errors in result?
       lead.custom_fields.set(AMO.CUSTOM_FIELD.COURIER_CALLED, "да");
       notes.push(
@@ -114,8 +117,9 @@ export class LeadChangeWebhook extends AbstractWebhook {
       );
       return [lead, true, notes];
     } catch (err) {
+      lead.custom_fields.set(AMO.CUSTOM_FIELD.COURIER_PICKUP_DATE, null);
       notes.push(`✖ СДЕК: не удалось вызвать курьера, ошибка сдек api`);
-      return [lead, save ?? false, notes];
+      return [lead, true, notes];
     }
   }
 }

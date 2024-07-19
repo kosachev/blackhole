@@ -194,9 +194,12 @@ export class LeadHelper {
 
   private toApi = {
     customFields: (): CustomFieldsValue[] => {
-      return [...this.custom_fields.entries()].map((item) => ({
-        field_id: item[0], // field_id not id!
-        values: [{ value: Array.isArray(item[1]) ? item[1][0] : item[1] }],
+      return [...this.custom_fields.entries()].map(([id, value]) => ({
+        field_id: id, // field_id not id!
+        values:
+          value === undefined || value === null
+            ? null
+            : [{ value: Array.isArray(value) ? +value[0] : value }],
       }));
     },
     tags: (): Pick<Tag, "id">[] => {
