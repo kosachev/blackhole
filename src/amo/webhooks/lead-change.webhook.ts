@@ -62,7 +62,6 @@ export class LeadChangeWebhook extends AbstractWebhook {
     const notes_size = notes.length;
     const d = new Date();
     const current_hour = d.getHours();
-    const current_day_of_week = d.getDay();
     const track_code = lead.custom_fields.get(AMO.CUSTOM_FIELD.TRACK_NUMBER);
     const uuid = lead.custom_fields.get(AMO.CUSTOM_FIELD.CDEK_UUID);
 
@@ -95,9 +94,10 @@ export class LeadChangeWebhook extends AbstractWebhook {
     const pickup_date = new Date(pickup_timestamp);
     let pickup_start = defaultPickupStart[pickup_date.getDay()];
 
+    const isWeekday = (d: number) => d >= 1 && d <= 5;
+
     if (
-      current_day_of_week >= 1 &&
-      current_day_of_week <= 5 &&
+      isWeekday(pickup_date.getDay()) &&
       lead.custom_fields.has(AMO.CUSTOM_FIELD.COURIER_PICKUP_TIME)
     ) {
       pickup_start = +(
@@ -117,7 +117,7 @@ export class LeadChangeWebhook extends AbstractWebhook {
       // TODO: check errors in result?
       lead.custom_fields.set(AMO.CUSTOM_FIELD.COURIER_CALLED, "да");
       notes.push(
-        `✔ СДЕК: Курьер вызван на ${pickup_date.toLocaleDateString("ru-RU")}, время ${pickup_start}:00-${pickup_start + 3}:00`,
+        `✔ СДЕК: Курьер вызван на ${pickup_date.toLocaleDateString("ru-RU")}, ${isWeekday(pickup_date.getDay()) ? "" : "в выходные выбор времени недоступен на "}время ${pickup_start}:00-${pickup_start + 3}:00}`,
       );
       return [lead, true, notes];
     } catch (err) {
