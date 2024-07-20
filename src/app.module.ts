@@ -6,13 +6,16 @@ import { CdekModule } from "./cdek/cdek.module";
 import { CronModule } from "./cron/cron.module";
 import { GoogleSheetsModule } from "./google-sheets/google-sheets.module";
 import { MailModule } from "./mail/mail.module";
-import { PartialReturnModule } from "./partial-return/partial-return.module";
+import { WebModule } from "./web/web.module";
 import { PDFModule } from "./pdf/pdf.module";
 import { TelegramModule } from "./telegram/telegram.module";
 import { YandexDiskModule } from "./yandex-disk/yandex-disk.module";
 
 import { LoggerMiddleware } from "./utils/logger.middleware";
 import { PostModule } from "./post/post.module";
+import { ServeStaticModule } from "@nestjs/serve-static";
+
+import { resolve } from "path";
 
 @Module({
   imports: [
@@ -29,8 +32,12 @@ import { PostModule } from "./post/post.module";
     YandexDiskModule,
     PDFModule,
     GoogleSheetsModule,
-    PartialReturnModule,
+    WebModule,
     PostModule,
+    ServeStaticModule.forRoot({
+      rootPath: resolve("./public"),
+      serveRoot: "/public",
+    }),
   ],
   controllers: [],
   providers: [],

@@ -12,7 +12,13 @@ module.exports = {
     node: true,
     jest: true,
   },
-  ignorePatterns: [".eslintrc.js", "dist/**/*.js"],
+  ignorePatterns: [
+    ".eslintrc.js",
+    "dist/**/*.js",
+    "node_modules/**/*.js",
+    "public/**/*.js",
+    "sppack.config.js",
+  ],
   rules: {
     "@typescript-eslint/interface-name-prefix": "off",
     "@typescript-eslint/explicit-function-return-type": "off",
