@@ -117,7 +117,7 @@ export class LeadChangeWebhook extends AbstractWebhook {
       // TODO: check errors in result?
       lead.custom_fields.set(AMO.CUSTOM_FIELD.COURIER_CALLED, "да");
       notes.push(
-        `✔ СДЕК: Курьер вызван на ${pickup_date.toLocaleDateString("ru-RU")}, ${isWeekday(pickup_date.getDay()) ? "" : "в выходные выбор времени недоступен на "}время ${pickup_start}:00-${pickup_start + 3}:00}`,
+        `✔ СДЕК: Курьер вызван на ${pickup_date.toLocaleDateString("ru-RU")}, ${isWeekday(pickup_date.getDay()) ? "" : "в выходные выбор времени недоступен и курьер вызван на "}время ${pickup_start}:00-${pickup_start + 3}:00`,
       );
       return [lead, true, notes];
     } catch (err) {
