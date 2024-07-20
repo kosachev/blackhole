@@ -1,9 +1,9 @@
 import { Module } from "@nestjs/common";
-import { PartialReturnController } from "./partial-return.controller";
+import { WebController } from "./web.controller";
 import { PartialReturnService } from "./partial-return.service";
 
 @Module({
   providers: [PartialReturnService],
-  controllers: [PartialReturnController],
+  controllers: [WebController],
 })
-export class PartialReturnModule {}
+export class WebModule {}
