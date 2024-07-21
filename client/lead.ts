@@ -5,10 +5,10 @@ import { PrintPdf } from "./print-pdf";
 import { CFV } from "./utils";
 
 export class Lead {
-  to_destruct: CallableFunction[] = [];
+  private to_destruct: CallableFunction[] = [];
 
   constructor(private lead_id: number) {
-    if (lead_id === 0) return;
+    if (lead_id === 0 || !lead_id) return;
     console.debug("LEAD LOADED", lead_id);
 
     // flat check
