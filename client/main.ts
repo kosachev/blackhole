@@ -1,5 +1,6 @@
 import { GarbageCollector } from "./garbage-collector";
 import { Lead } from "./lead";
+import { Pipeline } from "./pipeline";
 
 console.warn("TEMPER MONKEY SCRIPT LOADED");
 
@@ -30,6 +31,7 @@ console.warn("TEMPER MONKEY SCRIPT LOADED");
       gc.clean();
       switch (loc[4]) {
         case "pipeline":
+          setTimeout(() => gc.push(new Pipeline(+loc[5])), 1000);
           break;
         case "detail":
           setTimeout(() => gc.push(new Lead(+loc[5])), 2000);
