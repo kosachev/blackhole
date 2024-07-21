@@ -81,10 +81,10 @@ export class Lead {
     }
     check();
     CFV(AMO.CUSTOM_FIELD.INDEX).on("input", check);
-    $('button[data-value="3528714"] > span').on("DOMSubtreeModified", check);
+    CFV(AMO.CUSTOM_FIELD.DELIVERY_TYPE).on("change", check);
     this.to_destruct.push(() => {
       CFV(AMO.CUSTOM_FIELD.INDEX).off("input");
-      $('button[data-value="3528714"] > span').off("DOMSubtreeModified");
+      CFV(AMO.CUSTOM_FIELD.DELIVERY_TYPE).off("change", check);
     });
   }
 }
