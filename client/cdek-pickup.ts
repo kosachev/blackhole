@@ -1,4 +1,5 @@
 import { BACKEND_BASE_URL, CFV } from "./utils";
+import { AMO } from "../src/amo/amo.constants";
 
 const defaultPickupTime = [
   { min: 9, max: 9, default: 9, can_choose: false },
@@ -149,16 +150,19 @@ export class CdekPickup {
   private validatePreload(): string[] {
     const errors: string[] = [];
 
-    if (!CFV(1430854).val() || CFV(1430854).val() === "") {
+    if (
+      !CFV(AMO.CUSTOM_FIELD.TRACK_NUMBER).val() ||
+      CFV(AMO.CUSTOM_FIELD.TRACK_NUMBER).val() === ""
+    ) {
       errors.push("Отсутствует трек-код");
     }
-    if (!CFV(1997423).val() || CFV(1997423).val() === "") {
+    if (!CFV(AMO.CUSTOM_FIELD.CDEK_UUID).val() || CFV(AMO.CUSTOM_FIELD.CDEK_UUID).val() === "") {
       errors.push("Отсутствует сдек uuid");
     }
     if ($('div[data-id="1337998"] > div > div > button').text().trim() !== "Экспресс по России") {
       errors.push('Только для доставки типа "Экспресс по России"');
     }
-    if (CFV(2114837).val() === "да") {
+    if (CFV(AMO.CUSTOM_FIELD.COURIER_CALLED).val() === "да") {
       errors.push("Курьер уже вызван");
     }
 
@@ -176,8 +180,8 @@ export class CdekPickup {
 
     const data = {
       lead_id: this.lead_id,
-      track_code: CFV(1430854).val() as string,
-      uuid: CFV(1997423).val() as string,
+      track_code: CFV(AMO.CUSTOM_FIELD.TRACK_NUMBER).val() as string,
+      uuid: CFV(AMO.CUSTOM_FIELD.CDEK_UUID).val() as string,
       intake_date: $("input#cdekPickupDate").val() as string,
       intake_time: $("input#cdekPickupTime").val() as string,
     };

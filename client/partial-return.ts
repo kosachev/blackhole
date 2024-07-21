@@ -1,3 +1,4 @@
+import { AMO } from "../src/amo/amo.constants";
 import { BACKEND_BASE_URL, CFV } from "./utils";
 
 type Good = {
@@ -8,7 +9,6 @@ type Good = {
 };
 
 export class ParialReturn {
-  readonly CATALOG_ID = 3272;
   readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/partial_return`;
 
   constructor(private lead_id: number) {
@@ -48,7 +48,7 @@ export class ParialReturn {
   private async getGoodsFromLead(lead_id: number) {
     try {
       const res = await fetch(
-        `https://gerda.amocrm.ru/ajax/leads/${lead_id}/catalog/${this.CATALOG_ID}/elements?before_id=0&before_created_at=0&limit=50&with=catalog_element`,
+        `https://gerda.amocrm.ru/ajax/leads/${lead_id}/catalog/${AMO.CATALOG.GOODS}/elements?before_id=0&before_created_at=0&limit=50&with=catalog_element`,
       );
       const data = await res.json();
       for (const item of data._embedded.links) {
@@ -130,13 +130,19 @@ export class ParialReturn {
     const data = {
       lead_id: this.lead_id,
       contact_id: +$('input[name="ID"]').val()!,
-      catalog_id: this.CATALOG_ID,
-      custom_fields: [1366662, 1430854, 1454436, 1369856, 1369858, 1454432, 1454434].map(
-        (id: number) => ({
-          field_id: id,
-          value: CFV(id).val(),
-        }),
-      ),
+      catalog_id: AMO.CATALOG.GOODS,
+      custom_fields: [
+        AMO.CUSTOM_FIELD.ORDER_ID,
+        AMO.CUSTOM_FIELD.TRACK_NUMBER,
+        AMO.CUSTOM_FIELD.INDEX,
+        AMO.CUSTOM_FIELD.CITY,
+        AMO.CUSTOM_FIELD.STREET,
+        AMO.CUSTOM_FIELD.HOUSE,
+        AMO.CUSTOM_FIELD.FLAT,
+      ].map((id: number) => ({
+        field_id: id,
+        value: CFV(id).val(),
+      })),
       sold: [] as Good[],
       return: [] as Good[],
     };
