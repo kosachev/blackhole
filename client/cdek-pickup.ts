@@ -70,7 +70,7 @@ export class CdekPickup {
 
     $("#closeModalCdekPickup").on("click", this.close);
     $("#cdekPickupButtonCancel").on("click", this.close);
-    $("button#cdekPickupButtonGo").on("click", (el) => this.sendCdekPickup(el));
+    $("button#cdekPickupButtonGo").on("click", async (el) => await this.sendCdekPickup(el));
     $("input#cdekPickupDate").on("change", () => this.handlePickupDate());
     $("input#cdekPickupTime").on("change", () => this.validate());
 
@@ -160,7 +160,9 @@ export class CdekPickup {
     return errors;
   }
 
-  private sendCdekPickup(el: JQuery.ClickEvent<HTMLElement, undefined, HTMLElement, HTMLElement>) {
+  private async sendCdekPickup(
+    el: JQuery.ClickEvent<HTMLElement, undefined, HTMLElement, HTMLElement>,
+  ) {
     if ($(el.currentTarget).attr("class") !== "button-input button-input_blue") {
       console.debug("NOT GO");
       return;
@@ -177,25 +179,25 @@ export class CdekPickup {
 
     console.debug("SEND DATA CDEK PICKUP", data);
 
-    fetch(this.BACKEND_URL, {
-      method: "POST",
-      headers: { "Content-type": "application/json" },
-      body: JSON.stringify(data),
-    })
-      .then((res) => {
-        $("div#modalCdekPickup").html(
-          `<div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; margin-top: -741.5px; margin-left: -265px;"><div class="modal-body__inner" style="text-align: center;"><h2 class="head_2" style="font-size: 18pt;">${
-            res.ok ? "✔ УСПЕШНО" : "✘ ОШИБКА"
-          }</h2></div></div></div>`,
-        );
-        setTimeout(this.close, 1000);
-      })
-      .catch((err) => {
-        $("div#modalCdekPickup").html(
-          `<div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; margin-top: -741.5px; margin-left: -265px;"><div class="modal-body__inner" style="text-align: center;"><h2 class="head_2" style="font-size: 18pt;">✘ ОШИБКА</h2></div></div></div>`,
-        );
-        console.error("Field to send data to backend", err);
-        setTimeout(this.close, 1000);
+    try {
+      const res = await fetch(this.BACKEND_URL, {
+        method: "POST",
+        headers: { "Content-type": "application/json" },
+        body: JSON.stringify(data),
       });
+
+      $("div#modalCdekPickup").html(
+        `<div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; margin-top: -741.5px; margin-left: -265px;"><div class="modal-body__inner" style="text-align: center;"><h2 class="head_2" style="font-size: 18pt;">${
+          res.ok ? "✔ УСПЕШНО" : "✘ ОШИБКА"
+        }</h2></div></div></div>`,
+      );
+    } catch (err) {
+      $("div#modalCdekPickup").html(
+        `<div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; margin-top: -741.5px; margin-left: -265px;"><div class="modal-body__inner" style="text-align: center;"><h2 class="head_2" style="font-size: 18pt;">✘ ОШИБКА</h2></div></div></div>`,
+      );
+      console.error("Field to send data to backend", err);
+    }
+
+    setTimeout(this.close, 1000);
   }
 }

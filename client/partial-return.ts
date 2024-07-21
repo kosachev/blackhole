@@ -19,10 +19,10 @@ export class ParialReturn {
         '<li class="button-input__context-menu__item  element__ "><div id="splitLead" class="button-input__context-menu__item__inner"><span class="button-input__context-menu__item__icon-container">⇌</span><span class="button-input__context-menu__item__text "> Частичная доставка</span></div></li>',
       );
     }
-    $("#splitLead").on("click", () => this.render());
+    $("#splitLead").on("click", async () => await this.render());
   }
 
-  private render() {
+  private async render() {
     $("body").css("overflow", "hidden").attr("data-body-fixed", 1);
     $("body").append(
       '<div id="modalSplitLead" class="modal modal-list"><div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; margin-top: -741.5px; margin-left: -265px;"><div class="modal-body__inner"><span class="modal-body__close"><span id="closeModalSplitLead" class="icon icon-modal-close"></span></span><h2 class="modal-body__caption head_2">⇌ Частичный возврат</h2><div id="goodsList"></div></div></div></div></div>',
@@ -35,33 +35,36 @@ export class ParialReturn {
     );
     $("#closeModalSplitLead").on("click", this.closeModalSplit);
     $("button#splitButtonCancel").on("click", this.closeModalSplit);
-    $("button#splitButtonGo").on("click", (el) => this.sendPartialReturn(el));
+    $("button#splitButtonGo").on("click", async (el) => await this.sendPartialReturn(el));
 
-    this.getGoodsFromLead(this.lead_id);
+    await this.getGoodsFromLead(this.lead_id);
   }
 
-  private getGoodsFromLead(lead_id: number) {
-    $.getJSON(
-      `https://gerda.amocrm.ru/ajax/leads/${lead_id}/catalog/${this.CATALOG_ID}/elements?before_id=0&before_created_at=0&limit=50&with=catalog_element`,
-      (list: any) => {
-        for (const item of list._embedded.links) {
-          const good = {
-            id: item.to_entity_id,
-            name: item._embedded.catalog_element.name,
-            quantity: item.metadata.quantity,
-            price: +item._embedded.catalog_element.custom_fields.find(
-              (field) => field.code === "PRICE",
-            )?.values[0].value,
-          };
-          this.addGoodToSold(good);
-        }
-        $("#modalSplitLead").on("click", "li.split_li", (el) => this.handleListClick(el));
-      },
-    );
+  private async getGoodsFromLead(lead_id: number) {
+    try {
+      const res = await fetch(
+        `https://gerda.amocrm.ru/ajax/leads/${lead_id}/catalog/${this.CATALOG_ID}/elements?before_id=0&before_created_at=0&limit=50&with=catalog_element`,
+      );
+      const data = await res.json();
+      for (const item of data._embedded.links) {
+        const good = {
+          id: item.to_entity_id,
+          name: item._embedded.catalog_element.name,
+          quantity: item.metadata.quantity,
+          price: +item._embedded.catalog_element.custom_fields.find(
+            (field) => field.code === "PRICE",
+          )?.values[0].value,
+        };
+        this.addGoodToSold(good);
+      }
+      $("#modalSplitLead").on("click", "li.split_li", (el) => this.handleListClick(el));
+    } catch (e) {
+      console.error("ERROR", e);
+      alert("Ошибка получения товаров из лида");
+    }
   }
 
   private handleListClick(el: JQuery.ClickEvent<HTMLElement, undefined, HTMLElement, HTMLElement>) {
-    console.debug("CLICK");
     const goodtype = $(el.target).attr("class")!.indexOf("split_li_sold");
     $(el.target).remove();
     if (goodtype > -1) {
@@ -110,7 +113,7 @@ export class ParialReturn {
     $("div#modalSplitLead").remove();
   }
 
-  private sendPartialReturn(
+  private async sendPartialReturn(
     el: JQuery.ClickEvent<HTMLElement, undefined, HTMLElement, HTMLElement>,
   ) {
     if ($(el.currentTarget).attr("class") !== "button-input button-input_blue") {
@@ -157,25 +160,25 @@ export class ParialReturn {
 
     console.debug("SEND PARTIAL RETURN DATA", data);
 
-    fetch(this.BACKEND_URL, {
+    const res = await fetch(this.BACKEND_URL, {
       method: "POST",
       headers: { "Content-type": "application/json" },
       body: JSON.stringify(data),
-    })
-      .then((res) => {
-        $("div#modalSplitLead").html(
-          `<div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; margin-top: -741.5px; margin-left: -265px;"><div class="modal-body__inner" style="text-align: center;"><h2 class="head_2" style="font-size: 18pt;">${
-            res.ok ? "✔ УСПЕШНО" : "✘ ОШИБКА"
-          }</h2></div></div></div>`,
-        );
-        setTimeout(this.closeModalSplit, 1000);
-      })
-      .catch((err) => {
-        $("div#modalSplitLead").html(
-          `<div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; margin-top: -741.5px; margin-left: -265px;"><div class="modal-body__inner" style="text-align: center;"><h2 class="head_2" style="font-size: 18pt;">✘ ОШИБКА</h2></div></div></div>`,
-        );
-        console.error("Field to send data to backend", err);
-        setTimeout(this.closeModalSplit, 1000);
-      });
+    });
+
+    try {
+      $("div#modalSplitLead").html(
+        `<div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; margin-top: -741.5px; margin-left: -265px;"><div class="modal-body__inner" style="text-align: center;"><h2 class="head_2" style="font-size: 18pt;">${
+          res.ok ? "✔ УСПЕШНО" : "✘ ОШИБКА"
+        }</h2></div></div></div>`,
+      );
+    } catch (err) {
+      $("div#modalSplitLead").html(
+        `<div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; margin-top: -741.5px; margin-left: -265px;"><div class="modal-body__inner" style="text-align: center;"><h2 class="head_2" style="font-size: 18pt;">✘ ОШИБКА</h2></div></div></div>`,
+      );
+      console.error("Field to send data to backend", err);
+    }
+
+    setTimeout(this.closeModalSplit, 1000);
   }
 }
