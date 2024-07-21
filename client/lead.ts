@@ -1,3 +1,4 @@
+import { AMO } from "../src/amo/amo.constants";
 import { CdekPickup } from "./cdek-pickup";
 import { ParialReturn } from "./partial-return";
 import { PrintPdf } from "./print-pdf";
@@ -59,26 +60,30 @@ export class Lead {
 
   private validateIndexField() {
     function check() {
-      const delivery_type = $('div[data-id="1337998"] > div > div > button').text().trim();
+      const delivery_type = $(
+        `div[data-id="${AMO.CUSTOM_FIELD.DELIVERY_TYPE}"] > div > div > button`,
+      )
+        .text()
+        .trim();
       console.debug("VALIDATE INDEX FIELD", delivery_type);
 
       if (delivery_type === "Экспресс по России" || delivery_type === "Почта России") {
-        const index = CFV(1454436).val();
+        const index = CFV(AMO.CUSTOM_FIELD.INDEX).val();
         if (!index || isNaN(Number(index)) || Number(index) > 999999 || Number(index) < 100000) {
           console.debug("wrong index");
-          CFV(1454436).parent().parent().addClass("validation-not-valid");
+          CFV(AMO.CUSTOM_FIELD.INDEX).parent().parent().addClass("validation-not-valid");
         } else {
-          CFV(1454436).parent().parent().removeClass("validation-not-valid");
+          CFV(AMO.CUSTOM_FIELD.INDEX).parent().parent().removeClass("validation-not-valid");
         }
       } else {
-        CFV(1454436).parent().parent().removeClass("validation-not-valid");
+        CFV(AMO.CUSTOM_FIELD.INDEX).parent().parent().removeClass("validation-not-valid");
       }
     }
     check();
-    CFV(1454436).on("input", check);
+    CFV(AMO.CUSTOM_FIELD.INDEX).on("input", check);
     $('button[data-value="3528714"] > span').on("DOMSubtreeModified", check);
     this.to_destruct.push(() => {
-      CFV(1454436).off("input");
+      CFV(AMO.CUSTOM_FIELD.INDEX).off("input");
       $('button[data-value="3528714"] > span').off("DOMSubtreeModified");
     });
   }
