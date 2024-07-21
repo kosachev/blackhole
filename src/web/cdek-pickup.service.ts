@@ -51,8 +51,10 @@ export class CdekPickupService {
             field_id: AMO.CUSTOM_FIELD.COURIER_PICKUP_DATE,
             values: [{ value: new Date(data.intake_date).getTime() / 1000 }],
           },
-          // TODO: need to add Time Field, but it's not possible value (9:00, 15:00)
-          // TODO: all pickup fields should be api only
+          {
+            field_id: AMO.CUSTOM_FIELD.COURIER_PICKUP_TIME,
+            values: [{ value: `${start_time}:00` }],
+          },
         ],
       }),
       this.amo.client.note.addNotes("leads", [
