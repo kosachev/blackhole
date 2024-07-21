@@ -1,4 +1,4 @@
-import { Response } from "express";
+import type { Response } from "express";
 import { Body, Controller, Post, Get, Query, Res } from "@nestjs/common";
 import { RequestPartialReturn, PartialReturnService } from "./partial-return.service";
 import { CdekPickupService, RequestCdekPickup } from "./cdek-pickup.service";
