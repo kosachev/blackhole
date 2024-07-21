@@ -20,12 +20,12 @@ export class Lead {
     this.deleteCompanyField();
     this.validateIndexField();
 
-    this.to_destruct.push(
-      () => $("body").off("input"),
-      () => partial_return.destructor(),
-      () => cdek_pickup.destructor(),
-      () => print_pdf.destructor(),
-    );
+    this.to_destruct.push(() => {
+      $("body").off("input");
+      partial_return.destructor();
+      cdek_pickup.destructor();
+      print_pdf.destructor();
+    });
   }
 
   destructor() {
