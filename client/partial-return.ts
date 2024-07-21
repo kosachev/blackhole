@@ -20,15 +20,20 @@ export class ParialReturn {
       );
     }
     $("#splitLead").on("click", async () => await this.render());
+    $("head").append(
+      '<style class="partial_return" type="text/css">.split_li_sold { background: #CCFF66; } .split_li_return { background: #D5D8DB; } .split_li { margin: 3px; padding: 5px; border-radius: 5px; cursor: pointer; } .split_li_sold:before { content: "\u2705"; margin-right: 10px; } .split_li_return:before { content: "\u274C"; margin-right: 10px; }</style>',
+    );
+  }
+
+  destructor() {
+    console.debug("PARTIAL RETURN DESTRUCTOR", this.lead_id);
+    $("head").find("style.partial_return").remove();
   }
 
   private async render() {
     $("body").css("overflow", "hidden").attr("data-body-fixed", 1);
     $("body").append(
       '<div id="modalSplitLead" class="modal modal-list"><div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; margin-top: -741.5px; margin-left: -265px;"><div class="modal-body__inner"><span class="modal-body__close"><span id="closeModalSplitLead" class="icon icon-modal-close"></span></span><h2 class="modal-body__caption head_2">⇌ Частичный возврат</h2><div id="goodsList"></div></div></div></div></div>',
-    );
-    $("head").append(
-      '<style type="text/css">.split_li_sold { background: #CCFF66; } .split_li_return { background: #D5D8DB; } .split_li { margin: 3px; padding: 5px; border-radius: 5px; cursor: pointer; } .split_li_sold:before { content: "\u2705"; margin-right: 10px; } .split_li_return:before { content: "\u274C"; margin-right: 10px; }</style>',
     );
     $("div#goodsList").append(
       '<h2 class="head_2" id="headSold">Продажа</h2><ul id="goodsSold"></ul><hr><h2 class="head_2" id="headReturn">Возврат</h2><ul id="goodsReturn"></ul><hr><button id="splitButtonGo" type="button" class="button-input button-cancel"><span class="button-input-inner "><span class="button-input-inner__text">Отправить</span></span></button><button id="splitButtonCancel" type="button" class="button-input button-cancel"><span class="button-input-inner "><span class="button-input-inner__text">Отмена</span></span></button>',

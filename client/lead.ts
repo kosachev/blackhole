@@ -1,5 +1,6 @@
 import { CdekPickup } from "./cdek-pickup";
 import { ParialReturn } from "./partial-return";
+import { PrintPdf } from "./print-pdf";
 import { CFV } from "./utils";
 
 export class Lead {
@@ -10,14 +11,20 @@ export class Lead {
     console.debug("LEAD LOADED", lead_id);
 
     // flat check
-    new ParialReturn(lead_id);
-    new CdekPickup(lead_id);
+    const partial_return = new ParialReturn(lead_id);
+    const cdek_pickup = new CdekPickup(lead_id);
+    const print_pdf = new PrintPdf(lead_id);
 
     this.timezone();
     this.deleteCompanyField();
     this.validateIndexField();
 
-    this.to_destruct.push(() => $("body").off("input"));
+    this.to_destruct.push(
+      () => $("body").off("input"),
+      () => partial_return.destructor(),
+      () => cdek_pickup.destructor(),
+      () => print_pdf.destructor(),
+    );
   }
 
   destructor() {

@@ -24,15 +24,20 @@ export class CdekPickup {
       );
     }
     $("#cdekPickup").on("click", () => this.render());
+    $("head").append(
+      '<style class="cdek_pickup" type="text/css">input.datetime_input:invalid + span:after { content: "\u274C" }</style>',
+    );
+  }
+
+  destructor() {
+    console.debug("CKED PICKUP DESTRUCTOR", this.lead_id);
+    $("head").find("style.cdek_pickup").remove();
   }
 
   private render() {
     $("body").css("overflow", "hidden").attr("data-body-fixed", 1);
     $("body").append(
       '<div id="modalCdekPickup" class="modal modal-list"><div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; margin-top: -741.5px; margin-left: -265px;"><div class="modal-body__inner"><span class="modal-body__close"><span id="closeModalCdekPickup" class="icon icon-modal-close"></span></span><h2 class="modal-body__caption head_2">📦 Вызов курьера</h2><div id="cdekPickupInner"></div></div></div></div></div>',
-    );
-    $("head").append(
-      '<style type="text/css">input.datetime_input:invalid + span:after { content: "\u274C" }</style>',
     );
 
     this.errors = this.validatePreload();

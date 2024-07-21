@@ -30,4 +30,9 @@ export class YandexDiskService {
     const publish_url = await this.client.publishFile(dest);
     return publish_url;
   }
+
+  async getDownloadUrl(public_url: string): Promise<string> {
+    const res = await this.client.getPublicFileUrl(public_url);
+    return res.href;
+  }
 }
