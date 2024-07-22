@@ -195,18 +195,30 @@ export class CdekPickup {
         body: JSON.stringify(data),
       });
 
-      $("div#modalCdekPickup").html(
-        `<div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; margin-top: -741.5px; margin-left: -265px;"><div class="modal-body__inner" style="text-align: center;"><h2 class="head_2" style="font-size: 18pt;">${
-          res.ok ? "✔ УСПЕШНО" : "✘ ОШИБКА"
-        }</h2></div></div></div>`,
-      );
+      this.operationResult(res.ok ? "✔ УСПЕШНО" : "✘ ОШИБКА");
+      if (res.ok) {
+        const pickups = JSON.parse(localStorage.getItem("cdek_pickups") ?? "[]");
+        pickups.push({
+          datetime: new Date(`${data.intake_date}T${data.intake_time}Z`).getTime(),
+          date: data.intake_date,
+          time: data.intake_time,
+          track_code: data.track_code,
+          uuid: data.uuid,
+        });
+        pickups.sort((a: any, b: any) => a.datetime - b.datetime);
+        localStorage.setItem("cdek_pickups", JSON.stringify(pickups));
+      }
     } catch (err) {
-      $("div#modalCdekPickup").html(
-        `<div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; margin-top: -741.5px; margin-left: -265px;"><div class="modal-body__inner" style="text-align: center;"><h2 class="head_2" style="font-size: 18pt;">✘ ОШИБКА</h2></div></div></div>`,
-      );
+      this.operationResult("✘ ОШИБКА");
       console.error("Field to send data to backend", err);
     }
 
     setTimeout(this.close, 1000);
+  }
+
+  private operationResult(result: string) {
+    $("div#modalCdekPickup").html(
+      `<div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; margin-top: -741.5px; margin-left: -265px;"><div class="modal-body__inner" style="text-align: center;"><h2 class="head_2" style="font-size: 18pt;">${result}</h2></div></div></div>`,
+    );
   }
 }
