@@ -34,6 +34,7 @@ async function bootstrap() {
           filename: "%DATE%.log",
           dirname: "logs",
           level: "debug",
+          format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
         }),
       ],
     }),
