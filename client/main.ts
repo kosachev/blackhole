@@ -40,6 +40,15 @@ console.warn("TEMPER MONKEY SCRIPT LOADED");
     }
   });
 
+  $('div.nav__menu__item[data-entity="leads"] > a').on("click", () => {
+    const loc = location.href.split("?")[0].split("/");
+    console.debug("LEADS CLICKED");
+    if (loc[4] === "pipeline") {
+      gc.clean();
+      setTimeout(() => gc.push(new Pipeline(+loc[5])), 1000);
+    }
+  });
+
   $("div.n-avatar#1092156").append(
     '<svg class="svg-icon svg-tasks--types-icons--7-dims modal-body__inner__todo-types__item__iconpick__icon" data-icon-id="7" style="fill: rgb(0, 180, 0);"><use xlink:href="#tasks--types-icons--7"></use></svg>',
   );
