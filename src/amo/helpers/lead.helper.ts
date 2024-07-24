@@ -58,9 +58,11 @@ export class LeadHelper {
     this.data = LeadHelper.convertFieldsToNumber(data);
     this.data.price = this.data.price ?? 0;
 
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    const mirror = this;
+    this.proxify(this);
+  }
 
+  private proxify(instance: this) {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const handler: ProxyHandler<any> = {
       get(target, key) {
         if (typeof target[key] === "object" && target[key] !== null) {
@@ -73,7 +75,7 @@ export class LeadHelper {
                 key.toString(),
               )
             ) {
-              mirror.to_save = true;
+              instance.to_save = true;
             }
             return target[key](...args);
           };
@@ -81,17 +83,16 @@ export class LeadHelper {
         return target[key];
       },
       set(target, prop: string, value) {
-        console.log(this);
-        mirror.to_save = true;
+        instance.to_save = true;
         target[prop] = value;
         return true;
       },
     };
 
-    this.data = new Proxy(this.data, handler);
-    this.goods = new Proxy(this.goods, handler);
-    this.custom_fields = new Proxy(this.custom_fields, handler);
-    this.tags = new Proxy(this.tags, handler);
+    instance.data = new Proxy(instance.data, handler);
+    instance.goods = new Proxy(instance.goods, handler);
+    instance.custom_fields = new Proxy(instance.custom_fields, handler);
+    instance.tags = new Proxy(instance.tags, handler);
   }
 
   private static convertFieldsToNumber(data: any) {
