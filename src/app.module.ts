@@ -10,6 +10,7 @@ import { WebModule } from "./web/web.module";
 import { PDFModule } from "./pdf/pdf.module";
 import { TelegramModule } from "./telegram/telegram.module";
 import { YandexDiskModule } from "./yandex-disk/yandex-disk.module";
+import { LogViewerModule } from "./log-viewer/log-viewer.module";
 
 import { LoggerMiddleware } from "./utils/logger.middleware";
 import { PostModule } from "./post/post.module";
@@ -34,6 +35,7 @@ import { resolve } from "path";
     GoogleSheetsModule,
     WebModule,
     PostModule,
+    LogViewerModule,
     ServeStaticModule.forRoot({
       rootPath: resolve("./public"),
       serveRoot: "/public",
