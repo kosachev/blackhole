@@ -16,8 +16,8 @@
     "test": "vitest run --config ./test/vitest.config.ts",
     "test:cov": "vitest run --coverage --config ./test/vitest.config.ts",
     "test:e2e": "vitest run --config ./test/vitest.config.ts",
-    "tail": "node ./tools/scripts/tail-logs.mjs",
-    "build:client": "npx spack"
+    "build:client": "npx spack",
+    "tail": "node ./tools/scripts/tail-logs.mjs"
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^2.0.2",
