@@ -1,4 +1,4 @@
-import { Response, Request } from "express";
+import type { Response, Request } from "express";
 
 import {
   ExceptionFilter,
@@ -23,6 +23,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       return;
     }
 
+    if (!(exception instanceof HttpException)) {
+      return;
+    }
     const ctx = host.switchToHttp();
     const status = exception.getStatus();
     const req = ctx.getRequest<Request>();
