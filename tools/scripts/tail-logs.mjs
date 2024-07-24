@@ -55,7 +55,7 @@ const source = new EventSource(`${host}/log_viewer/tail${file ?? ""}`, {
 
 source.onmessage = (ev) => {
   try {
-    const data = JSON.parse(line);
+    const data = JSON.parse(ev.data);
     console.log(
       `${data.timestamp} %s${data.level.toUpperCase()}%s [%s${data.context}%s] ${data.message ? data.message : ""}`,
       level(data.level),
