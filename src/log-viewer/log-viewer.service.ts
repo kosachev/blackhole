@@ -18,7 +18,10 @@ export class LogViewerService {
         content.split("\n").forEach((line) => subscriber.next({ data: line }));
       }
       const listener = async (curr: Stats, prev: Stats) => {
-        subscriber.next({ data: (await this.readNBytes(file, prev.size, curr.size)).trim() });
+        (await this.readNBytes(file, prev.size, curr.size))
+          .trim()
+          .split("\n")
+          .forEach((line) => subscriber.next({ data: line }));
       };
       watchFile(file, listener);
       req.on("close", () => unwatchFile(file, listener));

@@ -54,19 +54,24 @@ const source = new EventSource(`${host}/log_viewer/tail${file ?? ""}`, {
 });
 
 source.onmessage = (ev) => {
-  const data = JSON.parse(ev.data);
-  console.log(
-    `${data.timestamp} %s${data.level.toUpperCase()}%s [%s${data.context}%s] ${data.message ? data.message : ""}`,
-    level(data.level),
-    COLORS.Reset,
-    COLORS.FgGreen,
-    COLORS.Reset,
-  );
-  if (data.data) {
-    console.log(inspect(data.data, false, null, true));
-  }
-  if (data.stack) {
-    console.log(inspect(data.stack, false, null, true));
+  try {
+    const data = JSON.parse(line);
+    console.log(
+      `${data.timestamp} %s${data.level.toUpperCase()}%s [%s${data.context}%s] ${data.message ? data.message : ""}`,
+      level(data.level),
+      COLORS.Reset,
+      COLORS.FgGreen,
+      COLORS.Reset,
+    );
+    if (data.data) {
+      console.log(inspect(data.data, false, null, true));
+    }
+    if (data.stack) {
+      console.log(inspect(data.stack, false, null, true));
+    }
+  } catch (err) {
+    console.error("JSON.parse error", ev.data, err);
+    return;
   }
 };
 
