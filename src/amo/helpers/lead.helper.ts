@@ -30,6 +30,9 @@ const fields_to_convert = [
 ] as const;
 
 export class LeadHelper {
+  private notes: string[] = [];
+  to_save = false;
+
   custom_fields: Map<number, string | number | number[]>;
   tags: Set<number>;
   goods: Map<number, Good>;
@@ -215,7 +218,25 @@ export class LeadHelper {
   };
 
   async saveToAmo() {
-    return this.client.lead.updateLeadById(this.data.id, this.toApi.updateLeadRequest());
+    const promises: Promise<unknown>[] = [];
+    if (this.to_save) {
+      promises.push(this.client.lead.updateLeadById(this.data.id, this.toApi.updateLeadRequest()));
+    }
+    if (this.notes.length > 0) {
+      promises.push(
+        this.client.note.addNotes(
+          "leads",
+          this.notes.map((text) => ({
+            entity_id: this.data.id,
+            created_by: AMO.USER.ADMIN,
+            note_type: "common",
+            params: { text: text },
+          })),
+        ),
+      );
+    }
+
+    return await Promise.all(promises);
   }
 
   async addGoods(goods: { id: number; quantity: number }[]) {
@@ -259,19 +280,15 @@ export class LeadHelper {
 
   async note(text: string[] | string) {
     const text_arr = Array.isArray(text) ? text : [text];
-    await this.client.note.addNotes(
-      "leads",
-      text_arr.map((text) => ({
-        entity_id: this.data.id,
-        created_by: AMO.USER.ADMIN,
-        note_type: "common",
-        params: { text: text },
-      })),
-    );
+    this.notes = [...this.notes, ...text_arr];
   }
 
   // TODO: think about proper wrapper during implementation
   task(text: string, responsible_user_id: number) {
     throw new Error(`Method not implemented. ${text} ${responsible_user_id}`);
+  }
+
+  async step(fn: (lead: LeadHelper) => void | Promise<void>) {
+    fn(this);
   }
 }
