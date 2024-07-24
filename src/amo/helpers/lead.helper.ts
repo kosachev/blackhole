@@ -57,6 +57,45 @@ export class LeadHelper {
     this.account_id = params?.account_id;
     this.data = LeadHelper.convertFieldsToNumber(data);
     this.data.price = this.data.price ?? 0;
+
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const mirror = this;
+
+    const handler: ProxyHandler<any> = {
+      get(target, key) {
+        if (typeof target[key] === "object" && target[key] !== null) {
+          return new Proxy(target[key], handler);
+        }
+        if (typeof target[key] === "function") {
+          console.log("FUNCTION CALLED");
+          return (...args: unknown[]) => {
+            if (
+              ["set", "add", "delete", "clear", "push", "pop", "shift", "unshift", "set"].includes(
+                key.toString(),
+              )
+            ) {
+              console.log("MUTATION");
+              mirror.to_save = true;
+            }
+            console.log(`${key.toString()} was called with ${args.join(", ")}`);
+            return target[key](...args);
+          };
+        }
+        return target[key];
+      },
+      set(target, prop: string, value) {
+        console.log(this);
+        mirror.to_save = true;
+        console.log(`changed ${prop} from ${target[prop]} to ${value}`);
+        target[prop] = value;
+        return true;
+      },
+    };
+
+    this.data = new Proxy(this.data, handler);
+    this.goods = new Proxy(this.goods, handler);
+    this.custom_fields = new Proxy(this.custom_fields, handler);
+    this.tags = new Proxy(this.tags, handler);
   }
 
   private static convertFieldsToNumber(data: any) {

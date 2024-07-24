@@ -26,7 +26,6 @@ export class LeadChangeWebhook extends AbstractWebhook {
     const total_price = lead.totalPrice() - abs_discount;
     if (lead.data.price !== total_price) {
       lead.data.price = total_price;
-      lead.to_save = true;
       lead.note(
         `Цена изменена: ${total_price}₽${abs_discount > 0 ? " (" + abs_discount + "₽ скидка)" : ""}`,
       );
