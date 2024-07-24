@@ -49,7 +49,9 @@ if (!host || host === "") {
 
 console.log("Connecting to:", `${host}/log_viewer/tail${file ?? ""}`);
 
-const source = new EventSource(`${host}/log_viewer/tail${file ?? ""}`);
+const source = new EventSource(`${host}/log_viewer/tail${file ?? ""}`, {
+  https: { rejectUnauthorized: false },
+});
 
 source.onmessage = (ev) => {
   const data = JSON.parse(ev.data);
@@ -68,8 +70,8 @@ source.onmessage = (ev) => {
   }
 };
 
-source.onerror = () => {
-  console.error("Host closed connection");
+source.onerror = (err) => {
+  console.error("Host closed connection", err);
   process.exit(1);
 };
 
