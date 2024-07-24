@@ -38,6 +38,8 @@ export class TelegramService {
   }
 
   textToAdmin(text: string): Promise<Message.TextMessage> {
-    return this.api.sendMessage(this.config.get<number>("TELEGRAM_ADMIN_ID"), text);
+    return this.api.sendMessage(this.config.get<number>("TELEGRAM_ADMIN_ID"), text, {
+      parse_mode: "HTML",
+    });
   }
 }

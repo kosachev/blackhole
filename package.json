@@ -1,6 +1,6 @@
 {
   "name": "gerda",
-  "version": "0.0.1",
+  "version": "0.1.17",
   "description": "",
   "author": "",
   "private": true,
@@ -11,12 +11,14 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+    "start:prod": "npx spack && node ./tools/scripts/inline-env-to-client.mjs && nest start",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "vitest run --config ./test/vitest.config.ts",
     "test:cov": "vitest run --coverage --config ./test/vitest.config.ts",
     "test:e2e": "vitest run --config ./test/vitest.config.ts",
-    "boilerplate": "vitest run --config ./test/vitest.boilerplate.config.ts ./test/boilerplate.spec.ts"
+    "boilerplate": "vitest run --config ./test/vitest.boilerplate.config.ts ./test/boilerplate.spec.ts",
+    "build:client": "npx spack",
+    "tail": "node ./tools/scripts/tail-logs.mjs"
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^2.0.2",
@@ -25,8 +27,10 @@
     "@nestjs/core": "^10.3.10",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/schedule": "^4.0.0",
+    "@nestjs/serve-static": "^4.0.2",
     "@pdf-lib/fontkit": "^1.1.1",
     "@shevernitskiy/amo": "^0.2.6",
+    "@shevernitskiy/post-tracking": "^0.1.2",
     "cdek": "^1.0.9",
     "google-auth-library": "^9.7.0",
     "google-spreadsheet": "^4.1.1",
@@ -49,6 +53,7 @@
     "@swc/cli": "^0.1.65",
     "@swc/core": "^1.4.2",
     "@types/express": "^4.17.17",
+    "@types/jquery": "^3.5.30",
     "@types/node": "^20.11.24",
     "@types/supertest": "^6.0.0",
     "@types/tar-fs": "^2.0.4",
@@ -58,6 +63,7 @@
     "eslint": "^8.42.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
+    "eventsource": "^2.0.2",
     "msw": "^2.1.3",
     "pactum": "^3.6.1",
     "prettier": "^3.2.5",
@@ -68,5 +74,11 @@
     "typescript": "^5.1.3",
     "unplugin-swc": "^1.4.4",
     "vitest": "^2.0.1"
+  },
+  "pnpm": {
+    "overrides": {
+      "whatwg-url": "14.0.0",
+      "mailparser": "3.7.1"
+    }
   }
 }

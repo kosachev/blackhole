@@ -2,8 +2,8 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AmoService } from "../amo/amo.service";
 import { AMO } from "../amo/amo.constants";
-import { PostTrackingClient, TrackingHistory } from "./lib/post-tracking.lib";
-// import { Cron } from "@nestjs/schedule";
+import { PostTracking, TrackingHistory } from "@shevernitskiy/post-tracking";
+import { Cron } from "@nestjs/schedule";
 
 type ParsedHistories = {
   notes: { lead_id: number; text: string }[];
@@ -13,21 +13,22 @@ type ParsedHistories = {
 @Injectable()
 export class PostTrackingService {
   private readonly logger = new Logger(PostTrackingService.name);
-  private client: PostTrackingClient;
+  private client: PostTracking;
 
   constructor(
     private readonly config: ConfigService,
     private readonly amo: AmoService,
   ) {
-    this.client = new PostTrackingClient(
+    this.client = new PostTracking(
       this.config.get<string>("POST_TRACKING_LOGIN"),
       this.config.get<string>("POST_TRACKING_PASSWORD"),
+      { language: "RUS" },
       (error) => this.logger.error(error.message, error.stack),
     );
   }
 
   // executes in 19:05 everyday
-  // @Cron("0 5 19 * * *")
+  @Cron("0 5 19 * * *")
   async handler(): Promise<void> {
     const leads = await this.getLeadsInPostDelivery();
     const histories = await Promise.all(leads.map((lead) => this.client.tracking(lead.trackcode)));
@@ -113,13 +114,13 @@ export class PostTrackingService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const { history, lead_id, trackcode } of leads_with_history) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      for (const { index, place, operation, datetime } of history.history) {
+      for (const { index, place, operation_type, operation_desc, datetime } of history.history) {
         const diff = (Date.now() - datetime.getTime()) / 1000;
         // новые операции за последние сутки
         if (diff < 60 * 60 * 24) {
           out.notes.push({
             lead_id,
-            text: `ℹ Почта: ${operation} в ${place}, ${datetime.toISOString()}`,
+            text: `ℹ Почта: ${operation_type}, ${operation_desc} в ${place}, ${datetime.toLocaleString("ru-RU")}`,
           });
         }
       }

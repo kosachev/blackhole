@@ -1,7 +1,7 @@
 export class YandexDiskError extends Error {}
 
 export class YandexDiskClient {
-  private readonly base_url = `https://cloud-api.yandex.net:443/v1/disk/resources`;
+  private readonly BASE_URL = `https://cloud-api.yandex.net:443/v1/disk`;
 
   constructor(
     private readonly token: string,
@@ -14,7 +14,7 @@ export class YandexDiskClient {
     method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
   ): Promise<T> {
     try {
-      const res = await fetch(`${this.base_url}${url}?${new URLSearchParams(params)}`, {
+      const res = await fetch(`${this.BASE_URL}${url}?${new URLSearchParams(params)}`, {
         method: method,
         headers: {
           Accept: "application/json",
@@ -26,6 +26,7 @@ export class YandexDiskClient {
       const err = new YandexDiskError(`API request fialure: ${error.message}`);
       if (this.on_error) {
         this.on_error(err);
+        return null as T;
       } else {
         throw err;
       }
@@ -33,7 +34,7 @@ export class YandexDiskClient {
   }
 
   async getUploadUrl(path: string): Promise<string> {
-    const res = await this.request<{ href: string }>("/upload", {
+    const res = await this.request<{ href: string }>("/resources/upload", {
       path: `${path}`,
       fields: "href",
       overwrite: "true",
@@ -58,7 +59,7 @@ export class YandexDiskClient {
   }
 
   async getFileUrl(path: string): Promise<string> {
-    const res = await this.request<{ href: string }>("/download", {
+    const res = await this.request<{ href: string }>("/resources/download", {
       path: `${path}`,
       fields: "href",
     });
@@ -78,5 +79,12 @@ export class YandexDiskClient {
       path: `${path}`,
     });
     return res.public_url;
+  }
+
+  async getPublicFileUrl(public_url: string) {
+    const res = await this.request<{ href: string }>("/public/resources/download", {
+      public_key: `${public_url}`,
+    });
+    return res;
   }
 }

@@ -1,6 +1,7 @@
 import { WinstonModule } from "nest-winston";
 import winston from "winston";
 import "winston-daily-rotate-file";
+import { readFileSync } from "fs";
 
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
@@ -9,6 +10,13 @@ import { GlobalExceptionFilter } from "./utils/global-exception.filter";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
+    httpsOptions:
+      process.env.NODE_ENV === "production"
+        ? {
+            key: readFileSync(process.env.SSL_KEY_PATH),
+            cert: readFileSync(process.env.SSL_CERT_PATH),
+          }
+        : undefined,
     logger: WinstonModule.createLogger({
       level: process.env.LOG_LEVEL ?? "debug",
       transports: [
@@ -26,6 +34,7 @@ async function bootstrap() {
           filename: "%DATE%.log",
           dirname: "logs",
           level: "debug",
+          format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
         }),
       ],
     }),

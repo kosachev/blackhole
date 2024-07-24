@@ -1,17 +1,36 @@
-import { CustomFieldsValue, Embedded, Lead, Tag, Amo } from "@shevernitskiy/amo";
+import { CustomFieldsValue, Lead, Embedded, Tag, Amo } from "@shevernitskiy/amo";
 import { RequestUpdateLead } from "@shevernitskiy/amo/src/api/lead/types";
+import { AMO } from "../amo.constants";
 
 type Options = {
   load_goods?: boolean;
 };
 
-// need name and price?
 type Good = {
+  id: number;
   quantity: number;
+  name: string;
+  sku: string;
+  price: number;
 };
 
+const fields_to_convert = [
+  "id",
+  "status_id",
+  "price",
+  "responsible_user_id",
+  "last_modified",
+  "modified_user_id",
+  "created_user_id",
+  "date_create",
+  "pipeline_id",
+  "created_at",
+  "updated_at",
+  "account_id",
+] as const;
+
 export class LeadHelper {
-  custom_fields: Map<number, string>;
+  custom_fields: Map<number, string | number | number[]>;
   tags: Set<number>;
   goods: Map<number, Good>;
   old_status_id?: number;
@@ -19,9 +38,9 @@ export class LeadHelper {
 
   private constructor(
     private readonly client: Amo,
-    public lead: Partial<Lead> & { id: number },
+    public data: Partial<Lead> & { id: number },
     params?: {
-      custom_fields?: Map<number, string>;
+      custom_fields?: Map<number, string | number | number[]>;
       tags?: Set<number>;
       goods?: Map<number, Good>;
       old_status_id?: number;
@@ -33,30 +52,46 @@ export class LeadHelper {
     this.goods = params?.goods ?? new Map();
     this.old_status_id = params?.old_status_id;
     this.account_id = params?.account_id;
+    this.data = LeadHelper.convertFieldsToNumber(data);
+    this.data.price = this.data.price ?? 0;
+  }
+
+  private static convertFieldsToNumber(data: any) {
+    for (const item of Object.entries(data)) {
+      if (fields_to_convert.includes(item[0] as any)) {
+        data[item[0] as any] = +item[1];
+      }
+    }
+    return data;
   }
 
   static async createFromWebhook(client: Amo, data: any, options?: Options) {
-    console.log(data.custom_fields);
-    const custom_fields = new Map<number, string>(
-      data.custom_fields.map((item: CustomFieldsValue) => [
-        item.field_id ?? item.id,
-        item.values?.at(0)?.value,
+    // get the lead data itself from the webhook metadata
+    const lead = Object.values(data.leads)[0][0];
+    if (!lead) {
+      throw new Error("LeadHelper can't parse webhook data");
+    }
+    const custom_fields = new Map<number, number | string | number[]>(
+      lead.custom_fields.map((item: CustomFieldsValue) => [
+        +(item.field_id ?? item.id),
+        item.values?.at(0)?.value ?? item.values,
       ]),
     );
-    const tags = new Set<number>(data.tags?.map((item: Tag) => item.id));
-    let goods;
-    if (options?.load_goods && data.id) {
-      goods = await LeadHelper.loadGoods(data.id, client);
-    }
+    const tags = new Set<number>(lead.tags?.map((item: Tag) => +item.id));
 
-    const old_status_id = data.old_status_id;
-    const account_id = data.account_id;
-    delete data.old_status_id;
-    delete data.account_id;
-    delete data.custom_fields;
-    delete data.tags;
+    const goods =
+      options?.load_goods && lead.id
+        ? await LeadHelper.loadGoods(lead.id, client)
+        : new Map<number, Good>();
 
-    return new LeadHelper(client, data, {
+    const old_status_id = lead.old_status_id;
+    const account_id = lead.account_id;
+    delete lead.old_status_id;
+    delete lead.account_id;
+    delete lead.custom_fields;
+    delete lead.tags;
+
+    return new LeadHelper(client, lead, {
       custom_fields,
       tags,
       goods,
@@ -76,15 +111,17 @@ export class LeadHelper {
     options?: Options,
   ) {
     const custom_fields = data.custom_fields_values
-      ? new Map<number, string>(
-          data.custom_fields_values.map((item: CustomFieldsValue) => [
-            item.field_id ?? item.id!,
-            item.values?.at(0)?.value ?? "unknown",
-          ]),
+      ? new Map<number, string | number | number[]>(
+          data.custom_fields_values.map((item: CustomFieldsValue) => {
+            return [
+              item.field_id ?? item.id!,
+              (item.values?.at(0)?.value as string | number) ?? (item.values as number[]),
+            ];
+          }),
         )
-      : new Map<number, string>();
+      : new Map<number, string | number | number[]>();
     const tags = new Set<number>(data._embedded?.tags?.map((item: Partial<Tag>) => item?.id ?? 0));
-    let goods;
+    let goods: Map<number, Good> = new Map<number, Good>();
     if (options?.load_goods && data.id) {
       goods = await LeadHelper.loadGoods(data.id, client);
     }
@@ -114,34 +151,62 @@ export class LeadHelper {
 
   private static async loadGoods(id: number, client: Amo): Promise<Map<number, Good>> {
     const res = await client.link.getLinksByEntityId(id, "leads", {
-      filter: (filter) => filter.single("to_catalog_id", 6969),
+      // TODO: remove hardcoded catalog id
+      filter: (filter) => filter.single("to_catalog_id", AMO.CATALOG.GOODS),
     });
     const goods = new Map<number, Good>();
     for (const link of res._embedded.links) {
       goods.set(link.to_entity_id, {
+        id: link.to_entity_id,
         quantity: link.metadata?.quantity ?? 1,
+        name: "unknown",
+        sku: "unknown",
+        price: 0,
       });
+    }
+    if (goods.size === 0) {
+      return goods;
+    }
+    const cat_els = await client.catalog.getCatalogElementsByCatalogId(AMO.CATALOG.GOODS, {
+      filter: (filter) => filter.multi("id", [...goods.keys()]),
+    });
+    for (const el of cat_els._embedded.elements) {
+      const good = goods.get(el.id);
+      if (good) {
+        good.name = el.name;
+        good.sku =
+          el.custom_fields_values
+            .find((item) => item.field_id == AMO.CATALOG.CUSTOM_FIELD.SKU)
+            ?.values?.at(0)
+            ?.value?.toString() ?? "unknown";
+        good.price =
+          parseInt(
+            el.custom_fields_values
+              .find((item) => item.field_id == AMO.CATALOG.CUSTOM_FIELD.PRICE)
+              ?.values?.at(0)
+              ?.value.toString(),
+          ) ?? 0;
+      }
+      goods.set(el.id, good);
     }
     return goods;
   }
 
-  toApi = {
-    lead: (): Lead => this.lead as Lead,
+  private toApi = {
     customFields: (): CustomFieldsValue[] => {
-      return [...this.custom_fields.entries()].map((item) => ({
-        id: item[0],
-        values: [
-          {
-            value: item[1],
-          },
-        ],
+      return [...this.custom_fields.entries()].map(([id, value]) => ({
+        field_id: id, // field_id not id!
+        values:
+          value === undefined || value === null
+            ? null
+            : [{ value: Array.isArray(value) ? +value[0] : value }],
       }));
     },
     tags: (): Pick<Tag, "id">[] => {
       return [...this.tags.values()].map((item) => ({ id: item }));
     },
     updateLeadRequest: (): RequestUpdateLead => ({
-      ...this.lead,
+      ...this.data,
       custom_fields_values: this.toApi.customFields(),
       _embedded: {
         tags: this.toApi.tags(),
@@ -149,34 +214,63 @@ export class LeadHelper {
     }),
   };
 
-  async update(): Promise<any> {
-    const reqs: Promise<any>[] = [
-      this.client.lead.updateLeadById(this.lead.id, this.toApi.updateLeadRequest()),
-    ];
-    return Promise.all(reqs);
+  async saveToAmo() {
+    return this.client.lead.updateLeadById(this.data.id, this.toApi.updateLeadRequest());
   }
 
-  async addGood(id: number, good: Good) {
-    this.goods.set(id, good);
-    this.client.link.addLinksByEntityId(this.lead.id, "leads", [
-      {
+  async addGoods(goods: { id: number; quantity: number }[]) {
+    await this.client.link.addLinksByEntityId(
+      this.data.id,
+      "leads",
+      goods.map((item) => ({
+        to_entity_id: item.id,
+        to_entity_type: "catalog_elements",
+        metadata: { quantity: item.quantity, catalog_id: AMO.CATALOG.GOODS },
+      })),
+    );
+
+    // TODO: bad, should be tracked by instance as well to eliminate double loading
+    this.goods = await LeadHelper.loadGoods(this.data.id, this.client);
+    this.data.price = this.totalPrice();
+  }
+
+  async delGoods(goods_id: number[]) {
+    // return if no goods in the map with at least one of the ids
+    const valid_ids = goods_id.filter((id) => this.goods.delete(id));
+    if (valid_ids.length == 0) {
+      return;
+    }
+
+    await this.client.link.deleteLinksByEntityId(
+      this.data.id,
+      "leads",
+      valid_ids.map((id) => ({
         to_entity_id: id,
-        metadata: { quantity: good.quantity },
-      },
-    ]);
-
-    throw new Error("Method not implemented.");
+        to_entity_type: "catalog_elements",
+        metadata: { catalog_id: AMO.CATALOG.GOODS },
+      })),
+    );
+    this.data.price = this.totalPrice();
   }
 
-  async delGood(id: number) {
-    this.goods.delete(id);
-    this.client.link.deleteLinksByEntityId(this.lead.id, "leads", [{ to_entity_id: id }]);
+  totalPrice(): number {
+    return [...this.goods.values()].reduce((a, b) => a + (b.price ?? 0) * (b.quantity ?? 0), 0);
   }
 
-  note(text: string[] | string) {
-    throw new Error(`Method not implemented. ${text}`);
+  async note(text: string[] | string) {
+    const text_arr = Array.isArray(text) ? text : [text];
+    await this.client.note.addNotes(
+      "leads",
+      text_arr.map((text) => ({
+        entity_id: this.data.id,
+        created_by: AMO.USER.ADMIN,
+        note_type: "common",
+        params: { text: text },
+      })),
+    );
   }
 
+  // TODO: think about proper wrapper during implementation
   task(text: string, responsible_user_id: number) {
     throw new Error(`Method not implemented. ${text} ${responsible_user_id}`);
   }
