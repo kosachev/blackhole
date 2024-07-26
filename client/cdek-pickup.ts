@@ -1,4 +1,4 @@
-import { BACKEND_BASE_URL, CFV } from "./utils";
+import { BACKEND_BASE_URL, CFV } from "./common";
 import { AMO } from "../src/amo/amo.constants";
 
 const defaultPickupTime = [

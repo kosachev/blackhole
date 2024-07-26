@@ -1,4 +1,4 @@
-import { BACKEND_BASE_URL } from "./utils";
+import { BACKEND_BASE_URL } from "./common";
 
 export class PrintPdf {
   readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/print_pdf`;

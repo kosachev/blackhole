@@ -1,5 +1,5 @@
 import { AMO } from "../src/amo/amo.constants";
-import { BACKEND_BASE_URL, CFV } from "./utils";
+import { BACKEND_BASE_URL, CFV, leadGoods } from "./common";
 
 type Good = {
   id: number;
@@ -47,21 +47,8 @@ export class ParialReturn {
 
   private async getGoodsFromLead(lead_id: number) {
     try {
-      const res = await fetch(
-        `https://gerda.amocrm.ru/ajax/leads/${lead_id}/catalog/${AMO.CATALOG.GOODS}/elements?before_id=0&before_created_at=0&limit=50&with=catalog_element`,
-      );
-      const data = await res.json();
-      for (const item of data._embedded.links) {
-        const good = {
-          id: item.to_entity_id,
-          name: item._embedded.catalog_element.name,
-          quantity: item.metadata.quantity,
-          price: +item._embedded.catalog_element.custom_fields.find(
-            (field) => field.code === "PRICE",
-          )?.values[0].value,
-        };
-        this.addGoodToSold(good);
-      }
+      const goods = await leadGoods(lead_id);
+      goods.forEach((good) => this.addGoodToSold(good));
       $("#modalSplitLead").on("click", "li.split_li", (el) => this.handleListClick(el));
     } catch (e) {
       console.error("ERROR", e);
