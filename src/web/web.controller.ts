@@ -6,6 +6,7 @@ import { CdekPickupService, RequestCdekPickup } from "./cdek-pickup.service";
 import { PrintPdfService } from "./print-pdf.service";
 import { DeliveryPriceService, RequestDeliveryPrice } from "./delivery-price.service";
 import { GlobalExceptionFilter } from "../utils/global-exception.filter";
+import { PVZPickerService, RequestPVZPicker } from "./pvz-picker.service";
 
 @Controller("web")
 @UseFilters(GlobalExceptionFilter)
@@ -15,6 +16,7 @@ export class WebController {
     private readonly cdek_pickup: CdekPickupService,
     private readonly print_pdf: PrintPdfService,
     private readonly delivery_price: DeliveryPriceService,
+    private readonly pvz_picker: PVZPickerService,
   ) {}
 
   @Post("partial_return")
@@ -38,5 +40,15 @@ export class WebController {
   @Post("delivery_price")
   async deliveryPrice(@Body() data: RequestDeliveryPrice) {
     return this.delivery_price.handler(data);
+  }
+
+  @Get("pvz_picker")
+  async getPVZList(@Query("index") index: string) {
+    return this.pvz_picker.getPVZList(+index);
+  }
+
+  @Post("pvz_picker")
+  async pickPVZ(@Body() data: RequestPVZPicker) {
+    return this.pvz_picker.handler(data);
   }
 }

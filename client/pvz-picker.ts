@@ -1,0 +1,100 @@
+import { AMO } from "../src/amo/amo.constants";
+import { BACKEND_BASE_URL, CFV, deliveryType, validateIndexCf } from "./common";
+
+export class PVZPicker {
+  readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/pvz_picker`;
+
+  constructor(private lead_id: number) {
+    console.debug("PVZ PICKER LOADED", lead_id);
+
+    $(`div[data-id=${AMO.CUSTOM_FIELD.PVZ}] > div`)
+      .first()
+      .append(`<span id="pvz_picker" style="margin-left: 5px; cursor: pointer">⟳</span>`);
+
+    $("head").append(
+      `<style class="pvz_picker_style">#PVZPickerInner { height: 100vh } .pvz_picker_loading { animation: rotate 4s infinite; } @keyframes rotate { 0% { transform: rotate(0deg) } 100% { transform: rotate(360deg) }</style>`,
+    );
+
+    CFV(AMO.CUSTOM_FIELD.INDEX).on("input", this.render);
+    CFV(AMO.CUSTOM_FIELD.DELIVERY_TYPE).on("change", this.render);
+    $("#pvz_picker").on("click", () => this.modal());
+    $(window).on("message", (event) => {
+      // @ts-expect-error data should be there
+      const data = event.originalEvent.data;
+      if (data?.type === "choose_point") {
+        console.debug("PVZ PICKER MESSAGE", data.data);
+        this.sendRequest(data.data);
+      }
+    });
+
+    this.render();
+  }
+
+  destructor() {
+    console.debug("PVZ PICKER DESTRUCTOR", this.lead_id);
+    CFV(AMO.CUSTOM_FIELD.INDEX).off("input");
+    CFV(AMO.CUSTOM_FIELD.DELIVERY_TYPE).off("change");
+    $("#pvz_picker").off("click");
+    $("head").find("style.pvz_picker_style").remove();
+    $(window).off("message");
+  }
+
+  private render() {
+    const delivery_type = deliveryType();
+
+    if (delivery_type === "Экспресс по России" && validateIndexCf()) {
+      $("#pvz_picker").css("display", "inherit");
+    } else {
+      $("#pvz_picker").css("display", "none").css("color", "");
+    }
+  }
+
+  private modal() {
+    $("body").css("overflow", "hidden").attr("data-body-fixed", 1);
+    $("body").append(
+      `<div id="modalPVZPicker" class="modal modal-list"><div class="modal-body" style="position: fixed; display: block; top: 10%; left: 10%; margin-left: 0; margin-bottom: 0; width: 80%; height: 80%; padding: 0"><div id="PVZPickerInner"><iframe style="position: absolute; height: 100%; width: 100%; border: none" src="${BACKEND_BASE_URL}/public/pvz.html?backend=${BACKEND_BASE_URL}&origin=${window.location.origin}&index=${CFV(AMO.CUSTOM_FIELD.INDEX).val()}"></iframe><div id="closeModalPVZPicker"style="position: absolute; right: 16px; top: 25px; width: 30px; height: 30px; cursor: pointer"></div></div></div>`,
+    );
+    $("#closeModalPVZPicker").on("click", this.close);
+  }
+
+  private close() {
+    $("body").attr("data-body-fixed", 0).attr("style", "");
+    $("div#modalPVZPicker").remove();
+  }
+
+  async sendRequest(pvz: any) {
+    try {
+      const street = pvz.location.address.split(",")[0];
+
+      const data = {
+        lead_id: this.lead_id,
+        code: pvz.code,
+        index: pvz.location.postal_code,
+        city: pvz.location.city,
+        city_code: pvz.location.city_code,
+        street: street.trim(),
+        building: pvz.location.address.split(`${street},`)[1].trim(),
+      };
+
+      console.debug("SEND PVZ PICKER REQUEST", data);
+
+      const res = await fetch(this.BACKEND_URL, {
+        method: "POST",
+        headers: { "Content-type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        $("#pvz_picker").css("color", "red").removeClass("pvz_picker_loading");
+      } else {
+        $("#pvz_picker").css("color", "green").removeClass("pvz_picker_loading");
+      }
+    } catch (err) {
+      console.error("Field to send data to backend", err);
+    }
+
+    this.close();
+
+    setTimeout(() => $("#pvz_picker").css("color", ""), 3000);
+  }
+}

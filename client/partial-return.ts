@@ -124,7 +124,7 @@ export class ParialReturn {
         AMO.CUSTOM_FIELD.INDEX,
         AMO.CUSTOM_FIELD.CITY,
         AMO.CUSTOM_FIELD.STREET,
-        AMO.CUSTOM_FIELD.HOUSE,
+        AMO.CUSTOM_FIELD.BUILDING,
         AMO.CUSTOM_FIELD.FLAT,
       ].map((id: number) => ({
         field_id: id,

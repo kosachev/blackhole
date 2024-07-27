@@ -4,6 +4,7 @@ import { DeliveryPrice } from "./delivery-price";
 import { ParialReturn } from "./partial-return";
 import { PrintPdf } from "./print-pdf";
 import { CFV, deliveryType, validateIndexCf } from "./common";
+import { PVZPicker } from "./pvz-picker";
 
 export class Lead {
   private to_destruct: CallableFunction[] = [];
@@ -17,6 +18,7 @@ export class Lead {
     const cdek_pickup = new CdekPickup(lead_id);
     const print_pdf = new PrintPdf(lead_id);
     const delivery_price = new DeliveryPrice(lead_id);
+    const pvz_picker = new PVZPicker(lead_id);
 
     this.timezone();
     this.deleteCompanyField();
@@ -28,6 +30,7 @@ export class Lead {
       cdek_pickup.destructor();
       print_pdf.destructor();
       delivery_price.destructor();
+      pvz_picker.destructor();
     });
   }
 
