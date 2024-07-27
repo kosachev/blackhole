@@ -29,6 +29,7 @@
     "@nestjs/serve-static": "^4.0.2",
     "@pdf-lib/fontkit": "^1.1.1",
     "@shevernitskiy/amo": "^0.2.6",
+    "@shevernitskiy/post-calculator": "^0.1.2",
     "@shevernitskiy/post-tracking": "^0.1.2",
     "cdek": "^1.0.9",
     "google-auth-library": "^9.7.0",

@@ -7,7 +7,7 @@ export class PrintPdfService {
   constructor(private readonly yadisk: YandexDiskService) {}
 
   async handler(url: string): Promise<ReadableStream<Uint8Array>> {
-    if (!url.startsWith("https://yadi.sk/d/")) {
+    if (!url.startsWith("https://yadi.sk/")) {
       throw new InternalServerErrorException("Invalid url");
     }
     const download_url = await this.yadisk.getDownloadUrl(url);

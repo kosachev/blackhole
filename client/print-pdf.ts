@@ -1,4 +1,4 @@
-import { BACKEND_BASE_URL } from "./utils";
+import { BACKEND_BASE_URL } from "./common";
 
 export class PrintPdf {
   readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/print_pdf`;
@@ -60,7 +60,7 @@ export class PrintPdf {
   }
 
   handleNote(el: JQuery<HTMLElement>) {
-    if (el.text().includes("https://yadi.sk/d/") && !el.text().includes("🖨️")) {
+    if (el.text().includes("https://yadi.sk/") && !el.text().includes("🖨️")) {
       el.append(
         ` <a target="_blank" rel="nofollow" class="download_pdf" onclick="window.printPdf('${el.find("a").attr("href")}');">🖨️</a>`,
       );
