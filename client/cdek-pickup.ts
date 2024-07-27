@@ -38,7 +38,7 @@ export class CdekPickup {
   private render() {
     $("body").css("overflow", "hidden").attr("data-body-fixed", 1);
     $("body").append(
-      `<div id="modalCdekPickup" class="modal modal-list"><div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; margin-top: -${(window.innerHeight + 540) / 2}px; margin-left: -265px;"><div class="modal-body__inner"><span class="modal-body__close"><span id="closeModalCdekPickup" class="icon icon-modal-close"></span></span><h2 class="modal-body__caption head_2">📦 Вызов курьера</h2><div id="cdekPickupInner"></div></div></div></div></div>`,
+      `<div id="modalCdekPickup" class="modal modal-list"><div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; top: 20%; left: calc(50% - 250px); margin-left: 0; margin-bottom: 0; width: 500px;"><div class="modal-body__inner"><span class="modal-body__close"><span id="closeModalCdekPickup" class="icon icon-modal-close"></span></span><h2 class="modal-body__caption head_2">📦 Вызов курьера</h2><div id="cdekPickupInner"></div></div></div></div></div>`,
     );
 
     this.errors = this.validatePreload();
@@ -218,7 +218,7 @@ export class CdekPickup {
 
   private operationResult(result: string) {
     $("div#modalCdekPickup").html(
-      `<div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; margin-top: -741.5px; margin-left: -265px;"><div class="modal-body__inner" style="text-align: center;"><h2 class="head_2" style="font-size: 18pt;">${result}</h2></div></div></div>`,
+      `<div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; top: 30%; left: calc(50% - 100px); margin-left: 0; margin-bottom: 0; width: 200px;"><div class="modal-body__inner" style="text-align: center;"><h2 class="head_2" style="font-size: 18pt;">${result}</h2></div></div></div>`,
     );
   }
 }
