@@ -21,8 +21,6 @@ export class PVZPickerService {
   ) {}
 
   async handler(data: RequestPVZPicker) {
-    console.log("GET PICKED PVZ", data);
-
     await Promise.all([
       this.amo.client.lead.updateLeadById(data.lead_id, {
         custom_fields_values: [
@@ -54,6 +52,10 @@ export class PVZPickerService {
             field_id: AMO.CUSTOM_FIELD.CDEK_CITY_ID,
             values: [{ value: `${data.city_code}` }],
           },
+          {
+            field_id: AMO.CUSTOM_FIELD.DELIVERY_TARIFF,
+            values: [{ value: "Склад - Склад" }],
+          },
         ],
       }),
       this.amo.client.note.addNotes("leads", [
@@ -74,7 +76,7 @@ export class PVZPickerService {
       postal_code: index,
     });
     if (result === null) {
-      throw new InternalServerErrorException("CDEK: cdekPickup failed");
+      throw new InternalServerErrorException("CDEK: Unable to fetch cdek offices failed");
     }
     return result;
   }
