@@ -159,141 +159,145 @@
       const ORIGIN = url.searchParams.get("origin");
       const INDEX = url.searchParams.get("index");
 
-      if (!BACKEND_BASE || !ORIGIN || !INDEX) {
-        alert("Не все параметры были переданы");
-        throw new Error("Some query params missing");
-      }
-
-      const [res, location, _] = await Promise.all([
-        fetch(`${BACKEND_BASE}/web/pvz_picker?index=${INDEX}`),
-        locationByIndex(INDEX),
-        DG,
-      ]);
-      let data = await res.json();
-
-      document.getElementById("map").innerHTML = `<div id="info"></div>`;
-
-      data = data.filter((item) => !item.take_only && item.type == "PVZ");
-
-      const map = DG.map("map", {
-        center: location,
-        zoom: 13,
-      });
-
-      document
-        .getElementsByClassName("dg-control-round__icon dg-control-round__icon_name_fullscreen")[0]
-        .setAttribute("title", "Закрыть");
-
-      // client icon
-      DG.marker(location, {
-        icon: DG.icon({
-          iconUrl: "https://maps.api.2gis.ru/2.0/img/DGCustomization__markerHover.png",
-          iconRetinaUrl: "https://maps.api.2gis.ru/2.0/img/DGCustomization__markerHover.png",
-          iconSize: [22, 34],
-          iconAnchor: [22, 34],
-          popupAnchor: [-10, 0],
-        }),
-      })
-        .addTo(map)
-        .bindLabel("Клиент");
-
-      for (const item of data) {
-        DG.marker([item.location.latitude, item.location.longitude])
-          .addTo(map)
-          .bindLabel(item.name)
-          .bindPopup(item.location.address)
-          .on("click", (e) => {
-            showInfo(item);
-            map.setView([e.latlng.lat, e.latlng.lng]);
-          })
-          .on("popupclose", (e) => {
-            hideInfo();
-          });
-      }
-
-      async function locationByIndex(index) {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&postalcode=${index}`,
-        );
-
-        if (!res.ok) throw new Error(`Unable to fetch location for index ${index}`);
-        const data = await res.json();
-        if (!data[0]?.lat || !data[0].lon) {
-          throw new Error(`Unable to fetch location for index ${index}`);
+      try {
+        if (!BACKEND_BASE || !ORIGIN || !INDEX) {
+          alert("Не все параметры были переданы");
+          throw new Error("Some query params missing");
         }
 
-        return [data[0]?.lat, data[0].lon];
-      }
+        const [res, location, _] = await Promise.all([
+          fetch(`${BACKEND_BASE}/web/pvz_picker?index=${INDEX}`),
+          locationByIndex(INDEX),
+          DG,
+        ]);
 
-      function hideInfo() {
-        const el = document.getElementById("info");
-        el.classList.remove("show");
-      }
+        let data = await res.json();
 
-      window.choosePoint = () => {
-        window.parent.postMessage(
-          {
-            type: "choose_point",
-            data: window.choosedPointData,
-          },
-          ORIGIN,
-        );
-      };
+        document.getElementById("map").innerHTML = `<div id="info"></div>`;
 
-      function showInfo(item) {
-        const el = document.getElementById("info");
+        data = data.filter((item) => !item.take_only && item.type == "PVZ");
 
-        const features = [
-          [
-            item.is_dressing_room,
-            "https://www.cdek.ru/assets/static/dressing-room.e99334cc.svg",
-            "Примерочная",
-          ],
-          [
-            item.have_cash,
-            "https://www.cdek.ru/assets/static/payment-cash.b9fdf3f7.svg",
-            "Наличные",
-          ],
-          [
-            item.have_cashless,
-            "https://www.cdek.ru/assets/static/payment-haveterminal.b7117aff.svg",
-            "Терминал",
-          ],
-          [
-            item.have_fast_payment_system,
-            "https://www.cdek.ru/assets/static/payment-haveterminal.b7117aff.svg",
-            "СБП",
-          ],
-          [
-            item.phones[0]?.number,
-            "https://www.cdek.ru/assets/static/phone.8ee42289.svg",
-            item.phones[0]?.number,
-          ],
-        ];
-
-        const list = features.map((feature) => {
-          if (feature[0]) {
-            return featureItem(feature[1], feature[2]);
-          }
+        const map = DG.map("map", {
+          center: location,
+          zoom: 13,
         });
-        const days = [
-          "Понедельник",
-          "Вторник",
-          "Среда",
-          "Четверг",
-          "Пятница",
-          "Суббота",
-          "Воскресенье",
-        ];
 
-        const metro = item.metro_station
-          ? `<li class="feature_list_item">
+        document
+          .getElementsByClassName(
+            "dg-control-round__icon dg-control-round__icon_name_fullscreen",
+          )[0]
+          .setAttribute("title", "Закрыть");
+
+        // client icon
+        DG.marker(location, {
+          icon: DG.icon({
+            iconUrl: "https://maps.api.2gis.ru/2.0/img/DGCustomization__markerHover.png",
+            iconRetinaUrl: "https://maps.api.2gis.ru/2.0/img/DGCustomization__markerHover.png",
+            iconSize: [22, 34],
+            iconAnchor: [22, 34],
+            popupAnchor: [-10, 0],
+          }),
+        })
+          .addTo(map)
+          .bindLabel("Клиент");
+
+        for (const item of data) {
+          DG.marker([item.location.latitude, item.location.longitude])
+            .addTo(map)
+            .bindLabel(item.name)
+            .bindPopup(item.location.address)
+            .on("click", (e) => {
+              showInfo(item);
+              map.setView([e.latlng.lat, e.latlng.lng]);
+            })
+            .on("popupclose", (e) => {
+              hideInfo();
+            });
+        }
+
+        async function locationByIndex(index) {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&postalcode=${index}`,
+          );
+
+          if (!res.ok) throw new Error(`Unable to fetch location for index ${index}`);
+          const data = await res.json();
+          if (!data[0]?.lat || !data[0].lon) {
+            throw new Error(`Unable to fetch location for index ${index}`);
+          }
+
+          return [data[0]?.lat, data[0].lon];
+        }
+
+        function hideInfo() {
+          const el = document.getElementById("info");
+          el.classList.remove("show");
+        }
+
+        window.choosePoint = () => {
+          window.parent.postMessage(
+            {
+              type: "choose_point",
+              data: window.choosedPointData,
+            },
+            ORIGIN,
+          );
+        };
+
+        function showInfo(item) {
+          const el = document.getElementById("info");
+
+          const features = [
+            [
+              item.is_dressing_room,
+              "https://www.cdek.ru/assets/static/dressing-room.e99334cc.svg",
+              "Примерочная",
+            ],
+            [
+              item.have_cash,
+              "https://www.cdek.ru/assets/static/payment-cash.b9fdf3f7.svg",
+              "Наличные",
+            ],
+            [
+              item.have_cashless,
+              "https://www.cdek.ru/assets/static/payment-haveterminal.b7117aff.svg",
+              "Терминал",
+            ],
+            [
+              item.have_fast_payment_system,
+              "https://www.cdek.ru/assets/static/payment-haveterminal.b7117aff.svg",
+              "СБП",
+            ],
+            [
+              item.phones[0]?.number,
+              "https://www.cdek.ru/assets/static/phone.8ee42289.svg",
+              item.phones[0]?.number,
+            ],
+          ];
+
+          const list = features.map((feature) => {
+            if (feature[0]) {
+              return featureItem(feature[1], feature[2]);
+            }
+          });
+          const days = [
+            "Понедельник",
+            "Вторник",
+            "Среда",
+            "Четверг",
+            "Пятница",
+            "Суббота",
+            "Воскресенье",
+          ];
+
+          const metro = item.metro_station
+            ? `<li class="feature_list_item">
                 <div class="feature_icon"><svg data-v-71914fb1="" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" alt="" class="office-metro__icon"><circle cx="12" cy="12" r="10" stroke="#919699" stroke-width="2"></circle><path fill="#919699" d="M18.037 14.603 14.767 6 12 11.03 9.245 6l-3.282 8.603H5v1.304h4.95v-1.304h-.739l.717-2.142L12 16l2.072-3.539.717 2.142h-.74v1.304H19v-1.304z"></path></svg></div>
                 <p>${item.nearest_metro_station}</p>
               </li>`
-          : "";
+            : "";
 
-        el.innerHTML = `
+          el.innerHTML = `
           <div>
             <h2>${item.name}</h2>
             <ul>
@@ -317,12 +321,23 @@
           <button id="send" onclick="window.choosePoint()">Выбрать</button>
         `;
 
-        window.choosedPointData = item;
-        el.classList.add("show");
-      }
+          window.choosedPointData = item;
+          el.classList.add("show");
+        }
 
-      function featureItem(icon, text) {
-        return `<li class="feature_list_item"><div class="feature_icon" style="background-image: url(${icon})"></div><p>${text}</p></li>`;
+        function featureItem(icon, text) {
+          return `<li class="feature_list_item"><div class="feature_icon" style="background-image: url(${icon})"></div><p>${text}</p></li>`;
+        }
+      } catch (err) {
+        window.parent.postMessage(
+          {
+            type: "close_modal",
+            data: {},
+          },
+          ORIGIN,
+        );
+        alert("Неверно указан индекс");
+        console.error("ERROR on PVZ iframe", err);
       }
     </script>
   </body>

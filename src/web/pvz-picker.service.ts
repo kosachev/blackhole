@@ -38,7 +38,7 @@ export class PVZPickerService {
           },
           {
             field_id: AMO.CUSTOM_FIELD.FLAT,
-            values: [{ value: `пвз` }],
+            values: [{ value: "ПВЗ СДЕК" }],
           },
           {
             field_id: AMO.CUSTOM_FIELD.PVZ,

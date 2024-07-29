@@ -25,6 +25,9 @@ export class PVZPicker {
         console.debug("PVZ PICKER MESSAGE", data.data);
         this.sendRequest(data.data);
       }
+      if (data?.type === "close_modal") {
+        this.close();
+      }
     });
 
     this.render();
