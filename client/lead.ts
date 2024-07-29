@@ -25,6 +25,7 @@ export class Lead {
     this.timezone();
     this.deleteCompanyField();
     this.validateIndexField();
+    this.removeWidgetsDiv();
 
     this.to_destruct.push(() => {
       $("body").off("input");
@@ -42,6 +43,7 @@ export class Lead {
     for (const fn of this.to_destruct) {
       fn();
     }
+    $("head").find("style.remove_widgets").remove();
   }
 
   private timezone() {
@@ -88,5 +90,11 @@ export class Lead {
       CFV(AMO.CUSTOM_FIELD.INDEX).off("input");
       CFV(AMO.CUSTOM_FIELD.DELIVERY_TYPE).off("change");
     });
+  }
+
+  private removeWidgetsDiv() {
+    $("head").append(
+      '<style class="remove_widgets" type="text/css">#widgets_block { display: none !important; } #card_holder { padding-right: 0 !important; }</style>',
+    );
   }
 }
