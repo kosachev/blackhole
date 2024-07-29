@@ -35,10 +35,12 @@ export async function leadGoods(lead_id: number): Promise<Good[]> {
       },
     },
   );
+
   if (!res.ok) {
     console.error("Unable to fethc goods from lead", lead_id);
     return [];
   }
+  if (res.status === 204) return []; // no goods in lead
   const data = await res.json();
 
   return data._embedded.links.map((item) => ({
@@ -59,6 +61,46 @@ export async function leadGoods(lead_id: number): Promise<Good[]> {
       (field) => field.id === AMO.CATALOG.CUSTOM_FIELD.SKU,
     )?.values[0].value,
   }));
+}
+
+export function leadDiscount(price: number): number {
+  let abs_discount = 0;
+  let discount = $('div[data-id="1376070"]').find("button").text().trim() ?? "0";
+
+  if (discount === "Выбрать") {
+    discount = "0";
+  }
+
+  if (discount.includes("%")) {
+    abs_discount = price * (+discount.replace("%", "") / 100);
+  } else {
+    abs_discount = +discount;
+  }
+
+  return abs_discount;
+}
+
+export async function setLeadPrice(
+  lead_id: number,
+  pipeline_id: number | string,
+  status_id: number | string,
+  price: number | string,
+) {
+  const form = new FormData();
+  form.append("lead[PRICE]", price.toString());
+  form.append("lead[STATUS]", status_id.toString());
+  form.append("lead[PIPELINE_ID]", pipeline_id.toString());
+  form.append("ID", lead_id.toString());
+
+  await fetch(`https://gerda.amocrm.ru/ajax/leads/detail/`, {
+    method: "POST",
+    body: form,
+    headers: {
+      Accept: "application/json, text/javascript, */*; q=0.01",
+      Referer: `https://gerda.amocrm.ru/leads/detail/${lead_id}`,
+      "X-Requested-With": "XMLHttpRequest",
+    },
+  });
 }
 
 export const BACKEND_BASE_URL = process.env.BACKEND_BASE;
