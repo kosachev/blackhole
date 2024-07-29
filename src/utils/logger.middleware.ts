@@ -32,7 +32,7 @@ export class LoggerMiddleware implements NestMiddleware {
             statusCode: res.statusCode,
             contentLength: res.get("content-length"),
             responseTime: Date.now() - start,
-            body: res.locals.body ?? null,
+            body: res.locals.body && res.locals.body.length < 1000 ? res.locals.body : "too long",
           },
         },
       });

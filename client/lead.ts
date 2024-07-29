@@ -1,8 +1,10 @@
 import { AMO } from "../src/amo/amo.constants";
 import { CdekPickup } from "./cdek-pickup";
+import { DeliveryPrice } from "./delivery-price";
 import { ParialReturn } from "./partial-return";
 import { PrintPdf } from "./print-pdf";
-import { CFV } from "./utils";
+import { CFV, deliveryType, validateIndexCf } from "./common";
+import { PVZPicker } from "./pvz-picker";
 
 export class Lead {
   private to_destruct: CallableFunction[] = [];
@@ -15,6 +17,8 @@ export class Lead {
     const partial_return = new ParialReturn(lead_id);
     const cdek_pickup = new CdekPickup(lead_id);
     const print_pdf = new PrintPdf(lead_id);
+    const delivery_price = new DeliveryPrice(lead_id);
+    const pvz_picker = new PVZPicker(lead_id);
 
     this.timezone();
     this.deleteCompanyField();
@@ -25,6 +29,8 @@ export class Lead {
       partial_return.destructor();
       cdek_pickup.destructor();
       print_pdf.destructor();
+      delivery_price.destructor();
+      pvz_picker.destructor();
     });
   }
 
@@ -60,21 +66,14 @@ export class Lead {
 
   private validateIndexField() {
     function check() {
-      const delivery_type = $(
-        `div[data-id="${AMO.CUSTOM_FIELD.DELIVERY_TYPE}"] > div > div > button`,
-      )
-        .text()
-        .trim();
+      const delivery_type = deliveryType();
       console.debug("VALIDATE INDEX FIELD", delivery_type);
 
-      if (delivery_type === "Экспресс по России" || delivery_type === "Почта России") {
-        const index = CFV(AMO.CUSTOM_FIELD.INDEX).val();
-        if (!index || isNaN(Number(index)) || Number(index) > 999999 || Number(index) < 100000) {
-          console.debug("wrong index");
-          CFV(AMO.CUSTOM_FIELD.INDEX).parent().parent().addClass("validation-not-valid");
-        } else {
-          CFV(AMO.CUSTOM_FIELD.INDEX).parent().parent().removeClass("validation-not-valid");
-        }
+      if (
+        (delivery_type === "Экспресс по России" || delivery_type === "Почта России") &&
+        !validateIndexCf()
+      ) {
+        CFV(AMO.CUSTOM_FIELD.INDEX).parent().parent().addClass("validation-not-valid");
       } else {
         CFV(AMO.CUSTOM_FIELD.INDEX).parent().parent().removeClass("validation-not-valid");
       }
@@ -84,7 +83,7 @@ export class Lead {
     CFV(AMO.CUSTOM_FIELD.DELIVERY_TYPE).on("change", check);
     this.to_destruct.push(() => {
       CFV(AMO.CUSTOM_FIELD.INDEX).off("input");
-      CFV(AMO.CUSTOM_FIELD.DELIVERY_TYPE).off("change", check);
+      CFV(AMO.CUSTOM_FIELD.DELIVERY_TYPE).off("change");
     });
   }
 }

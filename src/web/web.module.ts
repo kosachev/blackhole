@@ -3,9 +3,17 @@ import { WebController } from "./web.controller";
 import { PartialReturnService } from "./partial-return.service";
 import { CdekPickupService } from "./cdek-pickup.service";
 import { PrintPdfService } from "./print-pdf.service";
+import { DeliveryPriceService } from "./delivery-price.service";
+import { PVZPickerService } from "./pvz-picker.service";
 
 @Module({
-  providers: [PartialReturnService, CdekPickupService, PrintPdfService],
+  providers: [
+    PartialReturnService,
+    CdekPickupService,
+    PrintPdfService,
+    DeliveryPriceService,
+    PVZPickerService,
+  ],
   controllers: [WebController],
 })
 export class WebModule {}

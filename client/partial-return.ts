@@ -1,5 +1,5 @@
 import { AMO } from "../src/amo/amo.constants";
-import { BACKEND_BASE_URL, CFV } from "./utils";
+import { BACKEND_BASE_URL, CFV, leadGoods } from "./common";
 
 type Good = {
   id: number;
@@ -33,7 +33,7 @@ export class ParialReturn {
   private async render() {
     $("body").css("overflow", "hidden").attr("data-body-fixed", 1);
     $("body").append(
-      '<div id="modalSplitLead" class="modal modal-list"><div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; margin-top: -741.5px; margin-left: -265px;"><div class="modal-body__inner"><span class="modal-body__close"><span id="closeModalSplitLead" class="icon icon-modal-close"></span></span><h2 class="modal-body__caption head_2">⇌ Частичный возврат</h2><div id="goodsList"></div></div></div></div></div>',
+      `<div id="modalSplitLead" class="modal modal-list"><div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; top: 20%; left: calc(50% - 250px); margin-left: 0; margin-bottom: 0; width: 500px;"><div class="modal-body__inner"><span class="modal-body__close"><span id="closeModalSplitLead" class="icon icon-modal-close"></span></span><h2 class="modal-body__caption head_2">⇌ Частичный возврат</h2><div id="goodsList"></div></div></div></div></div>`,
     );
     $("div#goodsList").append(
       '<h2 class="head_2" id="headSold">Продажа</h2><ul id="goodsSold"></ul><hr><h2 class="head_2" id="headReturn">Возврат</h2><ul id="goodsReturn"></ul><hr><button id="splitButtonGo" type="button" class="button-input button-cancel"><span class="button-input-inner "><span class="button-input-inner__text">Отправить</span></span></button><button id="splitButtonCancel" type="button" class="button-input button-cancel"><span class="button-input-inner "><span class="button-input-inner__text">Отмена</span></span></button>',
@@ -47,21 +47,8 @@ export class ParialReturn {
 
   private async getGoodsFromLead(lead_id: number) {
     try {
-      const res = await fetch(
-        `https://gerda.amocrm.ru/ajax/leads/${lead_id}/catalog/${AMO.CATALOG.GOODS}/elements?before_id=0&before_created_at=0&limit=50&with=catalog_element`,
-      );
-      const data = await res.json();
-      for (const item of data._embedded.links) {
-        const good = {
-          id: item.to_entity_id,
-          name: item._embedded.catalog_element.name,
-          quantity: item.metadata.quantity,
-          price: +item._embedded.catalog_element.custom_fields.find(
-            (field) => field.code === "PRICE",
-          )?.values[0].value,
-        };
-        this.addGoodToSold(good);
-      }
+      const goods = await leadGoods(lead_id);
+      goods.forEach((good) => this.addGoodToSold(good));
       $("#modalSplitLead").on("click", "li.split_li", (el) => this.handleListClick(el));
     } catch (e) {
       console.error("ERROR", e);
@@ -137,7 +124,7 @@ export class ParialReturn {
         AMO.CUSTOM_FIELD.INDEX,
         AMO.CUSTOM_FIELD.CITY,
         AMO.CUSTOM_FIELD.STREET,
-        AMO.CUSTOM_FIELD.HOUSE,
+        AMO.CUSTOM_FIELD.BUILDING,
         AMO.CUSTOM_FIELD.FLAT,
       ].map((id: number) => ({
         field_id: id,
@@ -171,25 +158,24 @@ export class ParialReturn {
 
     console.debug("SEND PARTIAL RETURN DATA", data);
 
-    const res = await fetch(this.BACKEND_URL, {
-      method: "POST",
-      headers: { "Content-type": "application/json" },
-      body: JSON.stringify(data),
-    });
-
     try {
-      $("div#modalSplitLead").html(
-        `<div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; margin-top: -741.5px; margin-left: -265px;"><div class="modal-body__inner" style="text-align: center;"><h2 class="head_2" style="font-size: 18pt;">${
-          res.ok ? "✔ УСПЕШНО" : "✘ ОШИБКА"
-        }</h2></div></div></div>`,
-      );
-    } catch (err) {
-      $("div#modalSplitLead").html(
-        `<div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; margin-top: -741.5px; margin-left: -265px;"><div class="modal-body__inner" style="text-align: center;"><h2 class="head_2" style="font-size: 18pt;">✘ ОШИБКА</h2></div></div></div>`,
-      );
-      console.error("Field to send data to backend", err);
-    }
+      const res = await fetch(this.BACKEND_URL, {
+        method: "POST",
+        headers: { "Content-type": "application/json" },
+        body: JSON.stringify(data),
+      });
 
-    setTimeout(this.closeModalSplit, 1000);
+      this.operationResult(res.ok ? "✔ УСПЕШНО" : "✘ ОШИБКА");
+    } catch (err) {
+      this.operationResult("✘ ОШИБКА");
+      console.error("Field to send data to backend", err);
+      setTimeout(this.closeModalSplit, 1000);
+    }
+  }
+
+  private operationResult(result: string) {
+    $("div#modalSplitLead").html(
+      `<div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; top: 30%; left: calc(50% - 100px); margin-left: 0; margin-bottom: 0; width: 200px;"><div class="modal-body__inner" style="text-align: center;"><h2 class="head_2" style="font-size: 18pt;">${result}</h2></div></div></div>`,
+    );
   }
 }

@@ -1,0 +1,344 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Выбор ПВЗ</title>
+    <script src="https://maps.api.2gis.ru/2.0/loader.js"></script>
+    <style>
+      body {
+        margin: 0;
+      }
+
+      #map {
+        height: 100%;
+        width: 100%;
+      }
+
+      #info {
+        width: 350px;
+        height: 99%;
+        z-index: 99999;
+        background-color: #fff;
+        box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
+        padding: 10px;
+        font-family: "PT Sans", Arial, sans-serif;
+        font-size: 1rem;
+        position: relative;
+        left: -100%;
+        transition: left 0.5s ease-out;
+      }
+
+      #info.show {
+        left: 0;
+      }
+
+      h2 {
+        font-size: 20px;
+        font-weight: 600;
+        line-height: 28px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+      }
+
+      ul {
+        padding-inline-start: 10px;
+        margin-top: 5px;
+        margin-bottom: 5px;
+      }
+
+      button#send {
+        font-family: "PT Sans", Arial, sans-serif;
+        font-weight: 500;
+        font-size: 18px;
+        line-height: 24px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        display: inline-flex;
+        width: 100%;
+        justify-content: center;
+        align-items: center;
+        padding: 12px 24px;
+        gap: 8px;
+        height: 48px;
+        border-radius: 10px;
+        box-sizing: border-box;
+        cursor: pointer;
+        border: unset;
+        background: #1ab248;
+        color: #fff;
+        transition: all 0.2s ease-in-out;
+        margin-top: 30px;
+      }
+
+      button#send:hover {
+        background: #30cc5f;
+        border-color: #30cc5f;
+      }
+
+      .feature_list_item {
+        display: flex;
+        font-weight: 400;
+        font-size: 14px;
+        line-height: 22px;
+        margin-bottom: 7px;
+      }
+
+      .feature_list_item p {
+        padding: 0;
+        margin: 0;
+      }
+
+      .feature_icon {
+        width: 24px;
+        height: 24px;
+        margin-right: 10px;
+        background-repeat: no-repeat;
+        background-position: center center;
+        list-style: none;
+      }
+
+      .worktime {
+        padding-left: 44px;
+        padding-right: 10px;
+      }
+
+      .worktime_list_item {
+        font-weight: 400;
+        font-size: 14px;
+        line-height: 20px;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 3px;
+      }
+
+      .dg-control-round__icon_name_fullscreen:after {
+        background-image: none !important;
+        content: "✖" !important;
+        right: 2px !important;
+        top: -7px !important;
+        color: rgb(78, 78, 78);
+      }
+
+      #loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1000;
+        padding: 20px;
+        border-radius: 5px;
+      }
+
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #787979;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map" style="width: 100%; height: 100%; position: absolute; outline: none">
+      <div id="loading">
+        <div class="spinner"></div>
+      </div>
+    </div>
+    <script type="module">
+      const url = new URL(window.location.href);
+      const BACKEND_BASE = url.searchParams.get("backend");
+      const ORIGIN = url.searchParams.get("origin");
+      const INDEX = url.searchParams.get("index");
+
+      try {
+        if (!BACKEND_BASE || !ORIGIN || !INDEX) {
+          alert("Не все параметры были переданы");
+          throw new Error("Some query params missing");
+        }
+
+        const [res, location, _] = await Promise.all([
+          fetch(`${BACKEND_BASE}/web/pvz_picker?index=${INDEX}`),
+          locationByIndex(INDEX),
+          DG,
+        ]);
+
+        let data = await res.json();
+
+        document.getElementById("map").innerHTML = `<div id="info"></div>`;
+
+        data = data.filter((item) => !item.take_only && item.type == "PVZ");
+
+        const map = DG.map("map", {
+          center: location,
+          zoom: 13,
+        });
+
+        document
+          .getElementsByClassName(
+            "dg-control-round__icon dg-control-round__icon_name_fullscreen",
+          )[0]
+          .setAttribute("title", "Закрыть");
+
+        // client icon
+        DG.marker(location, {
+          icon: DG.icon({
+            iconUrl: "https://maps.api.2gis.ru/2.0/img/DGCustomization__markerHover.png",
+            iconRetinaUrl: "https://maps.api.2gis.ru/2.0/img/DGCustomization__markerHover.png",
+            iconSize: [22, 34],
+            iconAnchor: [22, 34],
+            popupAnchor: [-10, 0],
+          }),
+        })
+          .addTo(map)
+          .bindLabel("Клиент");
+
+        for (const item of data) {
+          DG.marker([item.location.latitude, item.location.longitude])
+            .addTo(map)
+            .bindLabel(item.name)
+            .bindPopup(item.location.address)
+            .on("click", (e) => {
+              showInfo(item);
+              map.setView([e.latlng.lat, e.latlng.lng]);
+            })
+            .on("popupclose", (e) => {
+              hideInfo();
+            });
+        }
+
+        async function locationByIndex(index) {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&postalcode=${index}`,
+          );
+
+          if (!res.ok) throw new Error(`Unable to fetch location for index ${index}`);
+          const data = await res.json();
+          if (!data[0]?.lat || !data[0].lon) {
+            throw new Error(`Unable to fetch location for index ${index}`);
+          }
+
+          return [data[0]?.lat, data[0].lon];
+        }
+
+        function hideInfo() {
+          const el = document.getElementById("info");
+          el.classList.remove("show");
+        }
+
+        window.choosePoint = () => {
+          window.parent.postMessage(
+            {
+              type: "choose_point",
+              data: window.choosedPointData,
+            },
+            ORIGIN,
+          );
+        };
+
+        function showInfo(item) {
+          const el = document.getElementById("info");
+
+          const features = [
+            [
+              item.is_dressing_room,
+              "https://www.cdek.ru/assets/static/dressing-room.e99334cc.svg",
+              "Примерочная",
+            ],
+            [
+              item.have_cash,
+              "https://www.cdek.ru/assets/static/payment-cash.b9fdf3f7.svg",
+              "Наличные",
+            ],
+            [
+              item.have_cashless,
+              "https://www.cdek.ru/assets/static/payment-haveterminal.b7117aff.svg",
+              "Терминал",
+            ],
+            [
+              item.have_fast_payment_system,
+              "https://www.cdek.ru/assets/static/payment-haveterminal.b7117aff.svg",
+              "СБП",
+            ],
+            [
+              item.phones[0]?.number,
+              "https://www.cdek.ru/assets/static/phone.8ee42289.svg",
+              item.phones[0]?.number,
+            ],
+          ];
+
+          const list = features.map((feature) => {
+            if (feature[0]) {
+              return featureItem(feature[1], feature[2]);
+            }
+          });
+          const days = [
+            "Понедельник",
+            "Вторник",
+            "Среда",
+            "Четверг",
+            "Пятница",
+            "Суббота",
+            "Воскресенье",
+          ];
+
+          const metro = item.metro_station
+            ? `<li class="feature_list_item">
+                <div class="feature_icon"><svg data-v-71914fb1="" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" alt="" class="office-metro__icon"><circle cx="12" cy="12" r="10" stroke="#919699" stroke-width="2"></circle><path fill="#919699" d="M18.037 14.603 14.767 6 12 11.03 9.245 6l-3.282 8.603H5v1.304h4.95v-1.304h-.739l.717-2.142L12 16l2.072-3.539.717 2.142h-.74v1.304H19v-1.304z"></path></svg></div>
+                <p>${item.nearest_metro_station}</p>
+              </li>`
+            : "";
+
+          el.innerHTML = `
+          <div>
+            <h2>${item.name}</h2>
+            <ul>
+              <li class="feature_list_item">
+                <div class="feature_icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" data-v-f128a01f=""><path stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-opacity=".66" stroke-width="1.5" d="M10 11.667a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5"></path><path stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-opacity=".66" stroke-width="1.5" d="m14.714 13.88-3.536 3.537a1.667 1.667 0 0 1-2.355 0L5.286 13.88a6.666 6.666 0 1 1 9.428 0"></path></svg></div>
+                <p>${item.location.address}</p>
+              </li>
+              ${metro}
+              <li class="feature_list_item">
+                <div class="feature_icon"><svg data-v-fb97623c="" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"><path stroke="#919699" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 7v5l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0"></path></svg></div>
+                <p>${item.work_time}</p>
+              </li>
+              ${item.note ? '<li class="feature_list_item">' + item.note + "</li>" : ""}
+            </ul>
+
+            <h2>Услуги</h2>
+            <ul>
+              ${list.join("")}
+            </ul>
+          </div>
+          <button id="send" onclick="window.choosePoint()">Выбрать</button>
+        `;
+
+          window.choosedPointData = item;
+          el.classList.add("show");
+        }
+
+        function featureItem(icon, text) {
+          return `<li class="feature_list_item"><div class="feature_icon" style="background-image: url(${icon})"></div><p>${text}</p></li>`;
+        }
+      } catch (err) {
+        window.parent.postMessage(
+          {
+            type: "close_modal",
+            data: {},
+          },
+          ORIGIN,
+        );
+        alert("Неверно указан индекс");
+        console.error("ERROR on PVZ iframe", err);
+      }
+    </script>
+  </body>
+</html>

@@ -30,6 +30,9 @@ const fields_to_convert = [
 ] as const;
 
 export class LeadHelper {
+  private notes: string[] = [];
+  to_save = false;
+
   custom_fields: Map<number, string | number | number[]>;
   tags: Set<number>;
   goods: Map<number, Good>;
@@ -54,6 +57,42 @@ export class LeadHelper {
     this.account_id = params?.account_id;
     this.data = LeadHelper.convertFieldsToNumber(data);
     this.data.price = this.data.price ?? 0;
+
+    this.proxify(this);
+  }
+
+  private proxify(instance: this) {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const handler: ProxyHandler<any> = {
+      get(target, key) {
+        if (typeof target[key] === "object" && target[key] !== null) {
+          return new Proxy(target[key], handler);
+        }
+        if (typeof target[key] === "function") {
+          return (...args: unknown[]) => {
+            if (
+              ["set", "add", "delete", "clear", "push", "pop", "shift", "unshift", "set"].includes(
+                key.toString(),
+              )
+            ) {
+              instance.to_save = true;
+            }
+            return target[key](...args);
+          };
+        }
+        return target[key];
+      },
+      set(target, prop: string, value) {
+        instance.to_save = true;
+        target[prop] = value;
+        return true;
+      },
+    };
+
+    instance.data = new Proxy(instance.data, handler);
+    instance.goods = new Proxy(instance.goods, handler);
+    instance.custom_fields = new Proxy(instance.custom_fields, handler);
+    instance.tags = new Proxy(instance.tags, handler);
   }
 
   private static convertFieldsToNumber(data: any) {
@@ -215,7 +254,25 @@ export class LeadHelper {
   };
 
   async saveToAmo() {
-    return this.client.lead.updateLeadById(this.data.id, this.toApi.updateLeadRequest());
+    const promises: Promise<unknown>[] = [];
+    if (this.to_save) {
+      promises.push(this.client.lead.updateLeadById(this.data.id, this.toApi.updateLeadRequest()));
+    }
+    if (this.notes.length > 0) {
+      promises.push(
+        this.client.note.addNotes(
+          "leads",
+          this.notes.map((text) => ({
+            entity_id: this.data.id,
+            created_by: AMO.USER.ADMIN,
+            note_type: "common",
+            params: { text: text },
+          })),
+        ),
+      );
+    }
+
+    return await Promise.all(promises);
   }
 
   async addGoods(goods: { id: number; quantity: number }[]) {
@@ -259,19 +316,15 @@ export class LeadHelper {
 
   async note(text: string[] | string) {
     const text_arr = Array.isArray(text) ? text : [text];
-    await this.client.note.addNotes(
-      "leads",
-      text_arr.map((text) => ({
-        entity_id: this.data.id,
-        created_by: AMO.USER.ADMIN,
-        note_type: "common",
-        params: { text: text },
-      })),
-    );
+    this.notes = [...this.notes, ...text_arr];
   }
 
   // TODO: think about proper wrapper during implementation
   task(text: string, responsible_user_id: number) {
     throw new Error(`Method not implemented. ${text} ${responsible_user_id}`);
+  }
+
+  async step(fn: (lead: LeadHelper) => void | Promise<void>) {
+    fn(this);
   }
 }

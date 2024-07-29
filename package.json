@@ -1,6 +1,6 @@
 {
   "name": "gerda",
-  "version": "0.1.17",
+  "version": "0.1.20",
   "description": "",
   "author": "",
   "private": true,
@@ -17,7 +17,7 @@
     "test:cov": "vitest run --coverage --config ./test/vitest.config.ts",
     "test:e2e": "vitest run --config ./test/vitest.config.ts",
     "boilerplate": "vitest run --config ./test/vitest.boilerplate.config.ts ./test/boilerplate.spec.ts",
-    "build:client": "npx spack",
+    "build:client": "npx spack && node ./tools/scripts/inline-env-to-client.mjs",
     "tail": "node ./tools/scripts/tail-logs.mjs"
   },
   "dependencies": {
@@ -30,6 +30,7 @@
     "@nestjs/serve-static": "^4.0.2",
     "@pdf-lib/fontkit": "^1.1.1",
     "@shevernitskiy/amo": "^0.2.6",
+    "@shevernitskiy/post-calculator": "^0.1.2",
     "@shevernitskiy/post-tracking": "^0.1.2",
     "cdek": "^1.0.9",
     "google-auth-library": "^9.7.0",
