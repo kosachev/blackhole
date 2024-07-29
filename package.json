@@ -16,6 +16,7 @@
     "test": "vitest run --config ./test/vitest.config.ts",
     "test:cov": "vitest run --coverage --config ./test/vitest.config.ts",
     "test:e2e": "vitest run --config ./test/vitest.config.ts",
+    "boilerplate": "vitest run --config ./test/vitest.boilerplate.config.ts ./test/boilerplate.spec.ts",
     "build:client": "npx spack && node ./tools/scripts/inline-env-to-client.mjs",
     "tail": "node ./tools/scripts/tail-logs.mjs"
   },

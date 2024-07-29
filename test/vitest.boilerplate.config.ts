@@ -14,8 +14,6 @@ export default defineConfig({
       reportOnFailure: true,
     },
     reporters: "verbose",
-    include: ["./test/app.e2e-spec.ts", "test/cdek/*.spec.ts"],
-    exclude: ["./test/boilerplate.spec.ts"],
   },
   root: ".",
 });
