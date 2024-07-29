@@ -33,7 +33,7 @@ export class ParialReturn {
   private async render() {
     $("body").css("overflow", "hidden").attr("data-body-fixed", 1);
     $("body").append(
-      `<div id="modalSplitLead" class="modal modal-list"><div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; margin-top: -${(window.innerHeight + 540) / 2}px; margin-left: -265px;"><div class="modal-body__inner"><span class="modal-body__close"><span id="closeModalSplitLead" class="icon icon-modal-close"></span></span><h2 class="modal-body__caption head_2">⇌ Частичный возврат</h2><div id="goodsList"></div></div></div></div></div>`,
+      `<div id="modalSplitLead" class="modal modal-list"><div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; top: 20%; left: calc(50% - 250px); margin-left: 0; margin-bottom: 0; width: 500px;"><div class="modal-body__inner"><span class="modal-body__close"><span id="closeModalSplitLead" class="icon icon-modal-close"></span></span><h2 class="modal-body__caption head_2">⇌ Частичный возврат</h2><div id="goodsList"></div></div></div></div></div>`,
     );
     $("div#goodsList").append(
       '<h2 class="head_2" id="headSold">Продажа</h2><ul id="goodsSold"></ul><hr><h2 class="head_2" id="headReturn">Возврат</h2><ul id="goodsReturn"></ul><hr><button id="splitButtonGo" type="button" class="button-input button-cancel"><span class="button-input-inner "><span class="button-input-inner__text">Отправить</span></span></button><button id="splitButtonCancel" type="button" class="button-input button-cancel"><span class="button-input-inner "><span class="button-input-inner__text">Отмена</span></span></button>',
@@ -124,7 +124,7 @@ export class ParialReturn {
         AMO.CUSTOM_FIELD.INDEX,
         AMO.CUSTOM_FIELD.CITY,
         AMO.CUSTOM_FIELD.STREET,
-        AMO.CUSTOM_FIELD.HOUSE,
+        AMO.CUSTOM_FIELD.BUILDING,
         AMO.CUSTOM_FIELD.FLAT,
       ].map((id: number) => ({
         field_id: id,
@@ -158,25 +158,24 @@ export class ParialReturn {
 
     console.debug("SEND PARTIAL RETURN DATA", data);
 
-    const res = await fetch(this.BACKEND_URL, {
-      method: "POST",
-      headers: { "Content-type": "application/json" },
-      body: JSON.stringify(data),
-    });
-
     try {
-      $("div#modalSplitLead").html(
-        `<div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; margin-top: -741.5px; margin-left: -265px;"><div class="modal-body__inner" style="text-align: center;"><h2 class="head_2" style="font-size: 18pt;">${
-          res.ok ? "✔ УСПЕШНО" : "✘ ОШИБКА"
-        }</h2></div></div></div>`,
-      );
-    } catch (err) {
-      $("div#modalSplitLead").html(
-        `<div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; margin-top: -741.5px; margin-left: -265px;"><div class="modal-body__inner" style="text-align: center;"><h2 class="head_2" style="font-size: 18pt;">✘ ОШИБКА</h2></div></div></div>`,
-      );
-      console.error("Field to send data to backend", err);
-    }
+      const res = await fetch(this.BACKEND_URL, {
+        method: "POST",
+        headers: { "Content-type": "application/json" },
+        body: JSON.stringify(data),
+      });
 
-    setTimeout(this.closeModalSplit, 1000);
+      this.operationResult(res.ok ? "✔ УСПЕШНО" : "✘ ОШИБКА");
+    } catch (err) {
+      this.operationResult("✘ ОШИБКА");
+      console.error("Field to send data to backend", err);
+      setTimeout(this.closeModalSplit, 1000);
+    }
+  }
+
+  private operationResult(result: string) {
+    $("div#modalSplitLead").html(
+      `<div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; top: 30%; left: calc(50% - 100px); margin-left: 0; margin-bottom: 0; width: 200px;"><div class="modal-body__inner" style="text-align: center;"><h2 class="head_2" style="font-size: 18pt;">${result}</h2></div></div></div>`,
+    );
   }
 }
