@@ -7,7 +7,9 @@ updates:
     groups:
       deps:
         patterns:
-          - "@shevernitskiy/amo"
+          - "msw"
+          - "@nestjs/*"
+          - "@shevernitskiy/*"
           - "cdek"
           - "google-auth-library"
           - "google-spreadsheet"
