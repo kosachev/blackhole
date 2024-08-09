@@ -24,3 +24,5 @@ updates:
           - "tar-fs"
           - "winston"
           - "winston-daily-rotate-file"
+        exclude-patterns:
+          - "eslint*"
