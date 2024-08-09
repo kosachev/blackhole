@@ -49,7 +49,6 @@ console.warn("TEMPER MONKEY SCRIPT LOADED");
     }
   });
 
-  $("div.n-avatar#1092156").append(
-    '<svg class="svg-icon svg-tasks--types-icons--7-dims modal-body__inner__todo-types__item__iconpick__icon" data-icon-id="7" style="fill: rgb(0, 180, 0);"><use xlink:href="#tasks--types-icons--7"></use></svg>',
-  );
+  $("div.n-avatar__overlay > svg").css("filter", "sepia(1) hue-rotate(45deg) saturate(5)");
+  $("div.n-avatar__overlay > span").css("filter", "sepia(1) hue-rotate(45deg) saturate(5)");
 })(window["jQuery"].noConflict(true));
