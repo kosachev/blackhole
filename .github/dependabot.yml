@@ -8,21 +8,5 @@ updates:
       deps:
         patterns:
           - "*"
-          - "msw"
-          - "pactum"
-          - "@nestjs/*"
-          - "@shevernitskiy/*"
-          - "cdek"
-          - "google-auth-library"
-          - "google-spreadsheet"
-          - "grammy"
-          - "handlebars"
-          - "nest-winston"
-          - "nodemailer"
-          - "number-to-words-ru"
-          - "pdf-lib"
-          - "tar-fs"
-          - "winston"
-          - "winston-daily-rotate-file"
         exclude-patterns:
-          - "eslint*"
+          - "*eslint*"
