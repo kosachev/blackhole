@@ -8,6 +8,7 @@ updates:
       deps:
         patterns:
           - "msw"
+          - "pactum"
           - "@nestjs/*"
           - "@shevernitskiy/*"
           - "cdek"
