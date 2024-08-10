@@ -56,8 +56,18 @@ export class DeliveryPriceService {
 
   async cdekDelivery(data: RequestDeliveryPrice) {
     const total_price = data.goods.reduce((acc, curr) => acc + curr.price * curr.quantity, 0);
-    const total_weight = data.goods.reduce((acc, curr) => acc + curr.quantity * curr.weight, 0);
-    const insurance = Math.round(total_price * 0.75) / 100; // 0.75% rounded to 2 decimals
+    const total_weight = data.goods.reduce(
+      (acc, curr) =>
+        acc + curr.quantity * (curr.weight ?? this.config.get<number>("CDEK_DEFAULT_WEIGHT")),
+      0,
+    );
+    const insurance =
+      Math.round(total_price * this.config.get<number>("CDEK_INSURANCE") * 100) / 100; // 0.75% rounded to 2 decimals
+
+    const [length, width, height] = this.config
+      .get<string>("CDEK_DEFAULT_PARCEL_SIZE")
+      .split("x")
+      .map(Number);
 
     const res = await this.cdek.client.calculatorByAvaibleTariffs({
       from_location: {
@@ -72,7 +82,12 @@ export class DeliveryPriceService {
         { code: "INSURANCE", parameter: total_price.toString() },
       ],
       packages: [
-        { weight: data.goods.reduce((acc, curr) => acc + curr.quantity * curr.weight, 0) },
+        {
+          weight: total_weight,
+          width,
+          height,
+          length,
+        },
       ],
     });
 
@@ -132,7 +147,7 @@ export class DeliveryPriceService {
           created_by: AMO.USER.ADMIN,
           note_type: "common",
           params: {
-            text: `₽ СДЕК: страховка ${insurance}, вес ${Math.round(total_weight / 10) / 100}кг, 2% - ${total_price * 0.02}, 3% - ${total_price * 0.03}\n${tariff_unavaible}${res.tariff_codes
+            text: `₽ СДЕК: страховка ${insurance}₽, вес ${Math.round(total_weight / 10) / 100}кг, объёмный вес ${Math.round((length * width * height) / 50) / 100}кг, 2% - ${total_price * 0.02}, 3% - ${total_price * 0.03}\n${tariff_unavaible}${res.tariff_codes
               .filter((item) => Object.values(CdekTariff).includes(item.tariff_code))
               .map(
                 (item) =>
@@ -172,7 +187,11 @@ export class DeliveryPriceService {
 
   async postDelivery(data: RequestDeliveryPrice) {
     const total_price = data.goods.reduce((acc, curr) => acc + curr.price * curr.quantity, 0);
-    const total_weight = data.goods.reduce((acc, curr) => acc + curr.quantity * curr.weight, 0);
+    const total_weight = data.goods.reduce(
+      (acc, curr) =>
+        acc + curr.quantity * (curr.weight ?? this.config.get<number>("POST_DEFAULT_WEIGHT")),
+      0,
+    );
 
     try {
       const res = await postCalculator({
@@ -203,7 +222,7 @@ export class DeliveryPriceService {
             created_by: AMO.USER.ADMIN,
             note_type: "common",
             params: {
-              text: `₽ Почта: страховка ${res.cover.valnds / 100}, платный вес ${Math.round(res.weightpay / 10) / 100}кг\n${res.name} - ${res.paymoneynds / 100}₽ (тариф ${res.ground.valnds / 100}₽)`,
+              text: `₽ Почта: страховка ${res.cover.valnds / 100}₽, платный вес ${Math.round(res.weightpay / 10) / 100}кг\n${res.name} - ${res.paymoneynds / 100}₽ (тариф ${res.ground.valnds / 100}₽)`,
             },
           },
         ]),

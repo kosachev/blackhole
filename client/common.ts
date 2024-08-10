@@ -22,6 +22,8 @@ export type Good = {
   name: string;
   quantity: number;
   price: number;
+  weight?: number;
+  sku?: string;
 };
 
 export async function leadGoods(lead_id: number): Promise<Good[]> {
@@ -50,17 +52,22 @@ export async function leadGoods(lead_id: number): Promise<Good[]> {
     price: +item._embedded.catalog_element.custom_fields.find(
       (field) => field.id === AMO.CATALOG.CUSTOM_FIELD.PRICE,
     )?.values[0].value,
-    weight: +(
-      (
-        item._embedded.catalog_element.custom_fields.find(
-          (field) => field.id === AMO.CATALOG.CUSTOM_FIELD.WEIGHT,
-        )?.values[0].value ?? 1000
-      ) // NOTE: default weight 1000 gramm if not exist
+    weight: strToNumOrUndefined(
+      item._embedded.catalog_element.custom_fields.find(
+        (field) => field.id === AMO.CATALOG.CUSTOM_FIELD.WEIGHT,
+      )?.values[0].value,
     ),
     sku: item._embedded.catalog_element.custom_fields.find(
       (field) => field.id === AMO.CATALOG.CUSTOM_FIELD.SKU,
     )?.values[0].value,
   }));
+}
+
+function strToNumOrUndefined(str?: string): number | undefined {
+  if (!str) return undefined;
+  const num = Number(str);
+  if (isNaN(num)) return undefined;
+  return num;
 }
 
 export function leadDiscount(price: number): number {
