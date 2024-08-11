@@ -4,6 +4,8 @@ import { CFV, leadDiscount, leadGoods, setLeadPrice } from "./common";
 export class LeadPrice {
   readonly GOODS_LIST_SELECTOR = `div#${AMO.CATALOG.GOODS}.linked-form-holder.js-cf-group-wrapper.catalog_elements-in_card`;
 
+  private readonly quantity_list_delay = 1000; // goods loaded lazely, so we shout wait
+
   private obervers: MutationObserver[] = [];
 
   constructor(private lead_id: number) {
@@ -22,6 +24,7 @@ export class LeadPrice {
     }
     this.obervers = [];
     CFV(AMO.CUSTOM_FIELD.DISCOUNT).off("change");
+    $('input[name="quantity"].catalog-fields__amount-field').off("change");
   }
 
   private async check(lead_id: number) {
@@ -54,7 +57,10 @@ export class LeadPrice {
           )
         ) {
           console.debug("REMOVED FROM LIST");
-          this.check(this.lead_id);
+          setTimeout(() => {
+            this.setupGoodsQuatityTrigger();
+            this.check(this.lead_id);
+          }, this.quantity_list_delay);
         }
 
         if (
@@ -67,7 +73,10 @@ export class LeadPrice {
           mutation.target?.isEqualNode($(this.GOODS_LIST_SELECTOR).get(0))
         ) {
           console.debug("ADDED TO LIST");
-          this.check(this.lead_id);
+          setTimeout(() => {
+            this.setupGoodsQuatityTrigger();
+            this.check(this.lead_id);
+          }, this.quantity_list_delay);
         }
       }
     });
@@ -85,7 +94,7 @@ export class LeadPrice {
     if ($(this.GOODS_LIST_SELECTOR).length > 0) {
       console.debug("GOODS LIST DETECTED");
       this.setupGoodsListObserver();
-      // setTimeout(() => this.setupQuantityObserver(), 1000); // let goods load first time
+      setTimeout(() => this.setupGoodsQuatityTrigger(), this.quantity_list_delay);
     } else {
       console.debug("NO GOODS LIST, OBSERVE");
 
@@ -98,7 +107,7 @@ export class LeadPrice {
           console.debug("GOODS LIST DETECTED");
           linked_lists_observer.disconnect();
           this.setupGoodsListObserver();
-          // setTimeout(() => this.setupQuantityObserver(), 1000); // let goods load first time
+          setTimeout(() => this.setupGoodsQuatityTrigger(), this.quantity_list_delay);
         }
       });
 
@@ -134,5 +143,18 @@ export class LeadPrice {
     });
 
     this.obervers.push(quantity_observer);
+  }
+
+  private setupGoodsQuatityTrigger() {
+    const el = $('input[name="quantity"].catalog-fields__amount-field');
+    console.debug("SETUP GOODS QUANTITY TRIGGER", el.length);
+    el.off("change");
+    el.on("change", (e) => {
+      // @ts-expect-error isTrigger should be 3 on target event
+      if (e.isTrigger === 3) {
+        console.debug("QUANTITY CHANGED");
+        this.check(this.lead_id);
+      }
+    });
   }
 }
