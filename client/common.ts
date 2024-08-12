@@ -9,6 +9,11 @@ export function validateIndexCf(): boolean {
   return !(!index || isNaN(Number(index)) || Number(index) > 999999 || Number(index) < 100000);
 }
 
+export function validatePVZCf(): boolean {
+  const pvz = (CFV(AMO.CUSTOM_FIELD.PVZ).val() as string) ?? "";
+  return pvz.length > 0;
+}
+
 export function deliveryType(): string {
   return $(`div[data-id="${AMO.CUSTOM_FIELD.DELIVERY_TYPE}"] > div > div > button`).text().trim();
 }

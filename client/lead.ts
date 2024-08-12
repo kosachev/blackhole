@@ -3,7 +3,7 @@ import { CdekPickup } from "./cdek-pickup";
 import { DeliveryPrice } from "./delivery-price";
 import { ParialReturn } from "./partial-return";
 import { PrintPdf } from "./print-pdf";
-import { CFV, deliveryType, validateIndexCf } from "./common";
+import { CFV, deliveryTariff, deliveryType, validateIndexCf, validatePVZCf } from "./common";
 import { PVZPicker } from "./pvz-picker";
 import { LeadPrice } from "./lead-price";
 
@@ -25,6 +25,7 @@ export class Lead {
     this.timezone();
     this.deleteCompanyField();
     this.validateIndexField();
+    this.validateDeliveryPVZField();
     this.removeWidgetsDiv();
 
     this.to_destruct.push(() => {
@@ -89,6 +90,33 @@ export class Lead {
     this.to_destruct.push(() => {
       CFV(AMO.CUSTOM_FIELD.INDEX).off("input");
       CFV(AMO.CUSTOM_FIELD.DELIVERY_TYPE).off("change");
+    });
+  }
+
+  private validateDeliveryPVZField() {
+    function check() {
+      const delivery_type = deliveryType();
+      const delivery_tariff = deliveryTariff();
+      console.debug("VALIDATE INDEX FIELD", delivery_type, delivery_tariff);
+
+      if (
+        delivery_type === "Экспресс по России" &&
+        delivery_tariff === "Склад - Склад" &&
+        !validatePVZCf()
+      ) {
+        CFV(AMO.CUSTOM_FIELD.PVZ).parent().parent().addClass("validation-not-valid");
+      } else {
+        CFV(AMO.CUSTOM_FIELD.PVZ).parent().parent().removeClass("validation-not-valid");
+      }
+    }
+    check();
+    CFV(AMO.CUSTOM_FIELD.PVZ).on("input", check);
+    CFV(AMO.CUSTOM_FIELD.DELIVERY_TYPE).on("change", check);
+    CFV(AMO.CUSTOM_FIELD.DELIVERY_TARIFF).on("change", check);
+    this.to_destruct.push(() => {
+      CFV(AMO.CUSTOM_FIELD.PVZ).off("input");
+      CFV(AMO.CUSTOM_FIELD.DELIVERY_TYPE).off("change");
+      CFV(AMO.CUSTOM_FIELD.DELIVERY_TARIFF).off("change");
     });
   }
 
