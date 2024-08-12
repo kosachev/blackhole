@@ -217,7 +217,7 @@
 
         async function locationByIndex(index) {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURI(index + ", Russia")}`,
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(index + ", Russia")}`,
           );
 
           if (!res.ok) throw new Error(`Unable to fetch location for index ${index}`);
