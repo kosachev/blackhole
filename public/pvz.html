@@ -15,7 +15,7 @@
 
       #info {
         width: 350px;
-        height: 99%;
+        height: calc(100% - 20px);
         z-index: 99999;
         background-color: #fff;
         box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
@@ -25,6 +25,7 @@
         position: relative;
         left: -100%;
         transition: left 0.5s ease-out;
+        overflow-y: auto;
       }
 
       #info.show {
