@@ -20,11 +20,12 @@ import { MailService } from "./mail.service";
           },
         },
         defaults: {
-          from: `"No Reply" <${config.get("MAIL_FROM")}>`,
+          from: `"${config.get("OWNER_SELLER_NAME")}" <${config.get("MAIL_FROM")}>`,
         },
         template: {
           dir: "./templates/",
           adapter: new HandlebarsAdapter(),
+
           options: {
             strict: true,
           },
