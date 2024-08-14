@@ -1,0 +1,36 @@
+<html lang="en">
+  <head>
+    <style>
+      body { margin: 0px; padding: 0px; } .headDiv { width: 100%; height: 120px; background:
+      #f9fafb; text-align: center; }
+    </style>
+  </head>
+  <body>
+    <p>Благодарим Вас за заказ в нашем интернет-магазине!</p>
+    <p>Пожалуйста, проверьте правильность информации.</p>
+
+    Ф.И.О. получателя:{{name}}
+    Адрес доставки:
+    {{address}}
+    Телефон:
+    {{phone}}
+    E-mail:
+    {{email}}
+    Способ доставки:
+    {{#if deliveryTypeId}}
+      <p>Экспресс по России</p>
+    {{/if}}
+    Ваш заказ номер №{{orderNumber}}
+
+    <ul>
+      {{#each products}}
+        <li>{{this.name}}</li>
+        <li>{{this.price}}</li>
+        <li>{{this.quantity}}</li>
+        <li>{{this.total}}</li>
+      {{/each}}
+
+    </ul>
+  </body>
+
+</html>

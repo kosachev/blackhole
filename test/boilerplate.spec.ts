@@ -32,13 +32,39 @@ describe("CDEK OrderStatusWebhook", () => {
 
   test("code here", async () => {
     console.log("Boilerplate starts");
-    await service.sendWelcome({
-      name: "Name",
+    // await service.invoiceCdek({
+    //   name: "Name",
+    //   address: "Индекс, город, улица, дом, квартира",
+    //   phone: "+7(916)324-56-78",
+    //   email: "nayn@yandex.ru",
+    //   deliveryType: "Экспресс по России",
+    //   orderNumber: "23423",
+    //   items:[
+    //       {
+    //         "name": "Куртка из вязаной норки 'Хлоя'",
+    //         "quantity": 1,
+    //         "price": 19900,
+    //         "sum": 19900
+    //       },
+    //       {
+    //         "name": "Шапка 'Норка'",
+    //         "quantity": 2,
+    //         "price": 7500,
+    //         "sum": 15000
+    //       }
+    //     ],
+    //   totalPrice: 34900,
+    //   // discount: 5, // Необязательный параметр. Если не указан, то в шаблоне не отображается блок скидки
+    //   discountedPrice: 34400, // Необязательный параметр
+    //   prepayment: 800,
+    // });
+
+    await service.invoicePost({
+      name: "Фамилия Имя Отчество",
       address: "Индекс, город, улица, дом, квартира",
       phone: "+7(916)324-56-78",
       email: "nayn@yandex.ru",
-      deliveryType: "Экспресс по России",
-      products: "объект продуктов",
+      deliveryType: "Почта России",
       orderNumber: "23423",
       items:[
           {
@@ -55,9 +81,9 @@ describe("CDEK OrderStatusWebhook", () => {
           }
         ],
       totalPrice: 34900,
-      // discount: 5, // Необязательный параметр. Если не указан, то в шаблоне не отображается блок скидки
+      discount: 5, // Необязательный параметр. Если не указан, то в шаблоне не отображается блок скидки
       discountedPrice: 34400, // Необязательный параметр
-      prepayment: 800,
+      prepayment: 1800, // Сумма предоплаты для почты всегда составляет 15% от стоимости товара с учетом скидки если она есть
     });
   });
 });
