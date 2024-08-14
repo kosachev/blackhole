@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Подтверждение заказа</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            -webkit-text-size-adjust: 100%;
+        }
+        .container {
+            width: 100%;
+            max-width: 650px;
+            margin: 0px auto;
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            box-sizing: border-box;
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin: 0;
+            color: #2c3e50;
+        }
+        
+        .payment-notice {
+    font-size: 15px;
+    color: #555555; /* Нейтральный, неяркий цвет */
+    margin-top: 20px;
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.05); /* Легкий черный фон с 5% непрозрачностью */
+    padding: 10px; /* Добавляем отступы внутри блока */
+    border-radius: 5px; /* Скругляем углы */
+}
+
+
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 14px;
+            color: #777;
+            word-wrap: break-word;
+        }
+        .footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1> Оплата заказа {{orderNumber}} </h1>
+        </div>
+        <div class="payment-notice">
+            Оплата вашего заказа {{orderNumber}} успешно получена. Мы с радостью сообщаем, что заказ уже формируется и скоро будет отправлен. Спасибо за выбор Мехового Салона GERDA
+        </div>
+        <div class="footer">
+            Если у вас возникли вопросы, пожалуйста, свяжитесь с нашей службой поддержки. С уважением, команда интернет-магазина Gerda
+            <p>Меховой Салон GERDA<br>
+            <a href="https://gerda.msk.ru?utm_source=invocemail" target="_blank">gerda.msk.ru</a><br>
+            +7(495)995-58-28<br>
+            8(800)333-43-85</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -134,15 +134,15 @@
             <p>Пожалуйста, проверьте правильность информации.</p>
 
             <div class="order-info">
-                <p><strong>Ф.И.О. получателя:</strong> {{name}}</p>
-                <p><strong>Адрес доставки:</strong> {{address}}</p>
-                <p><strong>Телефон:</strong> {{phone}}</p>
-                <p><strong>E-mail:</strong> {{email}}</p>
-                <p><strong>Способ доставки:</strong> {{deliveryType}}</p>
+                <p><strong>Ф.И.О. получателя:</strong> Фамилия Имя Отчество</p>
+                <p><strong>Адрес доставки:</strong>  193231,Санкт-Петербург, Латышских Стрелков улица, дом 17 корпус 1, кв 472 </p>
+                <p><strong>Телефон:</strong>  +79045534973</p>
+                <p><strong>E-mail:</strong>  ylianik051033@yandex.ru</p>
+                <p><strong>Способ доставки:</strong>  Почта России</p>
             </div>
             
             <div class="order-details">
-                <h2>Ваш заказ номер №{{orderNumber}}</h2>
+                <h2>Ваш заказ номер №28179</h2>
                 <table>
                     <thead>
                         <tr>
@@ -153,27 +153,27 @@
                         </tr>
                     </thead>
                     <tbody>
-                         {{#each items}}
+                        
                         <tr>
-                            <td>{{name}}</td>
-                            <td>{{price}}</td>
-                            <td>{{quantity}}</td>
-                            <td>{{sum}}</td>
+                            <td>Парка с мехом чернобурки "Сюзанна" черная рaзмер: 66</td>
+                            <td>31900</td>
+                            <td>1</td>
+                            <td>31900</td>
                         </tr>
-                          {{/each}}
+                         
                         <tr>
                             <td colspan="3" class="total">Сумма заказа:</td>
-                            <td>{{totalPrice}}</td>
+                            <td>31900</td>
                         </tr>
-                        {{#if discount}}
+                        
                         <tr>
-                            <td colspan="3" class="total">Cумма со скидкой ({{discount}}%):</td>
-                            <td>{{discountedPrice}}</td>
+                            <td colspan="3" class="total">Cумма со скидкой (5%): </td>
+                            <td>30100</td>
                         </tr>
-                        {{/if}}
+                        
                         <tr>
-                            <td colspan="3" class="total">Cумма предоплаты (Стоимость доставки):</td>
-                            <td>{{prepayment}}</td>
+                            <td colspan="3" class="total">Cумма предоплаты (15% от заказа):</td>
+                            <td>1800</td>
                         </tr>
                       
                     </tbody>

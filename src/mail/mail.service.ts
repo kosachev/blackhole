@@ -23,7 +23,7 @@ export class MailService {
   async invoiceCdek(params: invoice) {
     await this.mailer.sendMail({
       to: params.email,
-      subject: "Реквизиты",
+      subject: "Реквизиты для оплаты заказа №" + params.orderNumber,
       template: "./invoiceCdek.hbs",
       context: {
         name: params.name,
@@ -43,7 +43,7 @@ export class MailService {
   async invoicePost(params: invoice) {
     await this.mailer.sendMail({
       to: params.email,
-      subject: "Реквизиты",
+      subject: "Реквизиты для оплаты заказа №" + params.orderNumber,
       template: "./invoicePost.hbs",
       context: {
         name: params.name,
