@@ -90,23 +90,21 @@
             word-wrap: break-word;
         }
         .payment-notice {
-    font-size: 14px;
-    color: #555555; /* Нейтральный, неяркий цвет */
-    margin-top: 20px;
-    text-align: center;
-    background-color: rgba(0, 0, 0, 0.05); /* Легкий черный фон с 5% непрозрачностью */
-    padding: 10px; /* Добавляем отступы внутри блока */
-    border-radius: 5px; /* Скругляем углы */
-}
-.payment-notice a {
-    color: #555555;
-    text-decoration: underline;
-}
-.payment-notice a:hover {
-    color: #3498db; /* Легкое выделение при наведении */
-}
-
-
+            font-size: 14px;
+            color: #555555; 
+            margin-top: 20px;
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.05); 
+            padding: 10px; 
+            border-radius: 5px;
+        }
+        .payment-notice a {
+            color: #555555;
+            text-decoration: underline;
+        }
+        .payment-notice a:hover {
+            color: #3498db; 
+        }
         .footer {
             text-align: center;
             margin-top: 20px;
@@ -132,7 +130,6 @@
         </div>
         <div class="content">
             <p>Пожалуйста, проверьте правильность информации.</p>
-
             <div class="order-info">
                 <p><strong>Ф.И.О. получателя:</strong> {{name}}</p>
                 <p><strong>Адрес доставки:</strong> {{address}}</p>
@@ -140,7 +137,6 @@
                 <p><strong>E-mail:</strong> {{email}}</p>
                 <p><strong>Способ доставки:</strong> {{deliveryType}}</p>
             </div>
-            
             <div class="order-details">
                 <h2>Ваш заказ номер №{{orderNumber}}</h2>
                 <table>
@@ -175,10 +171,8 @@
                             <td colspan="3" class="total">Cумма предоплаты (Стоимость доставки):</td>
                             <td>{{prepayment}}</td>
                         </tr>
-                      
                     </tbody>
                 </table>
-                
             </div>
             <div class="order-payment">
                 <h3>Реквизиты для предоплаты:</h3>

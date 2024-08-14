@@ -34,19 +34,14 @@
             margin: 0;
             color: #2c3e50;
         }
-        
         .payment-notice {
-    font-size: 15px;
-    color: #555555; /* Нейтральный, неяркий цвет */
-    margin-top: 20px;
-    text-align: center;
-    background-color: rgba(0, 0, 0, 0.05); /* Легкий черный фон с 5% непрозрачностью */
-    padding: 10px; /* Добавляем отступы внутри блока */
-    border-radius: 5px; /* Скругляем углы */
-}
-
-
-
+            font-size: 15px;
+            color: #555555;
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.05); 
+            padding: 10px;
+            border-radius: 5px;
+        }       
         .footer {
             text-align: center;
             margin-top: 20px;
@@ -68,10 +63,10 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1> Оплата заказа №28179 </h1>
+            <h1> Оплата заказа {{orderNumber}} </h1>
         </div>
         <div class="payment-notice">
-            Оплата вашего заказа №28179 успешно получена. Мы с радостью сообщаем, что заказ уже формируется и скоро будет отправлен. Спасибо за выбор Мехового Салона GERDA
+            Оплата вашего заказа {{orderNumber}} успешно получена. Мы с радостью сообщаем, что заказ уже формируется и скоро будет отправлен. Спасибо за выбор Мехового Салона GERDA
         </div>
         <div class="footer">
             Если у вас возникли вопросы, пожалуйста, свяжитесь с нашей службой поддержки. С уважением, команда интернет-магазина Gerda

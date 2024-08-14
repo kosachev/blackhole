@@ -16,7 +16,8 @@
         .container {
             width: 100%;
             max-width: 650px;
-            margin: 0px auto;
+            min-width: 500px;
+            margin: 20px auto;
             background-color: #ffffff;
             border: 1px solid #e0e0e0;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -90,23 +91,21 @@
             word-wrap: break-word;
         }
         .payment-notice {
-    font-size: 14px;
-    color: #555555; /* Нейтральный, неяркий цвет */
-    margin-top: 20px;
-    text-align: center;
-    background-color: rgba(0, 0, 0, 0.05); /* Легкий черный фон с 5% непрозрачностью */
-    padding: 10px; /* Добавляем отступы внутри блока */
-    border-radius: 5px; /* Скругляем углы */
-}
-.payment-notice a {
-    color: #555555;
-    text-decoration: underline;
-}
-.payment-notice a:hover {
-    color: #3498db; /* Легкое выделение при наведении */
-}
-
-
+            font-size: 14px;
+            color: #555555;
+            margin-top: 20px;
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.05); 
+            padding: 10px; 
+            border-radius: 5px; 
+        }
+        .payment-notice a {
+            color: #555555;
+            text-decoration: underline;
+        }
+        .payment-notice a:hover {
+            color: #3498db;
+        }
         .footer {
             text-align: center;
             margin-top: 20px;
@@ -147,9 +146,9 @@
                     <thead>
                         <tr>
                             <th style="width: 50%;">Наименование товара</th>
-                            <th style="width: 15%;">Цена</th>
-                            <th style="width: 20%;">Кол-во</th>
-                            <th style="width: 15%;">Сумма</th>
+                            <th style="width: 20%;">Цена</th>
+                            <th style="width: 10%;">Кол-во</th>
+                            <th style="width: 20%;">Сумма</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -172,7 +171,7 @@
                         </tr>
                         {{/if}}
                         <tr>
-                            <td colspan="3" class="total">Cумма предоплаты (Стоимость доставки):</td>
+                            <td colspan="3" class="total">Cумма предоплаты (15% от заказа):</td>
                             <td>{{prepayment}}</td>
                         </tr>
                       

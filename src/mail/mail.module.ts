@@ -25,7 +25,6 @@ import { MailService } from "./mail.service";
         template: {
           dir: "./templates/",
           adapter: new HandlebarsAdapter(),
-
           options: {
             strict: true,
           },
