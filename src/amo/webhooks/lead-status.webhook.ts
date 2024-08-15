@@ -30,27 +30,21 @@ export class LeadStatusWebhook extends AbstractWebhook {
   }
 
   async statusRequisite(lead: LeadHelper) {
-    const delivery_type = lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE);
-    if (!delivery_type) {
-      lead.error("❌ Не выбран тип доставки");
-    } else if (delivery_type !== "Экспресс по России" && delivery_type !== "Почта России") {
-      lead.error(`❌ Оплата для типа доставки ${delivery_type} не требуется`);
-    }
-    const email = lead.contact.custom_fields.get(AMO.CONTACT.EMAIL);
-    const phone = lead.contact.custom_fields.get(AMO.CONTACT.PHONE);
-    if (!lead.contact.name || lead.contact.name === "") lead.error("❌ Не указано ФИО");
-    if (!email || email === "") lead.error("❌ У контакта не указан email");
-    if (!phone || phone === "") lead.error("❌ У контакта не указан телефон");
-    if (lead.goods.size === 0) lead.error("❌ В сделке нет товаров");
-
-    if (!lead.custom_fields.get(AMO.CUSTOM_FIELD.INDEX)) lead.warning("⚠️ Не указан индекс");
-    if (!lead.custom_fields.get(AMO.CUSTOM_FIELD.CITY)) lead.warning("⚠️ Не указан город");
-    if (!lead.custom_fields.get(AMO.CUSTOM_FIELD.STREET)) lead.warning("⚠️ Не указана улица");
-    if (!lead.custom_fields.get(AMO.CUSTOM_FIELD.BUILDING)) lead.warning("⚠️ Не указан дом");
-    if (!lead.custom_fields.get(AMO.CUSTOM_FIELD.FLAT)) lead.warning("⚠️ Не указана квартира");
-    if (!lead.custom_fields.get(AMO.CUSTOM_FIELD.ORDER_ID))
-      lead.warning("⚠️ Не указан номер заказа");
-    if (!lead.custom_fields.get(AMO.CUSTOM_FIELD.PREPAY)) lead.warning("⚠️ Не указана предоплата");
+    this.validation(lead, [
+      "delivery_type_exists",
+      "delivery_type_cdek_or_post",
+      "email_exists",
+      "phone_exists",
+      "name_exists",
+      "goods_exists",
+      "order_number_exists",
+      "index_exists",
+      "city_exists",
+      "street_exists",
+      "building_exists",
+      "flat_exists",
+      "prepay_exists",
+    ]);
 
     if (lead.errors.length > 0 || lead.warnings.length > 0) {
       lead.note(["🔍 Проверка: Реквизиты", ...lead.errors, ...lead.warnings].join("\n"));
@@ -72,9 +66,9 @@ export class LeadStatusWebhook extends AbstractWebhook {
           lead.custom_fields.get(AMO.CUSTOM_FIELD.BUILDING) ?? "",
           lead.custom_fields.get(AMO.CUSTOM_FIELD.FLAT) ?? "",
         ].join(", "),
-        phone: phone,
-        email: email,
-        delivery_type: delivery_type as string,
+        phone: lead.contact.custom_fields.get(AMO.CONTACT.PHONE),
+        email: lead.contact.custom_fields.get(AMO.CONTACT.EMAIL),
+        delivery_type: lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) as string,
         order_number: lead.custom_fields.get(AMO.CUSTOM_FIELD.ORDER_ID) as string,
         goods: [...lead.goods.values()].map((good) => ({
           name: good.name,
@@ -94,9 +88,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
   }
 
   async statusPayment(lead: LeadHelper) {
-    const email = lead.contact.custom_fields.get(AMO.CONTACT.EMAIL);
-    if (!email || email === "") lead.error("❌ У контакта не указан email");
-    if (!lead.custom_fields.get(AMO.CUSTOM_FIELD.ORDER_ID)) lead.error("❌ Не указан номер заказа");
+    this.validation(lead, ["email_exists", "order_number_exists"]);
 
     if (lead.errors.length > 0) {
       lead.note(["🔍 Проверка: Оплата", ...lead.errors].join("\n"));
@@ -105,7 +97,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
 
     try {
       await this.mail.prepaymentConfirm({
-        email: email,
+        email: lead.contact.custom_fields.get(AMO.CONTACT.EMAIL),
         order_number: lead.custom_fields.get(AMO.CUSTOM_FIELD.ORDER_ID) as string,
       });
 
@@ -117,27 +109,18 @@ export class LeadStatusWebhook extends AbstractWebhook {
   }
 
   async statusDelivery(lead: LeadHelper) {
-    const delivery_type = lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE);
-    if (!delivery_type) {
-      lead.error("❌ Не выбран тип доставки");
-    } else if (
-      delivery_type !== "Курьером (в пределах МКАД)" &&
-      delivery_type !== "Курьером (Московская область)"
-    ) {
-      lead.error(`❌ Неверный тип доставки ${delivery_type} для статуса`);
-    }
-
-    const phone = lead.contact.custom_fields.get(AMO.CONTACT.PHONE);
-    if (!phone || phone === "") lead.error("❌ У контакта не указан телефон");
-    if (lead.goods.size === 0) lead.error("❌ В сделке нет товаров");
-    if (!lead.custom_fields.get(AMO.CUSTOM_FIELD.ORDER_ID)) lead.error("❌ Не указан номер заказа");
-
-    if (!lead.custom_fields.get(AMO.CUSTOM_FIELD.CITY)) lead.warning("⚠️ Не указан город");
-    if (!lead.custom_fields.get(AMO.CUSTOM_FIELD.STREET)) lead.warning("⚠️ Не указана улица");
-    if (!lead.custom_fields.get(AMO.CUSTOM_FIELD.BUILDING)) lead.warning("⚠️ Не указан дом");
-    if (!lead.custom_fields.get(AMO.CUSTOM_FIELD.FLAT)) lead.warning("⚠️ Не указана квартира");
-    if (!lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_COST))
-      lead.warning("⚠️ Не указана стоимость доставки");
+    this.validation(lead, [
+      "delivery_type_exists",
+      "delivery_type_courier",
+      "phone_exists",
+      "goods_exists",
+      "order_number_exists",
+      "city_exists",
+      "street_exists",
+      "building_exists",
+      "flat_exists",
+      "prepay_exists",
+    ]);
 
     if (lead.errors.length > 0 || lead.warnings.length > 0) {
       lead.note(["🔍 Проверка: Доставка", ...lead.errors, ...lead.warnings].join("\n"));
@@ -148,7 +131,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
       const pdf = await this.pfd.invoice({
         order_id: lead.custom_fields.get(AMO.CUSTOM_FIELD.ORDER_ID) as string,
         customer_name: lead.contact.name,
-        customer_phone: phone,
+        customer_phone: lead.contact.custom_fields.get(AMO.CONTACT.PHONE),
         customer_address: [
           lead.custom_fields.get(AMO.CUSTOM_FIELD.CITY) ?? "",
           lead.custom_fields.get(AMO.CUSTOM_FIELD.STREET) ?? "",
@@ -173,6 +156,84 @@ export class LeadStatusWebhook extends AbstractWebhook {
     } catch (err) {
       this.logger.error(err);
       lead.note("❌ Товарный чек: ошибка при создании товарного чека");
+    }
+  }
+
+  private validation(lead: LeadHelper, fields: string[]) {
+    const errors_check: Record<string, [boolean, string]> = {
+      delivery_type_exists: [
+        lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) ? true : false,
+        "❌ Не выбран тип доставки",
+      ],
+      delivery_type_cdek_or_post: [
+        ["Экспресс по России", "Почта России"].includes(
+          lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) as string,
+        ),
+        "❌ Неверный тип доставки",
+      ],
+      delivery_type_courier: [
+        ["Курьером (в пределах МКАД)", "Курьером (Московская область)"].includes(
+          lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) as string,
+        ),
+        "❌ Неверный тип доставки",
+      ],
+      email_exists: [
+        lead.contact.custom_fields.get(AMO.CONTACT.EMAIL) ? true : false,
+        "❌ У контакта не указан email",
+      ],
+      phone_exists: [
+        lead.contact.custom_fields.get(AMO.CONTACT.PHONE) ? true : false,
+        "❌ У контакта не указан телефон",
+      ],
+      order_number_exists: [
+        lead.custom_fields.get(AMO.CUSTOM_FIELD.ORDER_ID) ? true : false,
+        "❌ Не указан номер заказа",
+      ],
+      goods_exists: [lead.goods.size > 0 ? true : false, "❌ В сделке нет товаров"],
+      name_exists: [lead.contact.name && lead.contact.name !== "", "❌ Не указано ФИО"],
+    };
+
+    const warnings_check: Record<string, [boolean, string]> = {
+      index_exists: [
+        lead.custom_fields.get(AMO.CUSTOM_FIELD.INDEX) ? true : false,
+        "⚠️ Не указан индекс",
+      ],
+      city_exists: [
+        lead.custom_fields.get(AMO.CUSTOM_FIELD.CITY) ? true : false,
+        "⚠️ Не указан город",
+      ],
+      street_exists: [
+        lead.custom_fields.get(AMO.CUSTOM_FIELD.STREET) ? true : false,
+        "⚠️ Не указана улица",
+      ],
+      building_exists: [
+        lead.custom_fields.get(AMO.CUSTOM_FIELD.BUILDING) ? true : false,
+        "⚠️ Не указан дом",
+      ],
+      flat_exists: [
+        lead.custom_fields.get(AMO.CUSTOM_FIELD.FLAT) ? true : false,
+        "⚠️ Не указана квартира",
+      ],
+      delivery_cost_exists: [
+        lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_COST) ? true : false,
+        "⚠️ Не указана стоимость доставки",
+      ],
+      prepay_exists: [
+        lead.custom_fields.get(AMO.CUSTOM_FIELD.PREPAY) ? true : false,
+        "⚠️ Не указана предоплата",
+      ],
+    };
+
+    for (const [key, value] of Object.entries(errors_check)) {
+      if (fields.includes(key) && !value[0]) {
+        lead.error(value[1]);
+      }
+    }
+
+    for (const [key, value] of Object.entries(warnings_check)) {
+      if (fields.includes(key) && !value[0]) {
+        lead.warning(value[1]);
+      }
     }
   }
 }
