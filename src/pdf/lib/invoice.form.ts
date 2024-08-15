@@ -7,7 +7,7 @@ const invoice = {
     y: 85,
     font_size: 14,
     line_height: 14,
-    text: (id: number, date: string) => `ТОВАРНЫЙ ЧЕК №${id} от ${date}`,
+    text: (id: string, date: string) => `ТОВАРНЫЙ ЧЕК №${id} от ${date}`,
   },
   lead: { x: 15, y: 120, font_size: 11, line_height: 14 },
   table: { x: 15, y: 200, font_size: 10, line_height: 12, border_width: 0.5 },
@@ -28,7 +28,7 @@ const invoice = {
 
 export type Invoice = {
   header: string;
-  id: number;
+  id: string;
   date: string;
   lead: string;
   goods: {

@@ -41,7 +41,7 @@ type Post7p112ep = {
 };
 
 type Invoice = {
-  lead_id: number;
+  order_id: string;
   customer_name: string;
   customer_phone: string;
   customer_address: string;
@@ -161,7 +161,7 @@ export class PDFService {
       header: `Продавец: ${this.config.get<string>("OWNER_SELLER_NAME")}
 ИП ${this.config.get<string>("OWNER_SHORT_NAME")}, ИНН ${this.config.get<string>("OWNER_INN")}
 Адрес: ${this.config.get<string>("OWNER_SHOP_ADDRESS")}`,
-      id: params.lead_id,
+      id: params.order_id,
       date: new Date().toLocaleDateString(),
       lead: `Покупатель: ${params.customer_name}
 Телефон: ${params.customer_phone}

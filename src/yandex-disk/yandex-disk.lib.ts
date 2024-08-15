@@ -68,14 +68,14 @@ export class YandexDiskClient {
 
   async publishFile(path: string): Promise<string> {
     await this.request<{ href: string }>(
-      "/publish",
+      "/resources/publish",
       {
         path: `${path}`,
         fields: "href",
       },
       "PUT",
     );
-    const res = await this.request<{ public_url: string }>("", {
+    const res = await this.request<{ public_url: string }>("/resources", {
       path: `${path}`,
     });
     return res.public_url;

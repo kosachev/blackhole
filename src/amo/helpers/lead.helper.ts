@@ -4,6 +4,7 @@ import { AMO } from "../amo.constants";
 
 type Options = {
   load_goods?: boolean;
+  load_contact?: boolean;
 };
 
 type Good = {
@@ -29,13 +30,24 @@ const fields_to_convert = [
   "account_id",
 ] as const;
 
+type Contact = {
+  id: number;
+  name: string;
+  first_name: string;
+  last_name: string;
+  custom_fields: Map<number, string>;
+};
+
 export class LeadHelper {
   private notes: string[] = [];
+  public errors: string[] = [];
+  public warnings: string[] = [];
   to_save = false;
 
   custom_fields: Map<number, string | number | number[]>;
   tags: Set<number>;
   goods: Map<number, Good>;
+  contact: Contact;
   old_status_id?: number;
   account_id?: number;
 
@@ -46,6 +58,7 @@ export class LeadHelper {
       custom_fields?: Map<number, string | number | number[]>;
       tags?: Set<number>;
       goods?: Map<number, Good>;
+      contact?: Contact;
       old_status_id?: number;
       account_id?: number;
     },
@@ -53,6 +66,13 @@ export class LeadHelper {
     this.custom_fields = params?.custom_fields ?? new Map();
     this.tags = params?.tags ?? new Set();
     this.goods = params?.goods ?? new Map();
+    this.contact = params?.contact ?? {
+      name: "",
+      id: 0,
+      first_name: "",
+      last_name: "",
+      custom_fields: new Map(),
+    };
     this.old_status_id = params?.old_status_id;
     this.account_id = params?.account_id;
     this.data = LeadHelper.convertFieldsToNumber(data);
@@ -111,7 +131,7 @@ export class LeadHelper {
       throw new Error("LeadHelper can't parse webhook data");
     }
     const custom_fields = new Map<number, number | string | number[]>(
-      lead.custom_fields.map((item: CustomFieldsValue) => [
+      lead.custom_fields?.map((item: CustomFieldsValue) => [
         +(item.field_id ?? item.id),
         item.values?.at(0)?.value ?? item.values,
       ]),
@@ -122,6 +142,9 @@ export class LeadHelper {
       options?.load_goods && lead.id
         ? await LeadHelper.loadGoods(lead.id, client)
         : new Map<number, Good>();
+
+    const contact =
+      options?.load_contact && lead.id ? await LeadHelper.loadContact(lead.id, client) : undefined;
 
     const old_status_id = lead.old_status_id;
     const account_id = lead.account_id;
@@ -134,6 +157,7 @@ export class LeadHelper {
       custom_fields,
       tags,
       goods,
+      contact,
       old_status_id,
       account_id,
     });
@@ -186,6 +210,32 @@ export class LeadHelper {
       ],
     });
     return LeadHelper.createFromApi(client, data, options);
+  }
+
+  private static async loadContact(id: number, client: Amo): Promise<Contact> {
+    const lead_info = await client.lead.getLeadById(id, {
+      with: ["contacts"],
+    });
+    const contact_id = lead_info._embedded.contacts.find((item) => item.is_main === true)?.id;
+    if (!contact_id) {
+      throw new Error(`LeadHelper can't fetch contact of the lead ${id}`);
+    }
+
+    const contact = await client.contact.getContactById(contact_id);
+    const custom_fields = new Map<number, string>(
+      contact.custom_fields_values?.map((item) => [
+        item.field_id ?? item.id,
+        item.values?.at(0)?.value as string,
+      ]),
+    );
+
+    return {
+      id: contact.id,
+      name: contact.name,
+      first_name: contact.first_name,
+      last_name: contact.last_name,
+      custom_fields: custom_fields,
+    };
   }
 
   private static async loadGoods(id: number, client: Amo): Promise<Map<number, Good>> {
@@ -314,9 +364,19 @@ export class LeadHelper {
     return [...this.goods.values()].reduce((a, b) => a + (b.price ?? 0) * (b.quantity ?? 0), 0);
   }
 
-  async note(text: string[] | string) {
+  note(text: string[] | string) {
     const text_arr = Array.isArray(text) ? text : [text];
     this.notes = [...this.notes, ...text_arr];
+  }
+
+  error(text: string[] | string) {
+    const text_arr = Array.isArray(text) ? text : [text];
+    this.errors = [...this.errors, ...text_arr];
+  }
+
+  warning(text: string[] | string) {
+    const text_arr = Array.isArray(text) ? text : [text];
+    this.warnings = [...this.warnings, ...text_arr];
   }
 
   // TODO: think about proper wrapper during implementation

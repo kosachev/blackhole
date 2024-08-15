@@ -11,9 +11,7 @@ export class YandexDiskService {
   private client: YandexDiskClient;
 
   constructor(private readonly config: ConfigService) {
-    this.client = new YandexDiskClient(this.config.get("YANDEX_DISK_TOKEN"), (error) =>
-      this.logger.error(error),
-    );
+    this.client = new YandexDiskClient(this.config.get("YANDEX_DISK_TOKEN"));
   }
 
   // upload local file by path
