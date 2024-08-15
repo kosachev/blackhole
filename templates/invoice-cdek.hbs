@@ -1,0 +1,113 @@
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Подтверждение заказа</title>
+    <style>
+      body { font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333; margin: 0;
+      padding: 0; -webkit-text-size-adjust: 100%; } .container { width: 100%; max-width: 650px;
+      min-width: 500px; margin: 0px auto; background-color: #ffffff; border: 1px solid #e0e0e0;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); padding: 20px; border-radius: 10px; box-sizing:
+      border-box; } .header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid
+      #e0e0e0; } .header h1 { font-size: 24px; margin: 0; color: #2c3e50; } .content { padding: 20px
+      0; } .content p { font-size: 16px; line-height: 1.6; word-wrap: break-word; } .order-info {
+      background-color: #f2f2f2; padding: 15px; border-radius: 12px; margin: 20px 0; box-shadow: 0
+      2px 4px rgba(0, 0, 0, 0.1); } .order-info p { margin: 3px 0; font-size: 15px; line-height:
+      1.3; word-wrap: break-word; } .order-details { margin-bottom: 20px; } .order-details table {
+      width: 100%; border-collapse: collapse; table-layout: fixed; } .order-details th,
+      .order-details td { padding: 7px; border: 1px solid #d6d6d6; font-size: 13px; word-break:
+      break-word; } .order-details th { background-color: #f8f8f8; } .total { font-weight: bold;
+      text-align: right; } .order-payment{ margin-top: 20px; margin-bottom: 20px; } .order-payment
+      h2 { font-size: 18px; margin-bottom: 10px; } .order-payment p { margin: 5px 0;
+      background-color: #f8f8f8; word-wrap: break-word; } .payment-notice { font-size: 14px; color:
+      #555555; margin-top: 20px; text-align: center; background-color: rgba(0, 0, 0, 0.05); padding:
+      10px; border-radius: 5px; } .payment-notice a { color: #555555; text-decoration: underline; }
+      .payment-notice a:hover { color: #3498db; } .footer { text-align: center; margin-top: 20px;
+      padding-top: 20px; border-top: 1px solid #e0e0e0; font-size: 14px; color: #777; word-wrap:
+      break-word; } .footer a { color: #3498db; text-decoration: none; } .footer a:hover {
+      text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Благодарим вас за заказ в нашем интернет-магазине!</h1>
+      </div>
+      <div class="content">
+        <p>Пожалуйста, проверьте правильность информации.</p>
+        <div class="order-info">
+          <p><strong>Ф.И.О. получателя:</strong> {{name}}</p>
+          <p><strong>Адрес доставки:</strong> {{address}}</p>
+          <p><strong>Телефон:</strong> {{phone}}</p>
+          <p><strong>E-mail:</strong> {{email}}</p>
+          <p><strong>Способ доставки:</strong> {{delivery_type}}</p>
+        </div>
+        <div class="order-details">
+          <h2>Ваш заказ номер №{{order_number}}</h2>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 50%;">Наименование товара</th>
+                <th style="width: 15%;">Цена</th>
+                <th style="width: 20%;">Кол-во</th>
+                <th style="width: 15%;">Сумма</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each goods}}
+                <tr>
+                  <td>{{name}}</td>
+                  <td>{{price}}</td>
+                  <td>{{quantity}}</td>
+                  <td>{{sum}}</td>
+                </tr>
+              {{/each}}
+              <tr>
+                <td colspan="3" class="total">Сумма заказа:</td>
+                <td>{{total_price}}</td>
+              </tr>
+              {{#if discount}}
+                <tr>
+                  <td colspan="3" class="total">Cумма со скидкой ({{discount}}):</td>
+                  <td>{{discounted_price}}</td>
+                </tr>
+              {{/if}}
+              <tr>
+                <td colspan="3" class="total">Cумма предоплаты (Стоимость доставки):</td>
+                <td>{{prepayment}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="order-payment">
+          <h3>Реквизиты для предоплаты:</h3>
+          <p><strong>На карту Сбербанка:</strong><br />
+            Получатель: Галина Анатольевна Косачева<br />
+            Номер карты: 5469 3800 1563 6078<br />
+            <small>(При переводе на карту пожалуйста указывайте номер заказа)</small></p>
+          <p><strong>Расчетный счет:</strong><br />
+            Банк получателя: ПАО Сбербанк России г. Москва<br />
+            Расчетный счет: № 40802810638000007770<br />
+            БИК 044525225 КПП 775001001 ИНН 860322879435<br />
+            Кор. счет 30101810400000000225<br />
+            Получатель: ИП Косачева Галина Анатольевна<br />
+            Место ведения счета: Москва</p>
+        </div>
+      </div>
+      <div class="payment-notice">
+        Просим Вас, после оплаты, прислать нам копию квитанции об оплате на наш e-mail:
+        <a href="mailto:info@gerda.msk.ru">info@gerda.msk.ru</a>
+        с указанием № заказа.
+      </div>
+      <div class="footer">
+        Если у вас возникли вопросы, пожалуйста, свяжитесь с нашей службой поддержки. С уважением,
+        команда интернет-магазина Gerda
+        <p>Меховой Салон GERDA<br />
+          <a href="https://gerda.msk.ru?utm_source=invoicemail" target="_blank">gerda.msk.ru</a><br
+          />
+          +7(495)995-58-28<br />
+          8(800)333-43-85</p>
+      </div>
+    </div>
+  </body>
+</html>
