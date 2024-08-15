@@ -68,48 +68,27 @@ export class MailService {
         ? params.total_price * (1 - discount_value / 100)
         : params.total_price - discount_value;
 
-    if (params.delivery_type === "Экспресс по России") {
-      await this.mailer.sendMail({
-        to: params.email,
-        subject: "Реквизиты для оплаты заказа №" + params.order_number,
-        template: "./invoice-cdek.hbs",
-        context: {
-          name: params.name,
-          address: params.address,
-          phone: params.phone,
-          email: params.email,
-          delivery_type: params.delivery_type,
-          order_number: params.order_number,
-          goods: goods,
-          total_price: params.total_price,
-          discount: params.discount,
-          discounted_price: discounted_price,
-          prepayment: params.prepayment,
-        },
-      });
-    }
-
-    if (params.delivery_type === "Почта России") {
-      await this.mailer.sendMail({
-        to: params.email,
-        subject: "Реквизиты для оплаты заказа №" + params.order_number,
-        template: "./invoice-post.hbs",
-        context: {
-          name: params.name,
-          address: params.address,
-          phone: params.phone,
-          email: params.email,
-          delivery_type: params.delivery_type,
-          order_number: params.order_number,
-          goods: goods,
-          total_price: params.total_price,
-          discount: params.discount,
-          discounted_price: discounted_price,
-          prepayment: params.prepayment,
-        },
-      });
-    }
+    await this.mailer.sendMail({
+      to: params.email,
+      subject: "Реквизиты для оплаты заказа №" + params.order_number,
+      template:
+        params.delivery_type === "Экспресс по России" ? "./invoice-cdek.hbs" : "./invoice-post.hbs",
+      context: {
+        name: params.name,
+        address: params.address,
+        phone: params.phone,
+        email: params.email,
+        delivery_type: params.delivery_type,
+        order_number: params.order_number,
+        goods: goods,
+        total_price: params.total_price,
+        discount: params.discount,
+        discounted_price: discounted_price,
+        prepayment: params.prepayment,
+      },
+    });
   }
+
   async prepaymentConfirm(params: PaymentConfirmParams) {
     await this.mailer.sendMail({
       to: params.email,
@@ -122,27 +101,17 @@ export class MailService {
   }
 
   async orderSend(params: OrderSendParams) {
-    if (params.delivery_type === "Почта России") {
-      await this.mailer.sendMail({
-        to: params.email,
-        subject: "Заказа №" + params.order_number + " отправлен",
-        template: "./order-post-send.hbs",
-        context: {
-          order_number: params.order_number,
-          track_code: params.track_code,
-        },
-      });
-    }
-    if (params.delivery_type === "Экспресс по России") {
-      await this.mailer.sendMail({
-        to: params.email,
-        subject: "Заказа №" + params.order_number + " отправлен",
-        template: "./order-cdek-send.hbs",
-        context: {
-          order_number: params.order_number,
-          track_code: params.track_code,
-        },
-      });
-    }
+    await this.mailer.sendMail({
+      to: params.email,
+      subject: "Заказа №" + params.order_number + " отправлен",
+      template:
+        params.delivery_type === "Экспресс по России"
+          ? "./order-cdek-send.hbs"
+          : "./order-post-send.hbs",
+      context: {
+        order_number: params.order_number,
+        track_code: params.track_code,
+      },
+    });
   }
 }
