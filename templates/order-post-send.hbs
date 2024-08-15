@@ -1,0 +1,67 @@
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Подтверждение заказа</title>
+    <style>
+      body { font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333; margin: 0;
+      padding: 0; -webkit-text-size-adjust: 100%; } .container { width: 100%; max-width: 650px;
+      min-width: 500px; margin: 0px auto; background-color: #ffffff; border: 1px solid #e0e0e0;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); padding: 20px; border-radius: 10px; box-sizing:
+      border-box; } .header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid
+      #e0e0e0; } .header h1 { font-size: 24px; margin: 0; color: #2c3e50; } .payment-notice {
+      font-size: 15px; color: #555555; text-align: center; background-color: rgba(0, 0, 0, 0.05);
+      padding: 10px; border-radius: 5px; } .footer { text-align: center; margin-top: 20px;
+      padding-top: 20px; border-top: 1px solid #e0e0e0; font-size: 14px; color: #777; word-wrap:
+      break-word; } .footer a { color: #3498db; text-decoration: none; } .footer a:hover {
+      text-decoration: underline; } .styled-button { background-color: #3498db; /* Синий цвет фона
+      */ color: white; /* Белый цвет текста */ border: none; /* Убираем границы */ padding: 10px
+      15px; /* Внутренние отступы */ font-size: 16px; /* Размер шрифта */ font-family: "Arial",
+      sans-serif; /* Шрифт */ border-radius: 5px; /* Закругленные углы */ cursor: pointer; /*
+      Указатель мыши при наведении */ transition: background-color 0.3s ease; /* Плавный переход
+      фона */ text-decoration: none; /* Убираем подчеркивание текста */ display: inline-block; /*
+      Отображение как кнопка */ box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Тень */ }
+      .styled-button:hover { background-color: #2980b9; /* Темно-синий цвет при наведении */ }
+      .styled-button:active { background-color: #1c5985; /* Еще более темный цвет при нажатии */
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Уменьшение тени при нажатии */ }
+      .styled-button:focus { outline: none; /* Убираем обводку при фокусе */ box-shadow: 0 0 0 3px
+      rgba(52, 152, 219, 0.5); /* Добавляем светящийся контур при фокусе */ }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Заказ {{order_number}} отправлен</h1>
+      </div>
+      <div class="payment-notice">
+        Ваш заказ №{{order_number}}
+        был отправлен, и скоро будет у вас!
+        <br />
+        Отправляем вам трек-номер
+        <strong>{{track_code}}</strong>, по которому вы можете следить за вашей посылкой в пути на
+        официальном сайте "Почта России"
+
+        <a href="https://www.pochta.ru/tracking" target="_blank">https://www.pochta.ru/</a>
+        или просто нажмите на эту кнопку:<br /><br /><br />
+        <a
+          href="https://www.pochta.ru/tracking?barcode={{track_code}}"
+          target="_blank"
+          class="styled-button"
+        >Проверить статус</a>
+      </div>
+      <div class="footer">
+        Если у вас возникли вопросы, пожалуйста, свяжитесь с нашей службой поддержки. С уважением,
+        команда интернет-магазина Gerda
+        <p>
+          Меховой Салон GERDA<br />
+          <a
+            href="https://gerda.msk.ru?utm_source=oredersendemail"
+            target="_blank"
+          >gerda.msk.ru</a><br />
+          +7(495)995-58-28<br />
+          8(800)333-43-85
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
