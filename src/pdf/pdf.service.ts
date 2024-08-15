@@ -46,6 +46,7 @@ type Invoice = {
   customer_phone: string;
   customer_address: string;
   delivery_time?: string;
+  delivery_cost?: number;
   payment_type?: string;
   goods: {
     name: string;
@@ -169,6 +170,7 @@ export class PDFService {
 Время доставки: ${params.delivery_time ?? ""}
 Способ оплаты: ${params.payment_type ?? ""}`,
       goods: params.goods,
+      delivery_cost: params.delivery_cost,
     });
   }
 }

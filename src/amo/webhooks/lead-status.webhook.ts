@@ -24,12 +24,16 @@ export class LeadStatusWebhook extends AbstractWebhook {
         await this.statusDelivery(lead);
         break;
       }
+      case AMO.STATUS.POST: {
+        await this.statusPost(lead);
+        break;
+      }
     }
 
     await lead.saveToAmo();
   }
 
-  async statusRequisite(lead: LeadHelper) {
+  private async statusRequisite(lead: LeadHelper) {
     this.validation(lead, [
       "delivery_type_exists",
       "delivery_type_cdek_or_post",
@@ -47,7 +51,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
     ]);
 
     if (lead.errors.length > 0 || lead.warnings.length > 0) {
-      lead.note(["🔍 Проверка: Реквизиты", ...lead.errors, ...lead.warnings].join("\n"));
+      lead.note(["🔍 Статус: Реквизиты", ...lead.errors, ...lead.warnings].join("\n"));
     }
     if (lead.errors.length > 0) return;
 
@@ -87,11 +91,11 @@ export class LeadStatusWebhook extends AbstractWebhook {
     }
   }
 
-  async statusPayment(lead: LeadHelper) {
+  private async statusPayment(lead: LeadHelper) {
     this.validation(lead, ["email_exists", "order_number_exists"]);
 
     if (lead.errors.length > 0) {
-      lead.note(["🔍 Проверка: Оплата", ...lead.errors].join("\n"));
+      lead.note(["🔍 Статус: Оплата", ...lead.errors].join("\n"));
       return;
     }
 
@@ -108,7 +112,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
     }
   }
 
-  async statusDelivery(lead: LeadHelper) {
+  private async statusDelivery(lead: LeadHelper) {
     this.validation(lead, [
       "delivery_type_exists",
       "delivery_type_courier",
@@ -120,15 +124,23 @@ export class LeadStatusWebhook extends AbstractWebhook {
       "building_exists",
       "flat_exists",
       "prepay_exists",
+      "delivery_time_exists",
+      "discount_is_percent",
     ]);
 
     if (lead.errors.length > 0 || lead.warnings.length > 0) {
-      lead.note(["🔍 Проверка: Доставка", ...lead.errors, ...lead.warnings].join("\n"));
+      lead.note(["🔍 Статус: Доставка", ...lead.errors, ...lead.warnings].join("\n"));
     }
     if (lead.errors.length > 0) return;
 
+    let discount = Number(
+      ((lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT) as string) ?? "").replaceAll("%", ""),
+    );
+    discount = isNaN(discount) ? 1 : discount > 100 ? 1 : (100 - discount) / 100;
+    const delivery_cost = Number(lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_COST) as string);
+
     try {
-      const pdf = await this.pfd.invoice({
+      const pdf = await this.pdf.invoice({
         order_id: lead.custom_fields.get(AMO.CUSTOM_FIELD.ORDER_ID) as string,
         customer_name: lead.contact.name,
         customer_phone: lead.contact.custom_fields.get(AMO.CONTACT.PHONE),
@@ -142,9 +154,10 @@ export class LeadStatusWebhook extends AbstractWebhook {
         payment_type: lead.custom_fields.get(AMO.CUSTOM_FIELD.PAY_TYPE) as string,
         goods: [...lead.goods.values()].map((good) => ({
           name: good.name,
-          price: good.price,
+          price: Math.round(good.price * discount),
           quantity: good.quantity,
         })),
+        delivery_cost: isNaN(delivery_cost) ? undefined : delivery_cost,
       });
 
       const yadisk_url = await this.yadisk.upload(
@@ -155,7 +168,58 @@ export class LeadStatusWebhook extends AbstractWebhook {
       lead.note(`✎ Сформирован товарный чек: ${yadisk_url}`);
     } catch (err) {
       this.logger.error(err);
-      lead.note("❌ Товарный чек: ошибка при создании товарного чека");
+      lead.note("❌ Товарный чек: ошибка при создании");
+    }
+  }
+
+  private async statusPost(lead: LeadHelper) {
+    this.validation(lead, [
+      "delivery_type_exists",
+      "delivery_type_cdek_or_post",
+      "name_exists",
+      "index_is_number",
+      "city_exists",
+      "street_exists",
+      "building_exists",
+      "flat_exists",
+    ]);
+
+    if (lead.errors.length > 0 || lead.warnings.length > 0) {
+      lead.note(["🔍 Статус: Почта", ...lead.errors, ...lead.warnings].join("\n"));
+    }
+    if (lead.errors.length > 0) return;
+
+    let phone = (lead.contact.custom_fields.get(AMO.CONTACT.PHONE) ?? "")
+      .replaceAll(" ", "")
+      .replaceAll("-", "")
+      .replaceAll("(", "")
+      .replaceAll(")", "")
+      .replaceAll("+", "");
+    if (!phone.startsWith("9")) phone = phone.slice(1);
+
+    try {
+      const pdf = await this.pdf.post7p112ep({
+        recipient: lead.contact.name,
+        recipient_address: [
+          lead.custom_fields.get(AMO.CUSTOM_FIELD.CITY) ?? "",
+          lead.custom_fields.get(AMO.CUSTOM_FIELD.STREET) ?? "",
+          lead.custom_fields.get(AMO.CUSTOM_FIELD.BUILDING) ?? "",
+          lead.custom_fields.get(AMO.CUSTOM_FIELD.FLAT) ?? "",
+        ].join(", "),
+        recipient_index: Number(lead.custom_fields.get(AMO.CUSTOM_FIELD.INDEX)),
+        recipient_phone: Number(phone) ? Number(phone) : undefined,
+        sum: lead.data.price,
+      });
+
+      const yadisk_url = await this.yadisk.upload(
+        `Почтовый_бланк_${lead.custom_fields.get(AMO.CUSTOM_FIELD.ORDER_ID)}.pdf`,
+        Buffer.from(pdf),
+      );
+
+      lead.note(`✎ Сформирован почтовый бланк: ${yadisk_url}`);
+    } catch (err) {
+      this.logger.error(err);
+      lead.note("❌ Почтовый бланк: ошибка при создании");
     }
   }
 
@@ -191,6 +255,10 @@ export class LeadStatusWebhook extends AbstractWebhook {
       ],
       goods_exists: [lead.goods.size > 0 ? true : false, "❌ В сделке нет товаров"],
       name_exists: [lead.contact.name && lead.contact.name !== "", "❌ Не указано ФИО"],
+      index_is_number: [
+        Number(lead.custom_fields.get(AMO.CUSTOM_FIELD.INDEX)) ? true : false,
+        "❌ Некорректный индекс",
+      ],
     };
 
     const warnings_check: Record<string, [boolean, string]> = {
@@ -221,6 +289,15 @@ export class LeadStatusWebhook extends AbstractWebhook {
       prepay_exists: [
         lead.custom_fields.get(AMO.CUSTOM_FIELD.PREPAY) ? true : false,
         "⚠️ Не указана предоплата",
+      ],
+      delivery_time_exists: [
+        lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TIME) ? true : false,
+        "⚠️ Не указано время доставки",
+      ],
+      discount_is_percent: [
+        (lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT) as string)?.includes("%") ||
+          !lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT),
+        "⚠️ Cкидка не учитывается, так как указана не в процентах",
       ],
     };
 

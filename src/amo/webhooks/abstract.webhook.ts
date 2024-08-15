@@ -21,7 +21,7 @@ export abstract class AbstractWebhook {
     private readonly cdek_service: CdekService,
     protected readonly telegram: TelegramService,
     protected readonly mail: MailService,
-    protected readonly pfd: PDFService,
+    protected readonly pdf: PDFService,
     protected readonly yadisk: YandexDiskService,
   ) {
     this.amo = this.amo_service.client;
