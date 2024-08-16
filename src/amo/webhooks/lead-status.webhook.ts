@@ -3,6 +3,8 @@ import { AbstractWebhook } from "./abstract.webhook";
 import { LeadHelper } from "../helpers/lead.helper";
 import { AMO } from "../amo.constants";
 
+import { createHash } from "node:crypto";
+
 @Injectable()
 export class LeadStatusWebhook extends AbstractWebhook {
   async handle(data: unknown) {
@@ -28,27 +30,36 @@ export class LeadStatusWebhook extends AbstractWebhook {
         await this.statusPost(lead);
         break;
       }
+      case AMO.STATUS.CDEK: {
+        await this.statusCdek(lead);
+        break;
+      }
     }
 
     await lead.saveToAmo();
   }
 
   private async statusRequisite(lead: LeadHelper) {
-    this.validation(lead, [
-      "delivery_type_exists",
-      "delivery_type_cdek_or_post",
-      "email_exists",
-      "phone_exists",
-      "name_exists",
-      "goods_exists",
-      "order_number_exists",
-      "index_exists",
-      "city_exists",
-      "street_exists",
-      "building_exists",
-      "flat_exists",
-      "prepay_exists",
-    ]);
+    this.validation({
+      lead,
+      errors: [
+        "delivery_type_exists",
+        "delivery_type_cdek_or_post",
+        "email_exists",
+        "phone_exists",
+        "name_exists",
+        "goods_exists",
+        "order_number_exists",
+      ],
+      warnings: [
+        "index_exists",
+        "city_exists",
+        "street_exists",
+        "building_exists",
+        "flat_exists",
+        "prepay_exists",
+      ],
+    });
 
     if (lead.errors.length > 0 || lead.warnings.length > 0) {
       lead.note(["🔍 Статус: Реквизиты", ...lead.errors, ...lead.warnings].join("\n"));
@@ -86,7 +97,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
   }
 
   private async statusPayment(lead: LeadHelper) {
-    this.validation(lead, ["email_exists", "order_number_exists"]);
+    this.validation({ lead, errors: ["email_exists", "order_number_exists"] });
 
     if (lead.errors.length > 0) {
       lead.note(["🔍 Статус: Оплата", ...lead.errors].join("\n"));
@@ -107,30 +118,31 @@ export class LeadStatusWebhook extends AbstractWebhook {
   }
 
   private async statusDelivery(lead: LeadHelper) {
-    this.validation(lead, [
-      "delivery_type_exists",
-      "delivery_type_courier",
-      "phone_exists",
-      "goods_exists",
-      "order_number_exists",
-      "city_exists",
-      "street_exists",
-      "building_exists",
-      "flat_exists",
-      "prepay_exists",
-      "delivery_time_exists",
-      "discount_is_percent",
-    ]);
+    this.validation({
+      lead,
+      errors: [
+        "delivery_type_exists",
+        "delivery_type_courier",
+        "phone_exists",
+        "goods_exists",
+        "order_number_exists",
+      ],
+      warnings: [
+        "city_exists",
+        "street_exists",
+        "building_exists",
+        "flat_exists",
+        "prepay_exists",
+        "delivery_time_exists",
+        "discount_is_percent",
+      ],
+    });
 
     if (lead.errors.length > 0 || lead.warnings.length > 0) {
       lead.note(["🔍 Статус: Доставка", ...lead.errors, ...lead.warnings].join("\n"));
     }
     if (lead.errors.length > 0) return;
 
-    let discount = Number(
-      ((lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT) as string) ?? "").replaceAll("%", ""),
-    );
-    discount = isNaN(discount) ? 1 : discount > 100 ? 1 : (100 - discount) / 100;
     const delivery_cost = Number(lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_COST) as string);
 
     try {
@@ -143,7 +155,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
         payment_type: lead.custom_fields.get(AMO.CUSTOM_FIELD.PAY_TYPE) as string,
         goods: [...lead.goods.values()].map((good) => ({
           name: good.name,
-          price: Math.round(good.price * discount),
+          price: Math.round(good.price * lead.getDiscountMultiplyier()),
           quantity: good.quantity,
         })),
         delivery_cost: isNaN(delivery_cost) ? undefined : delivery_cost,
@@ -162,16 +174,16 @@ export class LeadStatusWebhook extends AbstractWebhook {
   }
 
   private async statusPost(lead: LeadHelper) {
-    this.validation(lead, [
-      "delivery_type_exists",
-      "delivery_type_cdek_or_post",
-      "name_exists",
-      "index_is_number",
-      "city_exists",
-      "street_exists",
-      "building_exists",
-      "flat_exists",
-    ]);
+    this.validation({
+      lead,
+      errors: [
+        "delivery_type_exists",
+        "delivery_type_cdek_or_post",
+        "name_exists",
+        "index_is_number",
+      ],
+      warnings: ["city_exists", "street_exists", "building_exists", "flat_exists"],
+    });
 
     if (lead.errors.length > 0 || lead.warnings.length > 0) {
       lead.note(["🔍 Статус: Почта", ...lead.errors, ...lead.warnings].join("\n"));
@@ -206,93 +218,312 @@ export class LeadStatusWebhook extends AbstractWebhook {
     }
   }
 
-  private validation(lead: LeadHelper, fields: string[]) {
-    const errors_check: Record<string, [boolean, string]> = {
+  private async statusCdek(lead: LeadHelper) {
+    this.validation({
+      lead,
+      errors: [
+        "order_number_exists",
+        "index_exists",
+        "city_exists",
+        "street_exists",
+        "building_exists",
+        "name_exists",
+        "phone_exists",
+        "email_exists",
+        "goods_exists",
+        "delivery_tariff_picked",
+        "pvz_exists",
+      ],
+    });
+
+    if (lead.errors.length > 0) {
+      lead.note(["🔍 Статус: СДЭК", ...lead.errors].join("\n"));
+      return;
+    }
+
+    const [length, width, height] = this.config
+      .get<string>("CDEK_DEFAULT_PARCEL_SIZE")
+      .split("x")
+      .map(Number);
+
+    const discount = lead.getDiscountMultiplyier();
+
+    const is_pvz = [
+      "Склад - Склад",
+      "Дверь - Склад",
+      "Склад - Склад эконом",
+      "Дверь - Склад эконом",
+    ].includes((lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TARIFF) as string) ?? "");
+
+    try {
+      const order = {
+        type: 1,
+        number: lead.data.id.toString(),
+        tariff_code: lead.parseTariff(),
+        comment: lead.data.name,
+        delivery_recipient_cost: { value: 0 },
+        sender: {
+          name: this.config.get<string>("OWNER_SELLER_NAME"),
+          phones: [
+            {
+              number: `+7${this.config.get<string>("OWNER_NOTIFICATION_PHONE")}`,
+            },
+          ],
+        },
+        recipient: {
+          name: lead.contact.name,
+          phones: [{ number: `+7${lead.getStripedPhone()}` }],
+        },
+        from_location: {
+          postal_code: this.config.get<string>("OWNER_POST_INDEX"),
+          country_code: "ru",
+          address: this.config.get<string>("OWNER_SHOP_ADDRESS"),
+        },
+        to_location: !is_pvz
+          ? {
+              postal_code: lead.custom_fields.get(AMO.CUSTOM_FIELD.INDEX) as string,
+              country_code: "ru",
+              address: lead.getFullAddress(),
+            }
+          : undefined,
+        delivery_point: is_pvz
+          ? ((lead.custom_fields.get(AMO.CUSTOM_FIELD.PVZ) as string) ?? "")
+              .replaceAll("[", "")
+              .replaceAll("]", "")
+              .trim()
+          : undefined,
+        services: [
+          { code: "TRYING_ON" },
+          { code: "INSURANCE", parameter: (lead.data.price * discount).toString() },
+        ],
+        packages: [
+          {
+            number: lead.data.id.toString(),
+            weight: [...lead.goods.values()].reduce(
+              (acc, item) =>
+                acc + (item.weight ?? Number(this.config.get<number>("CDEK_DEFAULT_WEIGHT"))),
+              0,
+            ),
+            length: length,
+            width: width,
+            height: height,
+            comment: lead.data.name,
+            items: [...lead.goods.values()].map((good) => ({
+              name: good.name,
+              ware_key:
+                good.sku ??
+                createHash("shake256", { outputLength: 12 }).update(good.name).digest("hex"), // not crc32 but should work
+              amount: good.quantity,
+              weight: good.weight ?? Number(this.config.get<number>("CDEK_DEFAULT_WEIGHT")),
+              url: this.config.get<string>("AMO_REDIRECT_URI"),
+              cost: good.price * discount,
+              payment: {
+                value: good.price * discount,
+              },
+            })),
+          },
+        ],
+      };
+
+      if (lead.goods.size > 1) {
+        order.services.push({ code: "PART_DELIV" });
+      }
+
+      const res = await this.cdek.addOrder(order);
+
+      if (res.requests[0].errors?.length > 0 || res.requests[0].state !== "ACCEPTED") {
+        lead.note(
+          `❌ СДЭК: ошибки при создании заказа\n${res.requests[0].errors?.map((err) => err.message)}`.trim(),
+        );
+      } else {
+        lead.note(
+          `✎ СДЭК: создан заказ на доставку${is_pvz ? " в ПВЗ" : ""} по тарифу ${lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TARIFF) as string}`,
+        );
+        lead.custom_fields.set(AMO.CUSTOM_FIELD.CDEK_UUID, res.entity.uuid);
+        this.cdekTrackcodeCheck(lead.data.id, res.entity.uuid, 1);
+      }
+    } catch (err) {
+      this.logger.error(err);
+      lead.note("❌ СДЭК: не удалось создать заказ в сдэк");
+    }
+  }
+
+  private cdekTrackcodeCheck(lead_id: number, uuid: string, attemps: number) {
+    setTimeout(async () => {
+      const res = await this.cdek.getOrderByUUID(uuid);
+
+      if (
+        res.requests[0].errors?.length > 0 ||
+        res.entity.statuses.find((item) => item.code === "INVALID")
+      ) {
+        this.amo.note.addNotes("leads", [
+          {
+            entity_id: lead_id,
+            created_by: AMO.USER.ADMIN,
+            note_type: "common",
+            params: {
+              text: `❌ СДЭК: ошибки при создании заказа при получении трэк-кода\n${res.requests[0].errors?.map((err) => err.message).join("\n")}`.trim(),
+            },
+          },
+        ]);
+        return;
+      }
+
+      if (res.entity.statuses.find((item) => item.code === "ACCEPTED")) {
+        await Promise.all([
+          this.amo.lead.updateLeadById(lead_id, {
+            custom_fields_values: [
+              {
+                field_id: AMO.CUSTOM_FIELD.TRACK_NUMBER,
+                values: [{ value: res.entity.cdek_number }],
+              },
+              {
+                field_id: AMO.CUSTOM_FIELD.CDEK_INVOICE_URL,
+                values: [
+                  {
+                    value: `https://lk.cdek.ru/print/print-order?numberOrd=${res.entity.cdek_number}`,
+                  },
+                ],
+              },
+            ],
+          }),
+          this.amo.note.addNotes("leads", [
+            {
+              entity_id: lead_id,
+              created_by: AMO.USER.ADMIN,
+              note_type: "common",
+              params: {
+                text: `✎ СДЭК: получен трек-код ${res.entity.cdek_number}\nНакладная: https://lk.cdek.ru/print/print-order?numberOrd=${res.entity.cdek_number}`,
+              },
+            },
+          ]),
+        ]);
+        return;
+      }
+
+      if (attemps <= 5) {
+        attemps++;
+        this.cdekTrackcodeCheck(lead_id, uuid, attemps);
+      } else {
+        this.amo.note.addNotes("leads", [
+          {
+            entity_id: lead_id,
+            created_by: AMO.USER.ADMIN,
+            note_type: "common",
+            params: {
+              text: `❌ СДЭК: не удалось получить трек-код в течении 5 попыток`,
+            },
+          },
+        ]);
+      }
+    }, 1000 * attemps);
+  }
+
+  private validation({
+    lead,
+    errors,
+    warnings,
+  }: {
+    lead: LeadHelper;
+    errors?: string[];
+    warnings?: string[];
+  }) {
+    const checks: Record<string, [boolean, string]> = {
       delivery_type_exists: [
         lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) ? true : false,
-        "❌ Не выбран тип доставки",
+        "Не выбран тип доставки",
       ],
       delivery_type_cdek_or_post: [
         ["Экспресс по России", "Почта России"].includes(
           lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) as string,
         ),
-        "❌ Неверный тип доставки",
+        "Неверный тип доставки",
       ],
       delivery_type_courier: [
         ["Курьером (в пределах МКАД)", "Курьером (Московская область)"].includes(
           lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) as string,
         ),
-        "❌ Неверный тип доставки",
+        "Неверный тип доставки",
       ],
       email_exists: [
         lead.contact.custom_fields.get(AMO.CONTACT.EMAIL) ? true : false,
-        "❌ У контакта не указан email",
+        "У контакта не указан email",
       ],
       phone_exists: [
         lead.contact.custom_fields.get(AMO.CONTACT.PHONE) ? true : false,
-        "❌ У контакта не указан телефон",
+        "У контакта не указан телефон",
       ],
       order_number_exists: [
         lead.custom_fields.get(AMO.CUSTOM_FIELD.ORDER_ID) ? true : false,
-        "❌ Не указан номер заказа",
+        "Не указан номер заказа",
       ],
-      goods_exists: [lead.goods.size > 0 ? true : false, "❌ В сделке нет товаров"],
-      name_exists: [lead.contact.name && lead.contact.name !== "", "❌ Не указано ФИО"],
+      goods_exists: [lead.goods.size > 0 ? true : false, "В сделке нет товаров"],
+      name_exists: [lead.contact.name && lead.contact.name !== "", "Не указано ФИО"],
       index_is_number: [
         Number(lead.custom_fields.get(AMO.CUSTOM_FIELD.INDEX)) ? true : false,
-        "❌ Некорректный индекс",
+        "Некорректный индекс",
       ],
-    };
-
-    const warnings_check: Record<string, [boolean, string]> = {
       index_exists: [
         lead.custom_fields.get(AMO.CUSTOM_FIELD.INDEX) ? true : false,
-        "⚠️ Не указан индекс",
+        "Не указан индекс",
       ],
       city_exists: [
         lead.custom_fields.get(AMO.CUSTOM_FIELD.CITY) ? true : false,
-        "⚠️ Не указан город",
+        "Не указан город",
       ],
       street_exists: [
         lead.custom_fields.get(AMO.CUSTOM_FIELD.STREET) ? true : false,
-        "⚠️ Не указана улица",
+        "Не указана улица",
       ],
       building_exists: [
         lead.custom_fields.get(AMO.CUSTOM_FIELD.BUILDING) ? true : false,
-        "⚠️ Не указан дом",
+        "Не указан дом",
       ],
       flat_exists: [
         lead.custom_fields.get(AMO.CUSTOM_FIELD.FLAT) ? true : false,
-        "⚠️ Не указана квартира",
+        "Не указана квартира",
       ],
       delivery_cost_exists: [
         lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_COST) ? true : false,
-        "⚠️ Не указана стоимость доставки",
+        "Не указана стоимость доставки",
       ],
       prepay_exists: [
         lead.custom_fields.get(AMO.CUSTOM_FIELD.PREPAY) ? true : false,
-        "⚠️ Не указана предоплата",
+        "Не указана предоплата",
       ],
       delivery_time_exists: [
         lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TIME) ? true : false,
-        "⚠️ Не указано время доставки",
+        "Не указано время доставки",
       ],
       discount_is_percent: [
         (lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT) as string)?.includes("%") ||
           !lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT),
-        "⚠️ Cкидка не учитывается, так как указана не в процентах",
+        "Cкидка не учитывается, так как указана не в процентах",
+      ],
+      delivery_tariff_picked: [
+        lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TARIFF) ? true : false,
+        "Не выбран тариф доставки",
+      ],
+      pvz_exists: [
+        !(
+          [
+            "Склад - Склад",
+            "Дверь - Склад",
+            "Склад - Склад эконом",
+            "Дверь - Склад эконом",
+          ].includes((lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TARIFF) as string) ?? "") &&
+          !lead.custom_fields.get(AMO.CUSTOM_FIELD.PVZ)
+        ),
+        "Не выбран пункт выдачи",
       ],
     };
 
-    for (const [key, value] of Object.entries(errors_check)) {
-      if (fields.includes(key) && !value[0]) {
-        lead.error(value[1]);
+    for (const [check_name, check_data] of Object.entries(checks)) {
+      if (errors?.includes(check_name) && !check_data[0]) {
+        lead.error(`❌ ${check_data[1]}`);
       }
-    }
-
-    for (const [key, value] of Object.entries(warnings_check)) {
-      if (fields.includes(key) && !value[0]) {
-        lead.warning(value[1]);
+      if (warnings?.includes(check_name) && !check_data[0]) {
+        lead.warning(`⚠️ ${check_data[1]}`);
       }
     }
   }

@@ -11,8 +11,9 @@ type Good = {
   id: number;
   quantity: number;
   name: string;
-  sku: string;
+  sku?: string;
   price: number;
+  weight?: number;
 };
 
 const fields_to_convert = [
@@ -37,6 +38,17 @@ type Contact = {
   last_name: string;
   custom_fields: Map<number, string>;
 };
+
+enum CdekTariff {
+  OFFICE_TO_OFFICE = 136,
+  OFFICE_TO_DOOR = 137,
+  DOOR_TO_OFFICE = 138,
+  DOOR_TO_DOOR = 139,
+  ECONOMY_DOOR_TO_DOOR = 231,
+  ECONOMY_DOOR_TO_OFFICE = 232,
+  ECONOMY_OFFICE_TO_DOOR = 233,
+  ECONOMY_OFFICE_TO_OFFICE = 234,
+}
 
 export class LeadHelper {
   private notes: string[] = [];
@@ -249,7 +261,6 @@ export class LeadHelper {
         id: link.to_entity_id,
         quantity: link.metadata?.quantity ?? 1,
         name: "unknown",
-        sku: "unknown",
         price: 0,
       });
     }
@@ -262,12 +273,18 @@ export class LeadHelper {
     for (const el of cat_els._embedded.elements) {
       const good = goods.get(el.id);
       if (good) {
+        const weight = parseInt(
+          el.custom_fields_values
+            .find((item) => item.field_id == AMO.CATALOG.CUSTOM_FIELD.WEIGHT)
+            ?.values?.at(0)
+            ?.value.toString(),
+        );
         good.name = el.name;
         good.sku =
           el.custom_fields_values
             .find((item) => item.field_id == AMO.CATALOG.CUSTOM_FIELD.SKU)
             ?.values?.at(0)
-            ?.value?.toString() ?? "unknown";
+            ?.value?.toString() ?? undefined;
         good.price =
           parseInt(
             el.custom_fields_values
@@ -275,6 +292,7 @@ export class LeadHelper {
               ?.values?.at(0)
               ?.value.toString(),
           ) ?? 0;
+        good.weight = isNaN(weight) ? undefined : weight;
       }
       goods.set(el.id, good);
     }
@@ -422,5 +440,35 @@ export class LeadHelper {
       .replaceAll("+", "");
     if (!phone.startsWith("9")) phone = phone.slice(1);
     return phone;
+  }
+
+  parseTariff(): number {
+    switch (this.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TARIFF)) {
+      case "Дверь - Дверь":
+        return CdekTariff.DOOR_TO_DOOR;
+      case "Дверь - Склад":
+        return CdekTariff.DOOR_TO_OFFICE;
+      case "Склад - Дверь":
+        return CdekTariff.OFFICE_TO_DOOR;
+      case "Склад - Склад":
+        return CdekTariff.OFFICE_TO_OFFICE;
+      case "Дверь - Дверь эконом":
+        return CdekTariff.ECONOMY_DOOR_TO_DOOR;
+      case "Дверь - Склад эконом":
+        return CdekTariff.ECONOMY_DOOR_TO_OFFICE;
+      case "Склад - Дверь эконом":
+        return CdekTariff.ECONOMY_OFFICE_TO_DOOR;
+      case "Склад - Склад эконом":
+        return CdekTariff.ECONOMY_OFFICE_TO_OFFICE;
+      default:
+        return undefined;
+    }
+  }
+
+  getDiscountMultiplyier(): number {
+    const discount = Number(
+      ((this.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT) as string) ?? "").replaceAll("%", ""),
+    );
+    return isNaN(discount) ? 1 : discount > 100 ? 1 : (100 - discount) / 100;
   }
 }
