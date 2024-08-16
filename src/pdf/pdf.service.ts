@@ -38,6 +38,7 @@ type Post7p112ep = {
   recipient_phone?: number;
   recipient_index: number;
   sum: number;
+  sum_cash_on_delivery: number;
 };
 
 type Invoice = {
@@ -136,12 +137,15 @@ export class PDFService {
           params.sum.toString() +
           " " +
           convert(params.sum, { showNumberParts: { fractional: false } }).toLocaleLowerCase(),
-        sum_cash_on_delivery: params.sum.toString() + " " + convert(params.sum).toLocaleLowerCase(),
+        sum_cash_on_delivery:
+          params.sum_cash_on_delivery.toString() +
+          " " +
+          convert(params.sum_cash_on_delivery).toLocaleLowerCase(),
       }),
       this.builder.fillPost112epDoc({
-        sum: params.sum.toString(),
+        sum: params.sum_cash_on_delivery.toString(),
         kop: "00",
-        sum_words: convert(params.sum).toLocaleLowerCase(),
+        sum_words: convert(params.sum_cash_on_delivery).toLocaleLowerCase(),
         recipient_phone: this.config.get<string>("OWNER_NOTIFICATION_PHONE"),
         recipient: this.config.get<string>("OWNER_IP_NAME"),
         recipient_address: this.config.get<string>("OWNER_TOWN"),

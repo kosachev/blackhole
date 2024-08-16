@@ -63,13 +63,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
     try {
       await this.mail.invoice({
         name: lead.contact.name,
-        address: [
-          lead.custom_fields.get(AMO.CUSTOM_FIELD.INDEX) ?? "",
-          lead.custom_fields.get(AMO.CUSTOM_FIELD.CITY) ?? "",
-          lead.custom_fields.get(AMO.CUSTOM_FIELD.STREET) ?? "",
-          lead.custom_fields.get(AMO.CUSTOM_FIELD.BUILDING) ?? "",
-          lead.custom_fields.get(AMO.CUSTOM_FIELD.FLAT) ?? "",
-        ].join(", "),
+        address: lead.getFullAddress(true),
         phone: lead.contact.custom_fields.get(AMO.CONTACT.PHONE),
         email: lead.contact.custom_fields.get(AMO.CONTACT.EMAIL),
         delivery_type: lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) as string,
@@ -144,12 +138,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
         order_id: lead.custom_fields.get(AMO.CUSTOM_FIELD.ORDER_ID) as string,
         customer_name: lead.contact.name,
         customer_phone: lead.contact.custom_fields.get(AMO.CONTACT.PHONE),
-        customer_address: [
-          lead.custom_fields.get(AMO.CUSTOM_FIELD.CITY) ?? "",
-          lead.custom_fields.get(AMO.CUSTOM_FIELD.STREET) ?? "",
-          lead.custom_fields.get(AMO.CUSTOM_FIELD.BUILDING) ?? "",
-          lead.custom_fields.get(AMO.CUSTOM_FIELD.FLAT) ?? "",
-        ].join(", "),
+        customer_address: lead.getFullAddress(),
         delivery_time: lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TIME) as string,
         payment_type: lead.custom_fields.get(AMO.CUSTOM_FIELD.PAY_TYPE) as string,
         goods: [...lead.goods.values()].map((good) => ({
@@ -189,26 +178,20 @@ export class LeadStatusWebhook extends AbstractWebhook {
     }
     if (lead.errors.length > 0) return;
 
-    let phone = (lead.contact.custom_fields.get(AMO.CONTACT.PHONE) ?? "")
-      .replaceAll(" ", "")
-      .replaceAll("-", "")
-      .replaceAll("(", "")
-      .replaceAll(")", "")
-      .replaceAll("+", "");
-    if (!phone.startsWith("9")) phone = phone.slice(1);
+    const phone = Number(lead.getStripedPhone());
 
     try {
       const pdf = await this.pdf.post7p112ep({
         recipient: lead.contact.name,
-        recipient_address: [
-          lead.custom_fields.get(AMO.CUSTOM_FIELD.CITY) ?? "",
-          lead.custom_fields.get(AMO.CUSTOM_FIELD.STREET) ?? "",
-          lead.custom_fields.get(AMO.CUSTOM_FIELD.BUILDING) ?? "",
-          lead.custom_fields.get(AMO.CUSTOM_FIELD.FLAT) ?? "",
-        ].join(", "),
+        recipient_address: lead.getFullAddress(),
         recipient_index: Number(lead.custom_fields.get(AMO.CUSTOM_FIELD.INDEX)),
-        recipient_phone: Number(phone) ? Number(phone) : undefined,
+        recipient_phone: isNaN(phone) ? undefined : phone,
         sum: lead.data.price,
+        sum_cash_on_delivery:
+          lead.data.price -
+          lead.getAbsoluteDiscount() +
+          Number((lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_COST) as string) ?? "0") -
+          Number((lead.custom_fields.get(AMO.CUSTOM_FIELD.PREPAY) as string) ?? "0"),
       });
 
       const yadisk_url = await this.yadisk.upload(

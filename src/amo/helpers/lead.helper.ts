@@ -387,4 +387,40 @@ export class LeadHelper {
   async step(fn: (lead: LeadHelper) => void | Promise<void>) {
     fn(this);
   }
+
+  getAbsoluteDiscount(): number {
+    let abs_discount = 0;
+    if (this.custom_fields.has(AMO.CUSTOM_FIELD.DISCOUNT)) {
+      const discount = this.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT).toString();
+      if (discount.includes("%")) {
+        abs_discount = this.data.price * (+discount.replace("%", "") / 100);
+      } else {
+        abs_discount = +discount;
+      }
+    }
+    return abs_discount;
+  }
+
+  getFullAddress(with_index = false): string {
+    return [
+      with_index ? this.custom_fields.get(AMO.CUSTOM_FIELD.INDEX) : undefined,
+      this.custom_fields.get(AMO.CUSTOM_FIELD.CITY),
+      this.custom_fields.get(AMO.CUSTOM_FIELD.STREET),
+      this.custom_fields.get(AMO.CUSTOM_FIELD.BUILDING),
+      this.custom_fields.get(AMO.CUSTOM_FIELD.FLAT),
+    ]
+      .filter((item) => item)
+      .join(", ");
+  }
+
+  getStripedPhone(): string {
+    let phone = (this.contact.custom_fields.get(AMO.CONTACT.PHONE) ?? "")
+      .replaceAll(" ", "")
+      .replaceAll("-", "")
+      .replaceAll("(", "")
+      .replaceAll(")", "")
+      .replaceAll("+", "");
+    if (!phone.startsWith("9")) phone = phone.slice(1);
+    return phone;
+  }
 }

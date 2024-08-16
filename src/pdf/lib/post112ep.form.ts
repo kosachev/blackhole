@@ -23,7 +23,7 @@ export const post112p: Form<Post112ep> = {
     sum: { font_size: 23, field_name: "Summ" },
     kop: { font_size: 23, field_name: "kop" },
     sum_words: { font_size: 15, field_name: "SummWords" },
-    recipient_phone: { font_size: 18, field_name: "SenderPhone" },
+    recipient_phone: { font_size: 18, field_name: "RecipientPhone" },
     recipient: { font_size: 18, field_name: "Recipient" },
     recipient_address: { font_size: 18, field_name: "RecipientAddress" },
     recipient_index: { font_size: 18, field_name: "RecipientIndex" },
