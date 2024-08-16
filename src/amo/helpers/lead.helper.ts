@@ -4,14 +4,16 @@ import { AMO } from "../amo.constants";
 
 type Options = {
   load_goods?: boolean;
+  load_contact?: boolean;
 };
 
 type Good = {
   id: number;
   quantity: number;
   name: string;
-  sku: string;
+  sku?: string;
   price: number;
+  weight?: number;
 };
 
 const fields_to_convert = [
@@ -29,13 +31,35 @@ const fields_to_convert = [
   "account_id",
 ] as const;
 
+type Contact = {
+  id: number;
+  name: string;
+  first_name: string;
+  last_name: string;
+  custom_fields: Map<number, string>;
+};
+
+enum CdekTariff {
+  OFFICE_TO_OFFICE = 136,
+  OFFICE_TO_DOOR = 137,
+  DOOR_TO_OFFICE = 138,
+  DOOR_TO_DOOR = 139,
+  ECONOMY_DOOR_TO_DOOR = 231,
+  ECONOMY_DOOR_TO_OFFICE = 232,
+  ECONOMY_OFFICE_TO_DOOR = 233,
+  ECONOMY_OFFICE_TO_OFFICE = 234,
+}
+
 export class LeadHelper {
   private notes: string[] = [];
+  public errors: string[] = [];
+  public warnings: string[] = [];
   to_save = false;
 
   custom_fields: Map<number, string | number | number[]>;
   tags: Set<number>;
   goods: Map<number, Good>;
+  contact: Contact;
   old_status_id?: number;
   account_id?: number;
 
@@ -46,6 +70,7 @@ export class LeadHelper {
       custom_fields?: Map<number, string | number | number[]>;
       tags?: Set<number>;
       goods?: Map<number, Good>;
+      contact?: Contact;
       old_status_id?: number;
       account_id?: number;
     },
@@ -53,6 +78,13 @@ export class LeadHelper {
     this.custom_fields = params?.custom_fields ?? new Map();
     this.tags = params?.tags ?? new Set();
     this.goods = params?.goods ?? new Map();
+    this.contact = params?.contact ?? {
+      name: "",
+      id: 0,
+      first_name: "",
+      last_name: "",
+      custom_fields: new Map(),
+    };
     this.old_status_id = params?.old_status_id;
     this.account_id = params?.account_id;
     this.data = LeadHelper.convertFieldsToNumber(data);
@@ -111,7 +143,7 @@ export class LeadHelper {
       throw new Error("LeadHelper can't parse webhook data");
     }
     const custom_fields = new Map<number, number | string | number[]>(
-      lead.custom_fields.map((item: CustomFieldsValue) => [
+      lead.custom_fields?.map((item: CustomFieldsValue) => [
         +(item.field_id ?? item.id),
         item.values?.at(0)?.value ?? item.values,
       ]),
@@ -122,6 +154,9 @@ export class LeadHelper {
       options?.load_goods && lead.id
         ? await LeadHelper.loadGoods(lead.id, client)
         : new Map<number, Good>();
+
+    const contact =
+      options?.load_contact && lead.id ? await LeadHelper.loadContact(lead.id, client) : undefined;
 
     const old_status_id = lead.old_status_id;
     const account_id = lead.account_id;
@@ -134,6 +169,7 @@ export class LeadHelper {
       custom_fields,
       tags,
       goods,
+      contact,
       old_status_id,
       account_id,
     });
@@ -188,6 +224,32 @@ export class LeadHelper {
     return LeadHelper.createFromApi(client, data, options);
   }
 
+  private static async loadContact(id: number, client: Amo): Promise<Contact> {
+    const lead_info = await client.lead.getLeadById(id, {
+      with: ["contacts"],
+    });
+    const contact_id = lead_info._embedded.contacts.find((item) => item.is_main === true)?.id;
+    if (!contact_id) {
+      throw new Error(`LeadHelper can't fetch contact of the lead ${id}`);
+    }
+
+    const contact = await client.contact.getContactById(contact_id);
+    const custom_fields = new Map<number, string>(
+      contact.custom_fields_values?.map((item) => [
+        item.field_id ?? item.id,
+        item.values?.at(0)?.value as string,
+      ]),
+    );
+
+    return {
+      id: contact.id,
+      name: contact.name,
+      first_name: contact.first_name,
+      last_name: contact.last_name,
+      custom_fields: custom_fields,
+    };
+  }
+
   private static async loadGoods(id: number, client: Amo): Promise<Map<number, Good>> {
     const res = await client.link.getLinksByEntityId(id, "leads", {
       // TODO: remove hardcoded catalog id
@@ -199,7 +261,6 @@ export class LeadHelper {
         id: link.to_entity_id,
         quantity: link.metadata?.quantity ?? 1,
         name: "unknown",
-        sku: "unknown",
         price: 0,
       });
     }
@@ -212,12 +273,18 @@ export class LeadHelper {
     for (const el of cat_els._embedded.elements) {
       const good = goods.get(el.id);
       if (good) {
+        const weight = parseInt(
+          el.custom_fields_values
+            .find((item) => item.field_id == AMO.CATALOG.CUSTOM_FIELD.WEIGHT)
+            ?.values?.at(0)
+            ?.value.toString(),
+        );
         good.name = el.name;
         good.sku =
           el.custom_fields_values
             .find((item) => item.field_id == AMO.CATALOG.CUSTOM_FIELD.SKU)
             ?.values?.at(0)
-            ?.value?.toString() ?? "unknown";
+            ?.value?.toString() ?? undefined;
         good.price =
           parseInt(
             el.custom_fields_values
@@ -225,6 +292,7 @@ export class LeadHelper {
               ?.values?.at(0)
               ?.value.toString(),
           ) ?? 0;
+        good.weight = isNaN(weight) ? undefined : weight;
       }
       goods.set(el.id, good);
     }
@@ -314,9 +382,19 @@ export class LeadHelper {
     return [...this.goods.values()].reduce((a, b) => a + (b.price ?? 0) * (b.quantity ?? 0), 0);
   }
 
-  async note(text: string[] | string) {
+  note(text: string[] | string) {
     const text_arr = Array.isArray(text) ? text : [text];
     this.notes = [...this.notes, ...text_arr];
+  }
+
+  error(text: string[] | string) {
+    const text_arr = Array.isArray(text) ? text : [text];
+    this.errors = [...this.errors, ...text_arr];
+  }
+
+  warning(text: string[] | string) {
+    const text_arr = Array.isArray(text) ? text : [text];
+    this.warnings = [...this.warnings, ...text_arr];
   }
 
   // TODO: think about proper wrapper during implementation
@@ -326,5 +404,71 @@ export class LeadHelper {
 
   async step(fn: (lead: LeadHelper) => void | Promise<void>) {
     fn(this);
+  }
+
+  getAbsoluteDiscount(): number {
+    let abs_discount = 0;
+    if (this.custom_fields.has(AMO.CUSTOM_FIELD.DISCOUNT)) {
+      const discount = this.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT).toString();
+      if (discount.includes("%")) {
+        abs_discount = this.data.price * (+discount.replace("%", "") / 100);
+      } else {
+        abs_discount = +discount;
+      }
+    }
+    return abs_discount;
+  }
+
+  getFullAddress(with_index = false): string {
+    return [
+      with_index ? this.custom_fields.get(AMO.CUSTOM_FIELD.INDEX) : undefined,
+      this.custom_fields.get(AMO.CUSTOM_FIELD.CITY),
+      this.custom_fields.get(AMO.CUSTOM_FIELD.STREET),
+      this.custom_fields.get(AMO.CUSTOM_FIELD.BUILDING),
+      this.custom_fields.get(AMO.CUSTOM_FIELD.FLAT),
+    ]
+      .filter((item) => item)
+      .join(", ");
+  }
+
+  getStripedPhone(): string {
+    let phone = (this.contact.custom_fields.get(AMO.CONTACT.PHONE) ?? "")
+      .replaceAll(" ", "")
+      .replaceAll("-", "")
+      .replaceAll("(", "")
+      .replaceAll(")", "")
+      .replaceAll("+", "");
+    if (!phone.startsWith("9")) phone = phone.slice(1);
+    return phone;
+  }
+
+  parseTariff(): number {
+    switch (this.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TARIFF)) {
+      case "Дверь - Дверь":
+        return CdekTariff.DOOR_TO_DOOR;
+      case "Дверь - Склад":
+        return CdekTariff.DOOR_TO_OFFICE;
+      case "Склад - Дверь":
+        return CdekTariff.OFFICE_TO_DOOR;
+      case "Склад - Склад":
+        return CdekTariff.OFFICE_TO_OFFICE;
+      case "Дверь - Дверь эконом":
+        return CdekTariff.ECONOMY_DOOR_TO_DOOR;
+      case "Дверь - Склад эконом":
+        return CdekTariff.ECONOMY_DOOR_TO_OFFICE;
+      case "Склад - Дверь эконом":
+        return CdekTariff.ECONOMY_OFFICE_TO_DOOR;
+      case "Склад - Склад эконом":
+        return CdekTariff.ECONOMY_OFFICE_TO_OFFICE;
+      default:
+        return undefined;
+    }
+  }
+
+  getDiscountMultiplyier(): number {
+    const discount = Number(
+      ((this.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT) as string) ?? "").replaceAll("%", ""),
+    );
+    return isNaN(discount) ? 1 : discount > 100 ? 1 : (100 - discount) / 100;
   }
 }

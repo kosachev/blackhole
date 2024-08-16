@@ -7,7 +7,7 @@ const invoice = {
     y: 85,
     font_size: 14,
     line_height: 14,
-    text: (id: number, date: string) => `ТОВАРНЫЙ ЧЕК №${id} от ${date}`,
+    text: (id: string, date: string) => `ТОВАРНЫЙ ЧЕК №${id} от ${date}`,
   },
   lead: { x: 15, y: 120, font_size: 11, line_height: 14 },
   table: { x: 15, y: 200, font_size: 10, line_height: 12, border_width: 0.5 },
@@ -28,7 +28,7 @@ const invoice = {
 
 export type Invoice = {
   header: string;
-  id: number;
+  id: string;
   date: string;
   lead: string;
   goods: {
@@ -36,6 +36,7 @@ export type Invoice = {
     price: number;
     quantity: number;
   }[];
+  delivery_cost?: number;
 };
 
 export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bold: PDFFont) {
@@ -114,7 +115,7 @@ export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bo
     ],
   );
 
-  let total = 0;
+  let total = data.delivery_cost ?? 0;
 
   for (const [index, item] of data.goods.entries()) {
     drawTableLine(
@@ -130,9 +131,18 @@ export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bo
     total += item.price * item.quantity;
   }
 
-  // table footer
+  // delivery line
   drawTableLine(
     [invoice.table.x, top(invoice.table.y + invoice.table.line_height * (data.goods.length + 1))],
+    [
+      { width: 352, text: "Доставка", align: "right" },
+      { width: 210, text: (data.delivery_cost ?? 0).toString(), align: "right" },
+    ],
+  );
+
+  // table footer
+  drawTableLine(
+    [invoice.table.x, top(invoice.table.y + invoice.table.line_height * (data.goods.length + 2))],
     [
       { width: 352, text: "ИТОГО", align: "right", bold: true },
       { width: 210, text: total.toString(), align: "right" },

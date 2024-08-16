@@ -38,14 +38,16 @@ type Post7p112ep = {
   recipient_phone?: number;
   recipient_index: number;
   sum: number;
+  sum_cash_on_delivery: number;
 };
 
 type Invoice = {
-  lead_id: number;
+  order_id: string;
   customer_name: string;
   customer_phone: string;
   customer_address: string;
   delivery_time?: string;
+  delivery_cost?: number;
   payment_type?: string;
   goods: {
     name: string;
@@ -135,12 +137,15 @@ export class PDFService {
           params.sum.toString() +
           " " +
           convert(params.sum, { showNumberParts: { fractional: false } }).toLocaleLowerCase(),
-        sum_cash_on_delivery: params.sum.toString() + " " + convert(params.sum).toLocaleLowerCase(),
+        sum_cash_on_delivery:
+          params.sum_cash_on_delivery.toString() +
+          " " +
+          convert(params.sum_cash_on_delivery).toLocaleLowerCase(),
       }),
       this.builder.fillPost112epDoc({
-        sum: params.sum.toString(),
+        sum: params.sum_cash_on_delivery.toString(),
         kop: "00",
-        sum_words: convert(params.sum).toLocaleLowerCase(),
+        sum_words: convert(params.sum_cash_on_delivery).toLocaleLowerCase(),
         recipient_phone: this.config.get<string>("OWNER_NOTIFICATION_PHONE"),
         recipient: this.config.get<string>("OWNER_IP_NAME"),
         recipient_address: this.config.get<string>("OWNER_TOWN"),
@@ -161,7 +166,7 @@ export class PDFService {
       header: `Продавец: ${this.config.get<string>("OWNER_SELLER_NAME")}
 ИП ${this.config.get<string>("OWNER_SHORT_NAME")}, ИНН ${this.config.get<string>("OWNER_INN")}
 Адрес: ${this.config.get<string>("OWNER_SHOP_ADDRESS")}`,
-      id: params.lead_id,
+      id: params.order_id,
       date: new Date().toLocaleDateString(),
       lead: `Покупатель: ${params.customer_name}
 Телефон: ${params.customer_phone}
@@ -169,6 +174,7 @@ export class PDFService {
 Время доставки: ${params.delivery_time ?? ""}
 Способ оплаты: ${params.payment_type ?? ""}`,
       goods: params.goods,
+      delivery_cost: params.delivery_cost,
     });
   }
 }
