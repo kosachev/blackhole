@@ -34,6 +34,10 @@ export class LeadStatusWebhook extends AbstractWebhook {
         await this.statusCdek(lead);
         break;
       }
+      case AMO.STATUS.SENT: {
+        await this.statusSent(lead);
+        break;
+      }
     }
 
     await lead.saveToAmo();
@@ -218,6 +222,37 @@ export class LeadStatusWebhook extends AbstractWebhook {
     }
   }
 
+  private async statusSent(lead: LeadHelper) {
+    this.validation({
+      lead,
+      errors: [
+        "delivery_type_exists",
+        "delivery_type_cdek_or_post",
+        "order_number_exists",
+        "track_number_exists",
+      ],
+    });
+
+    if (lead.errors.length > 0 || lead.warnings.length > 0) {
+      lead.note(["🔍 Статус: Отправлено", ...lead.errors, ...lead.warnings].join("\n"));
+    }
+    if (lead.errors.length > 0) return;
+
+    try {
+      await this.mail.orderSend({
+        delivery_type: lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) as string,
+        email: lead.contact.custom_fields.get(AMO.CONTACT.EMAIL) as string,
+        order_number: lead.custom_fields.get(AMO.CUSTOM_FIELD.ORDER_ID) as string,
+        track_code: lead.custom_fields.get(AMO.CUSTOM_FIELD.TRACK_NUMBER) as string,
+      });
+
+      lead.note("✅ email: письмо с трек-кодом отправлено");
+    } catch (err) {
+      this.logger.error(err);
+      lead.note("❌ email: ошибка при отправке письма с трек-кодом");
+    }
+  }
+
   private async statusCdek(lead: LeadHelper) {
     this.validation({
       lead,
@@ -294,7 +329,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
           : undefined,
         services: [
           { code: "TRYING_ON" },
-          { code: "INSURANCE", parameter: (lead.data.price * discount).toString() },
+          { code: "INSURANCE", parameter: lead.data.price.toString() },
         ],
         packages: [
           {
@@ -316,7 +351,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
               amount: good.quantity,
               weight: good.weight ?? Number(this.config.get<number>("CDEK_DEFAULT_WEIGHT")),
               url: this.config.get<string>("AMO_REDIRECT_URI"),
-              cost: good.price * discount,
+              cost: good.price,
               payment: {
                 value: good.price * discount,
               },
@@ -515,6 +550,10 @@ export class LeadStatusWebhook extends AbstractWebhook {
           !lead.custom_fields.get(AMO.CUSTOM_FIELD.PVZ)
         ),
         "Не выбран пункт выдачи",
+      ],
+      track_number_exists: [
+        lead.custom_fields.get(AMO.CUSTOM_FIELD.TRACK_NUMBER) ? true : false,
+        "Не указан трэк-код",
       ],
     };
 
