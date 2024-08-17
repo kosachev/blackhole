@@ -375,7 +375,18 @@ export class LeadStatusWebhook extends AbstractWebhook {
           `✎ СДЭК: создан заказ на доставку${is_pvz ? " в ПВЗ" : ""} по тарифу ${lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TARIFF) as string}`,
         );
         lead.custom_fields.set(AMO.CUSTOM_FIELD.CDEK_UUID, res.entity.uuid);
-        this.cdekTrackcodeCheck(lead.data.id, res.entity.uuid, 1);
+
+        setTimeout(async () => {
+          const lead_new = await this.amo.lead.getLeadById(lead.data.id);
+          if (!lead_new) {
+            throw new Error("Lead not found");
+          }
+          const track_number = lead_new.custom_fields_values.find(
+            (item) => item.field_id === AMO.CUSTOM_FIELD.TRACK_NUMBER,
+          ).values[0]?.value;
+          if (!track_number || track_number === "")
+            this.cdekTrackcodeCheck(lead.data.id, res.entity.uuid, 1), 10000;
+        });
       }
     } catch (err) {
       this.logger.error(err);
