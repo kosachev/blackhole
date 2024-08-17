@@ -5,6 +5,9 @@ import { LeadHelper } from "../helpers/lead.helper";
 @Injectable()
 export class LeadAddWebhook extends AbstractWebhook {
   async handle(data: unknown) {
+    // TODO: bad solution, delay 2s
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     const lead = await LeadHelper.createFromWebhook(this.amo, data, { load_goods: true });
     const goods_total_price = lead.totalPrice();
     if (lead.data.price !== goods_total_price) {
