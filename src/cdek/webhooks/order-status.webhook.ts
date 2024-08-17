@@ -68,9 +68,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
           field_id: item[0],
           values: [{ value: item[1] }],
         })),
-        _embedded: {
-          tags: parsed.tag.map((item) => ({ id: item })),
-        },
+        tags_to_add: parsed.tag.map((item) => ({ id: item })),
       }),
     ];
 
