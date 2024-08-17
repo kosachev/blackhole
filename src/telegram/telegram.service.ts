@@ -42,4 +42,9 @@ export class TelegramService {
       parse_mode: "HTML",
     });
   }
+  textToManager(text: string): Promise<Message.TextMessage> {
+    return this.api.sendMessage(this.config.get<number>("TELEGRAM_MANAGER_ID"), text, {
+      parse_mode: "HTML",
+    });
+  }
 }

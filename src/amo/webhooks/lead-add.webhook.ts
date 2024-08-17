@@ -20,6 +20,6 @@ export class LeadAddWebhook extends AbstractWebhook {
       message += `\n\n${[...lead.goods.values()].map((item) => `${item.name} - ${item.quantity}шт`).join("\n")}`;
     }
 
-    await this.telegram.textToAdmin(message);
+    await Promise.all([this.telegram.textToAdmin(message), this.telegram.textToManager(message)]);
   }
 }
