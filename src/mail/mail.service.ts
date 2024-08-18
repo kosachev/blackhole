@@ -1,5 +1,10 @@
 import { MailerService } from "@nestjs-modules/mailer";
+import { ConfigService } from "@nestjs/config";
 import { Injectable } from "@nestjs/common";
+import { readFileSync, readdir } from "node:fs";
+import { join } from "node:path";
+import * as Handlebars from "handlebars";
+import Imap = require("imap");
 
 type InvoiceParams = {
   name: string;
@@ -32,7 +37,49 @@ type OrderSendParams = {
 
 @Injectable()
 export class MailService {
-  constructor(private mailer: MailerService) {}
+  private templates: Map<string, HandlebarsTemplateDelegate<any>>;
+
+  constructor(
+    private config: ConfigService,
+    private mailer: MailerService,
+  ) {
+    readdir("./templates", (err, files) => {
+      this.templates = new Map<string, HandlebarsTemplateDelegate<any>>();
+      for (const file of files) {
+        const template = Handlebars.compile(readFileSync(join("./templates", file)).toString());
+        this.templates.set(`./${file}`, template);
+      }
+    });
+  }
+
+  imap(params: { to: string; subject: string; template: string; context: any }) {
+    const imap = new Imap({
+      user: this.config.get("MAIL_USER"),
+      password: this.config.get("MAIL_PASSWORD"),
+      host: this.config.get("MAIL_IMAP_HOST"),
+      port: this.config.get("MAIL_IMAP_PORT"),
+      tls: true,
+      tlsOptions: { rejectUnauthorized: false },
+    });
+
+    imap.once("ready", () => {
+      imap.openBox("Отправленные", false, () => {
+        const html = this.templates.get(params.template)(params.context);
+        const data =
+          "MIME-Version: 1.0\r\n" +
+          "Content-Type: text/html; charset=UTF-8\r\n" +
+          `From: "${this.config.get("OWNER_SELLER_NAME")}" <${this.config.get("MAIL_FROM")}>\r\n` +
+          `To: <${params.to}>\r\n` +
+          `Subject: ${params.subject}\r\n\r\n` +
+          html +
+          "\r\n";
+
+        imap.append(data, () => imap.end());
+      });
+    });
+
+    imap.connect();
+  }
 
   async invoice(params: InvoiceParams) {
     if (params.delivery_type !== "Экспресс по России" && params.delivery_type !== "Почта России") {
@@ -68,7 +115,7 @@ export class MailService {
         ? params.total_price * (1 - discount_value / 100)
         : params.total_price - discount_value;
 
-    await this.mailer.sendMail({
+    const mail = {
       to: params.email,
       subject: "Реквизиты для оплаты заказа №" + params.order_number,
       template:
@@ -86,22 +133,26 @@ export class MailService {
         discounted_price: discounted_price,
         prepayment: params.prepayment,
       },
-    });
+    };
+
+    await Promise.all([this.mailer.sendMail(mail), this.imap(mail)]);
   }
 
   async prepaymentConfirm(params: PaymentConfirmParams) {
-    await this.mailer.sendMail({
+    const mail = {
       to: params.email,
       subject: "Оплата заказа №" + params.order_number,
       template: "./prepayment-confirm.hbs",
       context: {
         order_number: params.order_number,
       },
-    });
+    };
+
+    await Promise.all([this.mailer.sendMail(mail), this.imap(mail)]);
   }
 
   async orderSend(params: OrderSendParams) {
-    await this.mailer.sendMail({
+    const mail = {
       to: params.email,
       subject: "Заказа №" + params.order_number + " отправлен",
       template:
@@ -112,6 +163,8 @@ export class MailService {
         order_number: params.order_number,
         track_code: params.track_code,
       },
-    });
+    };
+
+    await Promise.all([this.mailer.sendMail(mail), this.imap(mail)]);
   }
 }
