@@ -48,21 +48,18 @@ export class LeadStatusWebhook extends AbstractWebhook {
       lead,
       errors: [
         "delivery_type_exists",
-        "delivery_type_cdek_or_post",
+        "payment_not_equired",
         "email_exists",
         "phone_exists",
         "name_exists",
         "goods_exists",
         "order_number_exists",
-      ],
-      warnings: [
-        "index_exists",
         "city_exists",
         "street_exists",
         "building_exists",
-        "flat_exists",
         "prepay_exists",
       ],
+      warnings: ["index_exists", "flat_exists"],
     });
 
     if (lead.errors.length > 0 || lead.warnings.length > 0) {
@@ -88,7 +85,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
           quantity: good.quantity,
           price: good.price,
         })),
-        total_price: lead.data.price,
+        total_price: lead.totalPrice(),
         discount: lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT) as string,
         prepayment: prepay,
       });
@@ -130,16 +127,11 @@ export class LeadStatusWebhook extends AbstractWebhook {
         "phone_exists",
         "goods_exists",
         "order_number_exists",
-      ],
-      warnings: [
         "city_exists",
         "street_exists",
         "building_exists",
-        "flat_exists",
-        "prepay_exists",
-        "delivery_time_exists",
-        "discount_is_percent",
       ],
+      warnings: ["flat_exists", "prepay_exists", "delivery_time_exists", "discount_is_percent"],
     });
 
     if (lead.errors.length > 0 || lead.warnings.length > 0) {
@@ -180,12 +172,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
   private async statusPost(lead: LeadHelper) {
     this.validation({
       lead,
-      errors: [
-        "delivery_type_exists",
-        "delivery_type_cdek_or_post",
-        "name_exists",
-        "index_is_number",
-      ],
+      errors: ["delivery_type_exists", "delivery_type_post", "name_exists", "index_is_number"],
       warnings: ["city_exists", "street_exists", "building_exists", "flat_exists"],
     });
 
@@ -195,6 +182,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
     if (lead.errors.length > 0) return;
 
     const phone = Number(lead.getStripedPhone());
+    const price = lead.totalPrice();
 
     try {
       const pdf = await this.pdf.post7p112ep({
@@ -202,9 +190,9 @@ export class LeadStatusWebhook extends AbstractWebhook {
         recipient_address: lead.getFullAddress(),
         recipient_index: Number(lead.custom_fields.get(AMO.CUSTOM_FIELD.INDEX)),
         recipient_phone: isNaN(phone) ? undefined : phone,
-        sum: lead.data.price,
+        sum: price,
         sum_cash_on_delivery:
-          lead.data.price -
+          price -
           lead.getAbsoluteDiscount() +
           Number((lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_COST) as string) ?? "0") -
           Number((lead.custom_fields.get(AMO.CUSTOM_FIELD.PREPAY) as string) ?? "0"),
@@ -257,6 +245,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
     this.validation({
       lead,
       errors: [
+        "delivery_type_cdek",
         "order_number_exists",
         "index_exists",
         "city_exists",
@@ -353,7 +342,10 @@ export class LeadStatusWebhook extends AbstractWebhook {
               url: this.config.get<string>("AMO_REDIRECT_URI"),
               cost: good.price,
               payment: {
-                value: good.price * discount,
+                value:
+                  Number(lead.custom_fields.get(AMO.CUSTOM_FIELD.FULLPAY) ?? "0") > 0
+                    ? 0
+                    : good.price * discount,
               },
             })),
           },
@@ -383,7 +375,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
           }
           const track_number = lead_new.custom_fields_values.find(
             (item) => item.field_id === AMO.CUSTOM_FIELD.TRACK_NUMBER,
-          ).values[0]?.value;
+          )?.values[0]?.value;
           if (!track_number || track_number === "")
             this.cdekTrackcodeCheck(lead.data.id, res.entity.uuid, 1), 10000;
         });
@@ -440,7 +432,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
               created_by: AMO.USER.ADMIN,
               note_type: "common",
               params: {
-                text: `✎ СДЭК: получен трек-код ${res.entity.cdek_number}\nНакладная: https://lk.cdek.ru/print/print-order?numberOrd=${res.entity.cdek_number}`,
+                text: `✎ СДЭК: получен трек-код ${res.entity.cdek_number}, накладная: https://lk.cdek.ru/print/print-order?numberOrd=${res.entity.cdek_number}`,
               },
             },
           ]),
@@ -484,13 +476,27 @@ export class LeadStatusWebhook extends AbstractWebhook {
         ["Экспресс по России", "Почта России"].includes(
           lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) as string,
         ),
-        "Неверный тип доставки",
+        `Неверный тип доставки ${lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) ?? ""}, должен быть "Экспресс по России" или "Почта России"`,
+      ],
+      delivery_type_post: [
+        lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) === "Почта России",
+        `Неверный тип доставки ${lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) ?? ""}, должен быть "Почта России"`,
+      ],
+      delivery_type_cdek: [
+        lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) === "Экспресс по России",
+        `Неверный тип доставки ${lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) ?? ""}, должен быть "Экспресс по России"`,
+      ],
+      payment_not_equired: [
+        ["Экспресс по России", "Почта России"].includes(
+          lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) as string,
+        ),
+        `Оплата для типа доставки "${lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) ?? ""}" не требуется`,
       ],
       delivery_type_courier: [
         ["Курьером (в пределах МКАД)", "Курьером (Московская область)"].includes(
           lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) as string,
         ),
-        "Неверный тип доставки",
+        `Неверный тип доставки "${lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) ?? ""}" для курьерской доставки, должен быть "Курьером (в пределах МКАД)" или "Курьером (Московская область)"`,
       ],
       email_exists: [
         lead.contact.custom_fields.get(AMO.CONTACT.EMAIL) ? true : false,

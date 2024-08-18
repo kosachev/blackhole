@@ -56,7 +56,7 @@ export class LeadHelper {
   public warnings: string[] = [];
   to_save = false;
 
-  custom_fields: Map<number, string | number | number[]>;
+  custom_fields: Map<number, string>;
   tags: Set<number>;
   goods: Map<number, Good>;
   contact: Contact;
@@ -67,7 +67,7 @@ export class LeadHelper {
     private readonly client: Amo,
     public data: Partial<Lead> & { id: number },
     params?: {
-      custom_fields?: Map<number, string | number | number[]>;
+      custom_fields?: Map<number, string>;
       tags?: Set<number>;
       goods?: Map<number, Good>;
       contact?: Contact;
@@ -142,11 +142,19 @@ export class LeadHelper {
     if (!lead) {
       throw new Error("LeadHelper can't parse webhook data");
     }
-    const custom_fields = new Map<number, number | string | number[]>(
-      lead.custom_fields?.map((item: CustomFieldsValue) => [
-        +(item.field_id ?? item.id),
-        item.values?.at(0)?.value ?? item.values,
-      ]),
+    const custom_fields = new Map<number, string>(
+      lead.custom_fields?.map((item: CustomFieldsValue) => {
+        if (
+          item.field_id == AMO.CUSTOM_FIELD.DELIVERY_TIME ||
+          item.id == AMO.CUSTOM_FIELD.DELIVERY_TIME
+        ) {
+          return [
+            Number(item.field_id ?? item.id!),
+            LeadHelper.deliveryIntervalToString(item.values as { value: string }[]),
+          ];
+        }
+        return [+(item.field_id ?? item.id), item.values?.at(0)?.value ?? item.values];
+      }),
     );
     const tags = new Set<number>(lead.tags?.map((item: Tag) => +item.id));
 
@@ -186,15 +194,24 @@ export class LeadHelper {
     options?: Options,
   ) {
     const custom_fields = data.custom_fields_values
-      ? new Map<number, string | number | number[]>(
+      ? new Map<number, string>(
           data.custom_fields_values.map((item: CustomFieldsValue) => {
+            if (
+              item.field_id == AMO.CUSTOM_FIELD.DELIVERY_TIME ||
+              item.id == AMO.CUSTOM_FIELD.DELIVERY_TIME
+            ) {
+              return [
+                Number(item.field_id ?? item.id!),
+                LeadHelper.deliveryIntervalToString(item.values as { value: string }[]),
+              ];
+            }
             return [
               item.field_id ?? item.id!,
-              (item.values?.at(0)?.value as string | number) ?? (item.values as number[]),
+              (item.values?.at(0)?.value as string) ?? (item.values.join(", ") as string),
             ];
           }),
         )
-      : new Map<number, string | number | number[]>();
+      : new Map<number, string>();
     const tags = new Set<number>(data._embedded?.tags?.map((item: Partial<Tag>) => item?.id ?? 0));
     let goods: Map<number, Good> = new Map<number, Good>();
     if (options?.load_goods && data.id) {
@@ -301,13 +318,18 @@ export class LeadHelper {
 
   private toApi = {
     customFields: (): CustomFieldsValue[] => {
-      return [...this.custom_fields.entries()].map(([id, value]) => ({
-        field_id: id, // field_id not id!
-        values:
-          value === undefined || value === null
-            ? null
-            : [{ value: Array.isArray(value) ? +value[0] : value }],
-      }));
+      return [...this.custom_fields.entries()]
+        .filter(
+          (item) =>
+            item[0] !== AMO.CUSTOM_FIELD.DELIVERY_TIME && item[0] !== AMO.CUSTOM_FIELD.FULLPAY,
+        )
+        .map(([id, value]) => ({
+          field_id: id, // field_id not id!
+          values:
+            value === undefined || value === null
+              ? null
+              : [{ value: Array.isArray(value) ? +value[0] : value }],
+        }));
     },
     tags: (): Pick<Tag, "id">[] => {
       return [...this.tags.values()].map((item) => ({ id: item }));
@@ -470,5 +492,30 @@ export class LeadHelper {
       ((this.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT) as string) ?? "").replaceAll("%", ""),
     );
     return isNaN(discount) ? 1 : discount > 100 ? 1 : (100 - discount) / 100;
+  }
+
+  static deliveryIntervalToString(data: { value: string }[]): string {
+    data.sort((a, b) => a.value.split(" - ")[0].localeCompare(b.value.split(" - ")[0]));
+
+    const result = [];
+    let prev: [string, string] = ["", ""];
+
+    for (const { value } of data) {
+      const [start, end] = value.split(" - ");
+      if (prev[1] === start) {
+        prev[1] = end;
+        continue;
+      } else {
+        if (prev[0] !== "" && prev[1] !== "") {
+          result.push(`${start} - ${end}`);
+        }
+        prev = [start, end];
+      }
+    }
+    if (prev[0] !== "" && prev[1] !== "") {
+      result.push(`${prev[0]} - ${prev[1]}`);
+    }
+
+    return result.join(", ");
   }
 }

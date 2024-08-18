@@ -75,7 +75,7 @@ export class PDFBuilder {
     doc.registerFontkit(fontkit);
     const font = await doc.embedFont(await this.font_data, { subset: true });
     const font_bold = await doc.embedFont(await this.font_bold_data, { subset: true });
-    const page = doc.addPage(PageSizes.A5.reverse() as [number, number]);
+    const page = doc.addPage(PageSizes.A4);
     fillInvoice(page, params, font, font_bold);
     return doc.save();
   }
