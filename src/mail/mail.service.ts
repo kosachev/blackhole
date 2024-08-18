@@ -154,7 +154,7 @@ export class MailService {
   async orderSend(params: OrderSendParams) {
     const mail = {
       to: params.email,
-      subject: "Заказа №" + params.order_number + " отправлен",
+      subject: "Заказ №" + params.order_number + " отправлен",
       template:
         params.delivery_type === "Экспресс по России"
           ? "./order-cdek-send.hbs"
