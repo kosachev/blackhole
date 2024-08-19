@@ -131,7 +131,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
             task_type_id: AMO.TASK.PROCESS,
             responsible_user_id: AMO.USER.ADMIN,
             created_by: AMO.USER.ADMIN,
-            text: "Принять возврат",
+            text: "Осмотреть товар на повреждения. Принять возврат",
           };
           parsed.note = `✔ СДЭК${prefix}: возврат получен (4)`;
           parsed.status = AMO.STATUS.CLOSED;
