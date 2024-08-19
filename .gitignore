@@ -41,3 +41,5 @@ lerna-debug.log*
 
 # Amo
 */amo_token.json
+
+.vscode

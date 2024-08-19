@@ -37,6 +37,7 @@ export type Invoice = {
     quantity: number;
   }[];
   delivery_cost?: number;
+  discount?: string;
 };
 
 export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bold: PDFFont) {
@@ -139,6 +140,17 @@ export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bo
       { width: 210, text: (data.delivery_cost ?? 0).toString(), align: "right" },
     ],
   );
+
+  // discount line
+  if (data.discount) {
+    drawTableLine(
+      [invoice.table.x, top(invoice.table.y + invoice.table.line_height * (data.goods.length + 1))],
+      [
+        { width: 352, text: "Скидка", align: "right" },
+        { width: 210, text: data.discount, align: "right" },
+      ],
+    );
+  }
 
   // table footer
   drawTableLine(

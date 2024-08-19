@@ -54,6 +54,7 @@ type Invoice = {
     price: number;
     quantity: number;
   }[];
+  discount?: string;
 };
 
 @Injectable()
@@ -175,6 +176,7 @@ export class PDFService {
 Способ оплаты: ${params.payment_type ?? ""}`,
       goods: params.goods,
       delivery_cost: params.delivery_cost,
+      discount: params.discount,
     });
   }
 }

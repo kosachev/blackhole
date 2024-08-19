@@ -155,6 +155,10 @@ export class LeadStatusWebhook extends AbstractWebhook {
           quantity: good.quantity,
         })),
         delivery_cost: isNaN(delivery_cost) ? undefined : delivery_cost,
+        discount:
+          lead.getDiscountMultiplyier() < 1
+            ? lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT)
+            : undefined,
       });
 
       const yadisk_url = await this.yadisk.upload(
