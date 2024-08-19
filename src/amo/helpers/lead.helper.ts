@@ -502,12 +502,16 @@ export class LeadHelper {
 
     for (const { value } of data) {
       const [start, end] = value.split(" - ");
+      if (prev[0] === "" && prev[1] === "") {
+        prev = [start, end];
+        continue;
+      }
       if (prev[1] === start) {
         prev[1] = end;
         continue;
       } else {
         if (prev[0] !== "" && prev[1] !== "") {
-          result.push(`${start} - ${end}`);
+          result.push(`${prev[0]} - ${prev[1]}`);
         }
         prev = [start, end];
       }
