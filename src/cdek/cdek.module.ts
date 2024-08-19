@@ -6,6 +6,7 @@ import { OrderStatusWebhook } from "./webhooks/order-status.webhook";
 import { DownloadPhotoWebhook } from "./webhooks/download-photo.webhook";
 import { PrealertCloseWebhook } from "./webhooks/prealert-close.webhook";
 import { PrintFormWebhook } from "./webhooks/print-form.webhook";
+import { CdekPvzCheckService } from "./cdek-pvz-check.service";
 
 @Global()
 @Module({
@@ -16,6 +17,7 @@ import { PrintFormWebhook } from "./webhooks/print-form.webhook";
     DownloadPhotoWebhook,
     PrealertCloseWebhook,
     PrintFormWebhook,
+    CdekPvzCheckService,
   ],
   controllers: [CdekController],
   exports: [CdekService],

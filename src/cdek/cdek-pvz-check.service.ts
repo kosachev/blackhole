@@ -1,0 +1,77 @@
+import { Injectable } from "@nestjs/common";
+import { CdekService } from "./cdek.service";
+import { AmoService } from "../amo/amo.service";
+import { AMO } from "../amo/amo.constants";
+import { Cron } from "@nestjs/schedule";
+
+@Injectable()
+export class CdekPvzCheckService {
+  constructor(
+    private readonly cdek: CdekService,
+    private readonly amo: AmoService,
+  ) {}
+
+  // executes in 10:05 everyday
+  @Cron("0 5 10 * * *")
+  async handler() {
+    const leads = await this.getLeadsInCdekDelivery();
+    if (leads.length === 0) return;
+
+    let statuses = await Promise.all(
+      leads.map((lead) => this.getLastStatus(lead.lead_id, lead.uuid)),
+    );
+    statuses = statuses.filter((item) => Date.now() - item.date.getTime() > 1000 * 3600 * 24 * 3);
+    if (statuses.length === 0) return;
+
+    await this.amo.client.task.addTasks(
+      statuses.map((item) => ({
+        entity_id: item.lead_id,
+        entity_type: "leads",
+        complete_till: ~~(Date.now() / 1000) + 3600,
+        task_type_id: AMO.TASK.PROCESS,
+        responsible_user_id: AMO.USER.ADMIN,
+        created_by: AMO.USER.ADMIN,
+        text: `Посылка не была получуна в течение ${Math.floor((Date.now() - item.date.getTime()) / (1000 * 3600 * 24))} дней`,
+      })),
+    );
+  }
+
+  private async getLeadsInCdekDelivery(): Promise<{ lead_id: number; uuid: string }[]> {
+    const leads = await this.amo.client.lead.getLeads({
+      filter: (f) => f.statuses([[AMO.PIPELINE.MAIN, AMO.STATUS.SENT]]),
+    });
+    if (!leads || leads._embedded.leads.length === 0) return [];
+    const active_leads = leads._embedded.leads
+      .filter(
+        (lead) =>
+          lead.custom_fields_values.find(
+            (item) => item.field_id === AMO.CUSTOM_FIELD.TRACK_NUMBER && item.values?.at(0)?.value,
+          ) &&
+          lead.custom_fields_values.find(
+            (item) =>
+              item.field_id === AMO.CUSTOM_FIELD.DELIVERY_TYPE &&
+              item.values?.at(0)?.value === "Экспресс по России",
+          ),
+      )
+      .map((lead) => ({
+        lead_id: lead.id,
+        uuid: lead.custom_fields_values
+          .find((item) => item.field_id === AMO.CUSTOM_FIELD.CDEK_UUID)
+          .values?.at(0)?.value as string,
+      }));
+
+    return active_leads;
+  }
+
+  private async getLastStatus(
+    lead_id: number,
+    uuid: string,
+  ): Promise<{ lead_id: number; code: string; date: Date }> {
+    const res = await this.cdek.client.getOrderByUUID(uuid);
+    return {
+      lead_id,
+      code: res.entity.statuses[0].code,
+      date: new Date(res.entity.statuses[0].date_time),
+    };
+  }
+}
