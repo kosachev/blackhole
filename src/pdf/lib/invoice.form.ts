@@ -144,7 +144,7 @@ export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bo
   // discount line
   if (data.discount) {
     drawTableLine(
-      [invoice.table.x, top(invoice.table.y + invoice.table.line_height * (data.goods.length + 1))],
+      [invoice.table.x, top(invoice.table.y + invoice.table.line_height * (data.goods.length + 2))],
       [
         { width: 352, text: "Скидка", align: "right" },
         { width: 210, text: data.discount, align: "right" },
@@ -154,7 +154,7 @@ export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bo
 
   // table footer
   drawTableLine(
-    [invoice.table.x, top(invoice.table.y + invoice.table.line_height * (data.goods.length + 2))],
+    [invoice.table.x, top(invoice.table.y + invoice.table.line_height * (data.goods.length + 3))],
     [
       { width: 352, text: "ИТОГО", align: "right", bold: true },
       { width: 210, text: total.toString(), align: "right" },
