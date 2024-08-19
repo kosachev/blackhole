@@ -376,9 +376,10 @@ export class LeadStatusWebhook extends AbstractWebhook {
           const track_number = lead_new.custom_fields_values.find(
             (item) => item.field_id === AMO.CUSTOM_FIELD.TRACK_NUMBER,
           )?.values[0]?.value;
-          if (!track_number || track_number === "")
-            this.cdekTrackcodeCheck(lead.data.id, res.entity.uuid, 1), 10000;
-        });
+          if (!track_number || track_number === "") {
+            this.cdekTrackcodeCheck(lead.data.id, res.entity.uuid, 1);
+          }
+        }, 10000);
       }
     } catch (err) {
       this.logger.error(err);
