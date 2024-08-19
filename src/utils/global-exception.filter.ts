@@ -15,7 +15,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
   catch(exception: HttpException, host: ArgumentsHost) {
     if (exception instanceof TypeError) {
-      this.logger.error(exception);
+      this.logger.error(`${exception.stack}`);
       return;
     }
     // workaround for AutoOkResponseInterceptor
