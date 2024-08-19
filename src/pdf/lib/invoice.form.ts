@@ -132,9 +132,14 @@ export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bo
     total += item.price * item.quantity;
   }
 
+  let addition_lines = 1;
+
   // delivery line
   drawTableLine(
-    [invoice.table.x, top(invoice.table.y + invoice.table.line_height * (data.goods.length + 1))],
+    [
+      invoice.table.x,
+      top(invoice.table.y + invoice.table.line_height * (data.goods.length + addition_lines)),
+    ],
     [
       { width: 352, text: "Доставка", align: "right" },
       { width: 210, text: (data.delivery_cost ?? 0).toString(), align: "right" },
@@ -143,8 +148,12 @@ export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bo
 
   // discount line
   if (data.discount) {
+    addition_lines++;
     drawTableLine(
-      [invoice.table.x, top(invoice.table.y + invoice.table.line_height * (data.goods.length + 2))],
+      [
+        invoice.table.x,
+        top(invoice.table.y + invoice.table.line_height * (data.goods.length + addition_lines)),
+      ],
       [
         { width: 352, text: "Скидка", align: "right" },
         { width: 210, text: data.discount, align: "right" },
@@ -153,8 +162,12 @@ export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bo
   }
 
   // table footer
+  addition_lines++;
   drawTableLine(
-    [invoice.table.x, top(invoice.table.y + invoice.table.line_height * (data.goods.length + 3))],
+    [
+      invoice.table.x,
+      top(invoice.table.y + invoice.table.line_height * (data.goods.length + addition_lines)),
+    ],
     [
       { width: 352, text: "ИТОГО", align: "right", bold: true },
       { width: 210, text: total.toString(), align: "right" },
