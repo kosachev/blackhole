@@ -20,7 +20,11 @@ export class CdekPvzCheckService {
     let statuses = await Promise.all(
       leads.map((lead) => this.getLastStatus(lead.lead_id, lead.uuid)),
     );
-    statuses = statuses.filter((item) => Date.now() - item.date.getTime() > 1000 * 3600 * 24 * 3);
+    statuses = statuses.filter(
+      (item) =>
+        Date.now() - item.date.getTime() > 1000 * 3600 * 24 * 3 &&
+        item.code === "ACCEPTED_AT_PICK_UP_POINT",
+    );
     if (statuses.length === 0) return;
 
     await this.amo.client.task.addTasks(
@@ -70,7 +74,7 @@ export class CdekPvzCheckService {
     const res = await this.cdek.client.getOrderByUUID(uuid);
     return {
       lead_id,
-      code: res.entity.statuses[0].code,
+      code: res.entity.statuses[0].code, // last status will be first in array, because it datetime sorted
       date: new Date(res.entity.statuses[0].date_time),
     };
   }
