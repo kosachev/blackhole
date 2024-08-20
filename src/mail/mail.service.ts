@@ -63,7 +63,7 @@ export class MailService {
     });
 
     imap.once("ready", () => {
-      imap.openBox(this.config.get("MAIL_IMAP_PATH"), false, () => {
+      imap.openBox("Отправленные", false, () => {
         const html = this.templates.get(params.template)(params.context);
         const data =
           "MIME-Version: 1.0\r\n" +
