@@ -52,6 +52,9 @@ export class CdekPvzCheckService {
             (item) => item.field_id === AMO.CUSTOM_FIELD.TRACK_NUMBER && item.values?.at(0)?.value,
           ) &&
           lead.custom_fields_values.find(
+            (item) => item.field_id === AMO.CUSTOM_FIELD.CDEK_UUID && item.values?.at(0)?.value,
+          ) &&
+          lead.custom_fields_values.find(
             (item) =>
               item.field_id === AMO.CUSTOM_FIELD.DELIVERY_TYPE &&
               item.values?.at(0)?.value === "Экспресс по России",
@@ -61,7 +64,7 @@ export class CdekPvzCheckService {
         lead_id: lead.id,
         uuid: lead.custom_fields_values
           .find((item) => item.field_id === AMO.CUSTOM_FIELD.CDEK_UUID)
-          .values?.at(0)?.value as string,
+          ?.values?.at(0)?.value as string,
       }));
 
     return active_leads;
