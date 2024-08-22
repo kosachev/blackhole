@@ -178,11 +178,33 @@ export class OrderStatusWebhook extends AbstractWebhook {
   }
 
   async handleReturn(data: UpdateOrderStatus): Promise<number> {
+    // if return lead with uuid exists -> return lead id
     const result = await this.amo.lead.getLeads({
       with: ["catalog_elements"],
       query: data.uuid,
     });
     if (result) return result._embedded.leads[0].id;
+
+    // if partial return lead exists without uuid -> return lead id
+    const result2 = await this.amo.lead.getLeads({
+      with: ["catalog_elements"],
+      query: data.attributes.related_entities.uuid,
+    });
+    if (result2) {
+      for (const lead of result2._embedded.leads) {
+        if (lead.status_id === AMO.STATUS.RETURN && lead.pipeline_id === AMO.PIPELINE.RETURN) {
+          await this.amo.lead.updateLeadById(lead.id, {
+            custom_fields_values: [
+              {
+                field_id: AMO.CUSTOM_FIELD.CDEK_RETURN_UUID,
+                values: [{ value: data.uuid }],
+              },
+            ],
+          });
+          return lead.id;
+        }
+      }
+    }
 
     // return UUID not found -> first occurence of return webhook
     const cdek_return = await this.cdek.getOrderByUUID(data.uuid);

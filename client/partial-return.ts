@@ -126,6 +126,7 @@ export class ParialReturn {
         AMO.CUSTOM_FIELD.STREET,
         AMO.CUSTOM_FIELD.BUILDING,
         AMO.CUSTOM_FIELD.FLAT,
+        AMO.CUSTOM_FIELD.CDEK_UUID,
       ].map((id: number) => ({
         field_id: id,
         value: CFV(id).val(),
