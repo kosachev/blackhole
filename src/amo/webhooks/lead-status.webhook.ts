@@ -1,9 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { AbstractWebhook } from "./abstract.webhook";
 import { LeadHelper } from "../helpers/lead.helper";
+import { generateSku } from "../helpers/sku.helper";
 import { AMO } from "../amo.constants";
-
-import { createHash } from "node:crypto";
 
 @Injectable()
 export class LeadStatusWebhook extends AbstractWebhook {
@@ -338,9 +337,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
             comment: lead.data.name,
             items: [...lead.goods.values()].map((good) => ({
               name: good.name,
-              ware_key:
-                good.sku ??
-                createHash("shake256", { outputLength: 12 }).update(good.name).digest("hex"), // not crc32 but should work
+              ware_key: good.sku ?? generateSku(good.name),
               amount: good.quantity,
               weight: good.weight ?? Number(this.config.get<number>("CDEK_DEFAULT_WEIGHT")),
               url: this.config.get<string>("AMO_REDIRECT_URI"),
