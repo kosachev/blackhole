@@ -17,8 +17,6 @@ export class CdekController {
 
   @Post("webhook")
   async handle(@Body() data: any): Promise<string> {
-    this.logger.log(data);
-
     switch (data.type) {
       case "ORDER_STATUS":
         await this.order_status.handle(data);
