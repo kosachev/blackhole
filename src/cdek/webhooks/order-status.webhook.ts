@@ -77,7 +77,6 @@ export class OrderStatusWebhook extends AbstractWebhook {
         this.amo.note.addNotes("leads", [
           {
             entity_id: Number(data.attributes.number),
-            created_by: AMO.USER.ADMIN,
             note_type: "common",
             params: {
               text: parsed.note,
@@ -261,7 +260,6 @@ export class OrderStatusWebhook extends AbstractWebhook {
       this.amo.note.addNotes("leads", [
         {
           entity_id: direct_lead_id,
-          created_by: AMO.USER.ADMIN,
           note_type: "common",
           params: {
             text: `⇌ СДЕК ВОЗВРАТ: Сделка переведена в возвраты\nВозвратный трек-код: ${cdek_return.entity.cdek_number}\nВозвратный UUID: ${cdek_return.entity.uuid}\nВозвратная накладная: https://lk.cdek.ru/print/print-order?numberOrd=${cdek_return.entity.cdek_number}`,
@@ -335,7 +333,6 @@ export class OrderStatusWebhook extends AbstractWebhook {
       this.amo.note.addNotes("leads", [
         {
           entity_id: direct_lead.id,
-          created_by: AMO.USER.ADMIN,
           note_type: "common",
           params: {
             text: `✔ СДЕК: Сделка переведена в реализованные, частичный возврат по ссылке https://gerda.amocrm.ru/leads/detail/${return_lead._embedded.leads[0].id}`,
@@ -343,7 +340,6 @@ export class OrderStatusWebhook extends AbstractWebhook {
         },
         {
           entity_id: return_lead._embedded.leads[0].id,
-          created_by: AMO.USER.ADMIN,
           note_type: "common",
           params: {
             text: `⇌ СДЕК ВОЗВРАТ:Частичный возврат по сделке ${direct_lead.id}, ссылка https://gerda.amocrm.ru/leads/detail/${direct_lead.id}, прямая накладная ${cdek_return.related_entities[0].cdek_number}`,

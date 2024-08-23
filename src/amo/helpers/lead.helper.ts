@@ -354,7 +354,6 @@ export class LeadHelper {
           "leads",
           this.notes.map((text) => ({
             entity_id: this.data.id,
-            created_by: AMO.USER.ADMIN,
             note_type: "common",
             params: { text: text },
           })),

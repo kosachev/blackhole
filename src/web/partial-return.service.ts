@@ -45,7 +45,6 @@ export class PartialReturnService {
       this.amo.client.note.addNotes("leads", [
         {
           entity_id: data.lead_id,
-          created_by: AMO.USER.ADMIN,
           note_type: "common",
           params: { text: "✔ Сделка переведена в реализованные" },
         },
@@ -64,7 +63,6 @@ export class PartialReturnService {
       this.amo.client.note.addNotes("leads", [
         {
           entity_id: data.lead_id,
-          created_by: AMO.USER.ADMIN,
           note_type: "common",
           params: { text: "⇌ Сделка переведена в возвраты" },
         },
@@ -114,7 +112,6 @@ export class PartialReturnService {
       this.amo.client.note.addNotes("leads", [
         {
           entity_id: data.lead_id,
-          created_by: AMO.USER.ADMIN,
           note_type: "common",
           params: {
             text: `✔ Сделка переведена в реализованные, частичный возврат по ссылке https://gerda.amocrm.ru/leads/detail/${return_lead_id}`,
@@ -122,7 +119,6 @@ export class PartialReturnService {
         },
         {
           entity_id: return_lead_id,
-          created_by: AMO.USER.ADMIN,
           note_type: "common",
           params: {
             text: `⇌ Частичный возврат по сделке ${data.lead_id}, ссылка https://gerda.amocrm.ru/leads/detail/${data.lead_id}${direct_track ? ", прямая накладная " + direct_track : ""}`,

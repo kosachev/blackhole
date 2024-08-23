@@ -33,7 +33,6 @@ export class CdekPickupService {
       await this.amo.client.note.addNotes("leads", [
         {
           entity_id: data.lead_id,
-          created_by: AMO.USER.ADMIN,
           note_type: "common",
           params: {
             text: `✖ СДЕК: не удалось вызвать курьера, ошибка сдек api`,
@@ -60,7 +59,6 @@ export class CdekPickupService {
       this.amo.client.note.addNotes("leads", [
         {
           entity_id: data.lead_id,
-          created_by: AMO.USER.ADMIN,
           note_type: "common",
           params: {
             text: `✔ СДЕК: Курьер вызван на ${data.intake_date}, время ${start_time}:00-${start_time + 3}:00`,

@@ -43,7 +43,6 @@ export class PostTrackingService {
           "leads",
           to_update.notes.map((note) => ({
             entity_id: note.lead_id,
-            created_by: AMO.USER.ADMIN,
             note_type: "common",
             params: { text: note.text },
           })),

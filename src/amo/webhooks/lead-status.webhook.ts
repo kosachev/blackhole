@@ -402,7 +402,6 @@ export class LeadStatusWebhook extends AbstractWebhook {
         this.amo.note.addNotes("leads", [
           {
             entity_id: lead_id,
-            created_by: AMO.USER.ADMIN,
             note_type: "common",
             params: {
               text: `❌ СДЭК: ошибки при создании заказа при получении трэк-кода\n${res.requests[0].errors?.map((err) => err.message).join("\n")}`.trim(),
@@ -434,7 +433,6 @@ export class LeadStatusWebhook extends AbstractWebhook {
           this.amo.note.addNotes("leads", [
             {
               entity_id: lead_id,
-              created_by: AMO.USER.ADMIN,
               note_type: "common",
               params: {
                 text: `✎ СДЭК: получен трек-код ${res.entity.cdek_number}, накладная: https://lk.cdek.ru/print/print-order?numberOrd=${res.entity.cdek_number}`,
@@ -452,7 +450,6 @@ export class LeadStatusWebhook extends AbstractWebhook {
         this.amo.note.addNotes("leads", [
           {
             entity_id: lead_id,
-            created_by: AMO.USER.ADMIN,
             note_type: "common",
             params: {
               text: `❌ СДЭК: не удалось получить трек-код в течении 5 попыток`,

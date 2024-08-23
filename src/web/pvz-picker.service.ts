@@ -61,7 +61,6 @@ export class PVZPickerService {
       this.amo.client.note.addNotes("leads", [
         {
           entity_id: data.lead_id,
-          created_by: AMO.USER.ADMIN,
           note_type: "common",
           params: {
             text: `✎ СДЭК: выбрана доставка до ПВЗ ${data.code}, ${data.city}, ${data.street}, ${data.building}, ${data.index}`,

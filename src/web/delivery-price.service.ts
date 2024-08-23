@@ -95,7 +95,6 @@ export class DeliveryPriceService {
       await this.amo.client.note.addNotes("leads", [
         {
           entity_id: data.lead_id,
-          created_by: AMO.USER.ADMIN,
           note_type: "common",
           params: {
             text: `✖ СДЕК: не удалось рассчитать стоимость доставки, ошибка сдек api`,
@@ -144,7 +143,6 @@ export class DeliveryPriceService {
       this.amo.client.note.addNotes("leads", [
         {
           entity_id: data.lead_id,
-          created_by: AMO.USER.ADMIN,
           note_type: "common",
           params: {
             text: `₽ СДЕК: страховка ${insurance}₽, вес ${Math.round(total_weight / 10) / 100}кг, объёмный вес ${Math.round((length * width * height) / 50) / 100}кг, 2% - ${total_price * 0.02}, 3% - ${total_price * 0.03}\n${tariff_unavaible}${res.tariff_codes
@@ -219,7 +217,6 @@ export class DeliveryPriceService {
         this.amo.client.note.addNotes("leads", [
           {
             entity_id: data.lead_id,
-            created_by: AMO.USER.ADMIN,
             note_type: "common",
             params: {
               text: `₽ Почта: страховка ${res.cover.valnds / 100}₽, платный вес ${Math.round(res.weightpay / 10) / 100}кг\n${res.name} - ${res.paymoneynds / 100}₽ (тариф ${res.ground.valnds / 100}₽)`,
@@ -231,7 +228,6 @@ export class DeliveryPriceService {
       await this.amo.client.note.addNotes("leads", [
         {
           entity_id: data.lead_id,
-          created_by: AMO.USER.ADMIN,
           note_type: "common",
           params: {
             text: `✖ Почта: не удалось рассчитать стоимость доставки, ошибка почта api`,
