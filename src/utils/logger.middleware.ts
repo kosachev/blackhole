@@ -6,6 +6,10 @@ export class LoggerMiddleware implements NestMiddleware {
   private logger = new Logger("HTTP");
 
   use(req: Request, res: Response, next: NextFunction): void {
+    // skip HEAD method cause it userscipt check for updates
+    if (req.method === "HEAD" && req.originalUrl.startsWith("/public")) {
+      return next();
+    }
     const start = Date.now();
 
     const old_send = res.send;
