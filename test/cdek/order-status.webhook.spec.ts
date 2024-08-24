@@ -121,7 +121,6 @@ describe("CDEK OrderStatusWebhook", () => {
         complete_till: ~~(Date.now() / 1000) + 3600,
         task_type_id: AMO.TASK.PROCESS,
         responsible_user_id: AMO.USER.ADMIN,
-        created_by: AMO.USER.ADMIN,
         text: "Осмотреть товар на повреждения. Принять возврат",
       },
     });
