@@ -210,7 +210,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
       ?.direct_package_number;
     if (!direct_lead_id) {
       throw new InternalServerErrorException(
-        `Unable to fetch direct lead id from return cdek order with: ${data.uuid}`,
+        `Unable to fetch direct lead id from return cdek order with: ${JSON.stringify(data)}`,
       );
     }
     const direct_lead = await this.amo.lead.getLeadById(direct_lead_id, {
