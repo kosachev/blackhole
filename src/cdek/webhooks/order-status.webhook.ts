@@ -206,11 +206,11 @@ export class OrderStatusWebhook extends AbstractWebhook {
 
     // return UUID not found -> first occurence of return webhook
     const cdek_return = await this.cdek.getOrderByUUID(data.uuid);
-    const direct_lead_id = +cdek_return.entity.packages.at(0)?.items.at(0)?.return_item_detail
+    const direct_lead_id = +cdek_return.entity.packages?.at(0)?.items.at(0)?.return_item_detail
       ?.direct_package_number;
     if (!direct_lead_id) {
       throw new InternalServerErrorException(
-        "Unable to fetch direct lead id from return cdek order",
+        `Unable to fetch direct lead id from return cdek order with: ${data.uuid}`,
       );
     }
     const direct_lead = await this.amo.lead.getLeadById(direct_lead_id, {
