@@ -204,9 +204,12 @@ export class OrderStatusWebhook extends AbstractWebhook {
       }
     }
 
+    this.logger.debug(data);
+
     // return UUID not found -> first occurence of return webhook
     const cdek_return = await this.cdek.getOrderByUUID(data.uuid);
-    const direct_lead_id = +cdek_return.entity.packages?.at(0)?.items.at(0)?.return_item_detail
+    this.logger.debug(cdek_return);
+    const direct_lead_id = +cdek_return.entity.packages?.at(0)?.items?.at(0)?.return_item_detail
       ?.direct_package_number;
     if (!direct_lead_id) {
       throw new InternalServerErrorException(
