@@ -184,31 +184,33 @@ export class OrderStatusWebhook extends AbstractWebhook {
     if (result) return result._embedded.leads[0].id;
 
     // if partial return lead exists without uuid -> return lead id
-    const result2 = await this.amo.lead.getLeads({
-      with: ["catalog_elements"],
-      query: data.attributes.related_entities.uuid,
-    });
-    if (result2) {
-      for (const lead of result2._embedded.leads) {
-        if (lead.status_id === AMO.STATUS.RETURN && lead.pipeline_id === AMO.PIPELINE.RETURN) {
-          await this.amo.lead.updateLeadById(lead.id, {
-            custom_fields_values: [
-              {
-                field_id: AMO.CUSTOM_FIELD.CDEK_RETURN_UUID,
-                values: [{ value: data.uuid }],
-              },
-            ],
-          });
-          return lead.id;
+    if (data.attributes.related_entities?.length > 0) {
+      const result2 = await this.amo.lead.getLeads({
+        with: ["catalog_elements"],
+        query: data.attributes.related_entities[0].uuid,
+      });
+      if (result2) {
+        for (const lead of result2._embedded.leads) {
+          if (lead.status_id === AMO.STATUS.RETURN && lead.pipeline_id === AMO.PIPELINE.RETURN) {
+            await this.amo.lead.updateLeadById(lead.id, {
+              custom_fields_values: [
+                {
+                  field_id: AMO.CUSTOM_FIELD.CDEK_RETURN_UUID,
+                  values: [{ value: data.uuid }],
+                },
+              ],
+            });
+            return lead.id;
+          }
         }
       }
     }
 
-    this.logger.debug(data);
+    this.logger.debug(JSON.stringify(data));
 
     // return UUID not found -> first occurence of return webhook
     const cdek_return = await this.cdek.getOrderByUUID(data.uuid);
-    this.logger.debug(cdek_return);
+    this.logger.debug(JSON.stringify(cdek_return));
     const direct_lead_id = +cdek_return.entity.packages?.at(0)?.items?.at(0)?.return_item_detail
       ?.direct_package_number;
     if (!direct_lead_id) {

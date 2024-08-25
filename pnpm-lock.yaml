@@ -43,8 +43,8 @@ dependencies:
     specifier: ^0.1.2
     version: 0.1.2
   cdek:
-    specifier: ^1.0.9
-    version: 1.0.9
+    specifier: ^1.0.10
+    version: 1.0.10
   google-auth-library:
     specifier: ^9.13.0
     version: 9.13.0
@@ -2521,8 +2521,8 @@ packages:
     resolution: {integrity: sha512-iL2iSS0eDILMb9n5yKQoTBim9jMZ0Yrk8g0N9K7UzYyWnfIKzXBZD5ngpM37ZcL/cv0Mli8XtVMRYMQAfFpi5Q==}
     dev: true
 
-  /cdek@1.0.9:
-    resolution: {integrity: sha512-XUrLVMB0Ghj3Qn3wZraMN2AngDmPlas3O0NUBAK656UHFKpKJ1ap6NAO+pZkfMzECp3u3nkL0Zw45QU4IHZRrQ==}
+  /cdek@1.0.10:
+    resolution: {integrity: sha512-Y+l07SUhfUKdJuxZHZ9szQKiAubgcv7Z7RL2glCKT3CyVxnJSEpi3d2IbgMHVvcwjx2UiBgfP7Qxl4Lfq9kB3A==}
     engines: {node: '>= 18'}
     dev: false
 
