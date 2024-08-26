@@ -175,43 +175,44 @@ export class OrderStatusWebhook extends AbstractWebhook {
     return parsed;
   }
 
-  async handleReturn(data: UpdateOrderStatus): Promise<number> {
-    // if return lead with uuid exists -> return lead id
+  private async getLeadByUUID(uuid?: string): Promise<{ first?: number; return?: number }> {
+    if (!uuid) return { first: undefined, return: undefined };
+
     const result = await this.amo.lead.getLeads({
       with: ["catalog_elements"],
-      query: data.uuid,
+      query: uuid,
     });
-    if (result) return result._embedded.leads[0].id;
+    const lead = result._embedded.leads.find(
+      (item) => item.status_id === AMO.STATUS.RETURN && item.pipeline_id === AMO.PIPELINE.RETURN,
+    );
+
+    return { first: result?._embedded?.leads?.at(0)?.id, return: lead?.id };
+  }
+
+  async handleReturn(data: UpdateOrderStatus): Promise<number> {
+    // if return lead with uuid exists -> return lead id
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { first: lead_exist_id, return: _ } = await this.getLeadByUUID(data.uuid);
+    if (lead_exist_id) return lead_exist_id;
 
     // if partial return lead exists without uuid -> return lead id
-    let direct_lead_id_by_uuid: undefined | number = undefined;
-    if (data.attributes.related_entities?.length > 0) {
-      const direct_lead_by_uuid = await this.amo.lead.getLeads({
-        with: ["catalog_elements"],
-        query: data.attributes.related_entities[0].uuid,
+    const { first: direct_lead_exist_id, return: return_lead_exist_id } = await this.getLeadByUUID(
+      data.attributes.related_entities?.at(0)?.uuid,
+    );
+    if (return_lead_exist_id) {
+      await this.amo.lead.updateLeadById(return_lead_exist_id, {
+        custom_fields_values: [
+          {
+            field_id: AMO.CUSTOM_FIELD.CDEK_RETURN_UUID,
+            values: [{ value: data.uuid }],
+          },
+          {
+            field_id: AMO.CUSTOM_FIELD.CDEK_RETURN_INVOICE,
+            values: [{ value: data.attributes.cdek_number }],
+          },
+        ],
       });
-      if (direct_lead_by_uuid) {
-        // found partial return in return pipeline
-        const lead = direct_lead_by_uuid._embedded.leads.find(
-          (item) =>
-            item.status_id === AMO.STATUS.RETURN && item.pipeline_id === AMO.PIPELINE.RETURN,
-        );
-        if (lead) {
-          await this.amo.lead.updateLeadById(lead.id, {
-            custom_fields_values: [
-              {
-                field_id: AMO.CUSTOM_FIELD.CDEK_RETURN_UUID,
-                values: [{ value: data.uuid }],
-              },
-            ],
-          });
-          return lead.id;
-        }
-        // not find partial return lead, just save lead id
-        if (direct_lead_by_uuid._embedded.leads.length > 0) {
-          direct_lead_id_by_uuid = direct_lead_by_uuid._embedded.leads[0].id;
-        }
-      }
+      return return_lead_exist_id;
     }
 
     // return UUID not found -> first occurence of return webhook
@@ -222,10 +223,13 @@ export class OrderStatusWebhook extends AbstractWebhook {
       !cdek_return.entity.packages?.at(0)?.items ||
       cdek_return.entity.packages?.at(0)?.items.length === 0
     ) {
-      if (direct_lead_id_by_uuid) {
-        return this.allReturn(direct_lead_id_by_uuid, cdek_return);
+      if (direct_lead_exist_id) {
+        return this.allReturn(direct_lead_exist_id, cdek_return);
       } else {
         this.logger.error(`Unable to handle cdek return order ${data.uuid}`);
+        throw new InternalServerErrorException(
+          `Unable to handle cdek return order ${data.uuid} without direct lead`,
+        );
       }
     }
 
@@ -254,11 +258,9 @@ export class OrderStatusWebhook extends AbstractWebhook {
       0,
     );
 
-    if (total_direct === total_return) {
-      return this.allReturn(direct_lead_id, cdek_return);
-    } else {
-      return this.partialReturn(direct_lead, cdek_return);
-    }
+    return total_direct === total_return
+      ? this.allReturn(direct_lead_id, cdek_return)
+      : this.partialReturn(direct_lead, cdek_return);
   }
 
   private async allReturn(direct_lead_id: number, cdek_return: GetOrder): Promise<number> {
