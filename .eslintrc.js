@@ -17,13 +17,22 @@ module.exports = {
     "dist/**/*.js",
     "node_modules/**/*.js",
     "public/**/*.js",
-    "sppack.config.js",
+    "spack.config.js",
   ],
   rules: {
     "@typescript-eslint/interface-name-prefix": "off",
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",
     "@typescript-eslint/no-explicit-any": "off",
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      {
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
+        caughtErrorsIgnorePattern: "^_",
+      },
+    ],
     "prettier/prettier": ["error", { endOfLine: "auto", singleQuote: false }],
   },
 };

@@ -191,7 +191,6 @@ export class OrderStatusWebhook extends AbstractWebhook {
 
   async handleReturn(data: UpdateOrderStatus): Promise<number> {
     // if return lead with uuid exists -> return lead id
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { first: lead_exist_id, return: _ } = await this.getLeadByUUID(data.uuid);
     if (lead_exist_id) return lead_exist_id;
 
