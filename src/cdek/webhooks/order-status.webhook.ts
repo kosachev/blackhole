@@ -347,6 +347,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
       this.amo.lead.updateLeadById(direct_lead.id, {
         status_id: AMO.STATUS.SUCCESS,
         price: direct_lead.price - return_total,
+        tags_to_delete: [{ id: AMO.TAG.RETURN }],
       }),
       this.amo.note.addNotes("leads", [
         {
