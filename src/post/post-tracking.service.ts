@@ -1,12 +1,14 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { Cron } from "@nestjs/schedule";
 import { AmoService } from "../amo/amo.service";
 import { AMO } from "../amo/amo.constants";
-import { PostTracking, TrackingHistory } from "@shevernitskiy/post-tracking";
-import { Cron } from "@nestjs/schedule";
+
+import { PostTracking, type TrackingHistory } from "@shevernitskiy/post-tracking";
+import type { RequestAddNote } from "@shevernitskiy/amo/src/api/note/types";
 
 type ParsedHistories = {
-  notes: { lead_id: number; text: string }[];
+  notes: RequestAddNote[];
   delivered: number[];
 };
 
@@ -38,16 +40,7 @@ export class PostTrackingService {
     const promises: Promise<unknown>[] = [];
 
     if (to_update.notes.length > 0) {
-      promises.push(
-        this.amo.client.note.addNotes(
-          "leads",
-          to_update.notes.map((note) => ({
-            entity_id: note.lead_id,
-            note_type: "common",
-            params: { text: note.text },
-          })),
-        ),
-      );
+      promises.push(this.amo.client.note.addNotes("leads", to_update.notes));
     }
 
     if (to_update.delivered.length > 0) {
@@ -117,16 +110,33 @@ export class PostTrackingService {
         const diff = (Date.now() - datetime.getTime()) / 1000;
         // новые операции за последние сутки
         if (diff < 60 * 60 * 24) {
-          out.notes.push({
-            lead_id,
-            text: `ℹ Почта: ${operation_type}, ${operation_desc} в ${place}, ${datetime.toLocaleString("ru-RU")}`,
-          });
+          out.notes.push(
+            ["Вручение", "Возврат"].includes(operation_type)
+              ? {
+                  entity_id: lead_id,
+                  note_type: "common",
+                  params: {
+                    text: `ℹ Почта: ${operation_type}, ${operation_desc} в ${place}, ${datetime.toLocaleString("ru-RU")}`,
+                  },
+                }
+              : {
+                  entity_id: lead_id,
+                  note_type: "extended_service_message",
+                  params: {
+                    text: `${operation_type}, ${operation_desc} в ${place}, ${datetime.toLocaleString("ru-RU")}`,
+                    service: "ℹ Почта",
+                  },
+                },
+          );
         }
       }
       if (history.last_operation === "Вручение") {
         out.notes.push({
-          lead_id,
-          text: `✔ Почта: заказ доставлен почтой и переведен в реализованные автоматически`,
+          entity_id: lead_id,
+          note_type: "common",
+          params: {
+            text: `✔ Почта: заказ доставлен почтой и переведен в реализованные автоматически`,
+          },
         });
         out.delivered.push(lead_id);
       }
