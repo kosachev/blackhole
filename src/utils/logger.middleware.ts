@@ -7,7 +7,11 @@ export class LoggerMiddleware implements NestMiddleware {
 
   use(req: Request, res: Response, next: NextFunction): void {
     // skip HEAD method cause it userscipt check for updates
-    if (req.method === "HEAD" && req.originalUrl.startsWith("/public")) {
+    // skip logging online checker
+    if (
+      (req.method === "HEAD" && req.originalUrl.startsWith("/public")) ||
+      req.headers["user-agent"] === "online-check-gerda-bot"
+    ) {
       return next();
     }
     const start = Date.now();
