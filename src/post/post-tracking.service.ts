@@ -10,6 +10,7 @@ import type { RequestAddNote } from "@shevernitskiy/amo/src/api/note/types";
 type ParsedHistories = {
   notes: RequestAddNote[];
   delivered: number[];
+  returned: number[];
 };
 
 @Injectable()
@@ -49,6 +50,18 @@ export class PostTrackingService {
           to_update.delivered.map((lead_id) => ({
             id: lead_id,
             status_id: AMO.STATUS.SUCCESS,
+          })),
+        ),
+      );
+    }
+
+    if (to_update.returned.length > 0) {
+      promises.push(
+        this.amo.client.lead.updateLeads(
+          to_update.delivered.map((lead_id) => ({
+            id: lead_id,
+            status_id: AMO.STATUS.RETURN,
+            tags_to_add: [{ id: AMO.TAG.RETURN }],
           })),
         ),
       );
@@ -101,6 +114,7 @@ export class PostTrackingService {
     const out: ParsedHistories = {
       notes: [],
       delivered: [],
+      returned: [],
     };
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -139,6 +153,16 @@ export class PostTrackingService {
           },
         });
         out.delivered.push(lead_id);
+      }
+      if (history.last_operation === "Возврат") {
+        out.notes.push({
+          entity_id: lead_id,
+          note_type: "common",
+          params: {
+            text: `⇌ Почта ВОЗВРАТ: Сделка переведена в возвраты`,
+          },
+        });
+        out.returned.push(lead_id);
       }
     }
 
