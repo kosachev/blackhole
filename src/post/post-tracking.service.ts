@@ -143,26 +143,27 @@ export class PostTrackingService {
                 },
           );
         }
-      }
-      if (history.last_operation === "Вручение") {
-        out.notes.push({
-          entity_id: lead_id,
-          note_type: "common",
-          params: {
-            text: `✔ Почта: заказ доставлен почтой и переведен в реализованные автоматически`,
-          },
-        });
-        out.delivered.push(lead_id);
-      }
-      if (history.last_operation === "Возврат") {
-        out.notes.push({
-          entity_id: lead_id,
-          note_type: "common",
-          params: {
-            text: `⇌ Почта ВОЗВРАТ: Сделка переведена в возвраты`,
-          },
-        });
-        out.returned.push(lead_id);
+
+        if (operation_type === "Вручение") {
+          out.notes.push({
+            entity_id: lead_id,
+            note_type: "common",
+            params: {
+              text: `✔ Почта: заказ доставлен почтой и переведен в реализованные автоматически`,
+            },
+          });
+          out.delivered.push(lead_id);
+        }
+        if (operation_type === "Возврат") {
+          out.notes.push({
+            entity_id: lead_id,
+            note_type: "common",
+            params: {
+              text: `⇌ Почта ВОЗВРАТ: Сделка переведена в возвраты`,
+            },
+          });
+          out.returned.push(lead_id);
+        }
       }
     }
 
