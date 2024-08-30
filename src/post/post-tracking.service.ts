@@ -11,6 +11,7 @@ type ParsedHistories = {
   notes: RequestAddNote[];
   delivered: number[];
   returned: number[];
+  return_completed: number[];
 };
 
 @Injectable()
@@ -67,6 +68,18 @@ export class PostTrackingService {
       );
     }
 
+    if (to_update.return_completed.length > 0) {
+      promises.push(
+        this.amo.client.lead.updateLeads(
+          to_update.delivered.map((lead_id) => ({
+            id: lead_id,
+            status_id: AMO.STATUS.CLOSED,
+            pipeline_id: AMO.PIPELINE.RETURN,
+          })),
+        ),
+      );
+    }
+
     await Promise.all(promises);
 
     this.logger.log(
@@ -75,9 +88,15 @@ export class PostTrackingService {
   }
 
   // fetch leads with status AMO.STATUS.SENT, delivery type "Почта России" and existing trackcode
-  private async getLeadsInPostDelivery(): Promise<{ lead_id: number; trackcode: number }[]> {
+  private async getLeadsInPostDelivery(): Promise<
+    { lead_id: number; trackcode: number; status_id: number }[]
+  > {
     const leads = await this.amo.client.lead.getLeads({
-      filter: (f) => f.statuses([[AMO.PIPELINE.MAIN, AMO.STATUS.SENT]]),
+      filter: (f) =>
+        f.statuses([
+          [AMO.PIPELINE.MAIN, AMO.STATUS.SENT],
+          [AMO.PIPELINE.RETURN, AMO.STATUS.RETURN],
+        ]),
     });
     if (!leads || leads._embedded.leads.length === 0) return [];
     // filter leads with type Pochta Rossii and trackcode != undefined
@@ -98,6 +117,7 @@ export class PostTrackingService {
         trackcode: +lead.custom_fields_values
           .find((item) => item.field_id === AMO.CUSTOM_FIELD.TRACK_NUMBER)
           .values?.at(0)?.value,
+        status_id: lead.status_id,
       }));
 
     return active_leads;
@@ -109,16 +129,18 @@ export class PostTrackingService {
       history: TrackingHistory;
       lead_id: number;
       trackcode: number;
+      status_id: number;
     }[],
   ): ParsedHistories {
     const out: ParsedHistories = {
       notes: [],
       delivered: [],
       returned: [],
+      return_completed: [],
     };
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    for (const { history, lead_id, trackcode } of leads_with_history) {
+    for (const { history, lead_id, trackcode, status_id } of leads_with_history) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       for (const { index, place, operation_type, operation_desc, datetime } of history.history) {
         const diff = (Date.now() - datetime.getTime()) / 1000;
@@ -145,14 +167,26 @@ export class PostTrackingService {
         }
 
         if (operation_type === "Вручение") {
-          out.notes.push({
-            entity_id: lead_id,
-            note_type: "common",
-            params: {
-              text: `✔ Почта: заказ доставлен почтой и переведен в реализованные автоматически`,
-            },
-          });
-          out.delivered.push(lead_id);
+          if (status_id === AMO.STATUS.SENT) {
+            out.notes.push({
+              entity_id: lead_id,
+              note_type: "common",
+              params: {
+                text: `✔ Почта: заказ доставлен почтой и переведен в реализованные автоматически`,
+              },
+            });
+            out.delivered.push(lead_id);
+          }
+          if (status_id === AMO.STATUS.RETURN) {
+            out.notes.push({
+              entity_id: lead_id,
+              note_type: "common",
+              params: {
+                text: `✔ Почта ВОЗВРАТ: возврат получен`,
+              },
+            });
+            out.return_completed.push(lead_id);
+          }
         }
         if (operation_type === "Возврат") {
           out.notes.push({
