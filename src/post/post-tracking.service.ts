@@ -139,10 +139,8 @@ export class PostTrackingService {
       return_completed: [],
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    for (const { history, lead_id, trackcode, status_id } of leads_with_history) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      for (const { index, place, operation_type, operation_desc, datetime } of history.history) {
+    for (const { history, lead_id, trackcode: _, status_id } of leads_with_history) {
+      for (const { index: _, place, operation_type, operation_desc, datetime } of history.history) {
         const diff = (Date.now() - datetime.getTime()) / 1000;
         // новые операции за последние сутки
         if (diff < 60 * 60 * 24) {
