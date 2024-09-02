@@ -234,7 +234,7 @@ export class DeliveryPriceService {
           },
         },
       ]);
-      throw new BadRequestException("POST DELIVERY: delivery price failed");
+      throw new BadRequestException(`POST DELIVERY: delivery price failed, ${err.message}`);
     }
   }
 }
