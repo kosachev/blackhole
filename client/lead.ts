@@ -26,7 +26,7 @@ export class Lead {
     this.deleteCompanyField();
     this.validateIndexField();
     this.validateDeliveryPVZField();
-    this.removeWidgetsDiv();
+    this.styles();
 
     this.to_destruct.push(() => {
       $("body").off("input");
@@ -44,7 +44,7 @@ export class Lead {
     for (const fn of this.to_destruct) {
       fn();
     }
-    $("head").find("style.remove_widgets").remove();
+    $("head").find("style.userstyles").remove();
   }
 
   private timezone() {
@@ -120,9 +120,9 @@ export class Lead {
     });
   }
 
-  private removeWidgetsDiv() {
+  private styles() {
     $("head").append(
-      '<style class="remove_widgets" type="text/css">#widgets_block { display: none !important; } #card_holder { padding-right: 0 !important; }</style>',
+      '<style class="userstyles" type="text/css">#widgets_block { display: none !important; } #card_holder { padding-right: 0 !important; } li.multisuggest__list-item { max-width: 130px }</style>',
     );
   }
 }
