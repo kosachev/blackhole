@@ -20,11 +20,14 @@ export class CdekPvzCheckService {
     let statuses = await Promise.all(
       leads.map((lead) => this.getLastStatus(lead.lead_id, lead.uuid)),
     );
-    statuses = statuses.filter(
-      (item) =>
-        Date.now() - item.date.getTime() > 1000 * 3600 * 24 * 3 &&
-        item.code === "ACCEPTED_AT_PICK_UP_POINT",
-    );
+    statuses = statuses.filter((item) => {
+      const duration = Date.now() - item.date.getTime();
+      return (
+        duration > 1000 * 3600 * 24 * 3 && // duration between 3 days
+        duration < 1000 * 3600 * 24 * 4 && // and 4 days
+        item.code === "ACCEPTED_AT_PICK_UP_POINT"
+      );
+    });
     if (statuses.length === 0) return;
 
     await this.amo.client.task.addTasks(
