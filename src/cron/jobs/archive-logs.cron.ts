@@ -7,7 +7,8 @@ import { Cron } from "@nestjs/schedule";
 import { CronService } from "../cron.service";
 
 export class ArchiveLogsJob extends CronService {
-  @Cron("0 9 1 1 * *")
+  // every month on 1 day at 9:00
+  @Cron("0 0 9 1 * *")
   async archiveJob(): Promise<void> {
     const date = new Date();
 
@@ -30,7 +31,6 @@ export class ArchiveLogsJob extends CronService {
       archive.on("finish", resolve);
       archive.on("error", reject);
     });
-
     for (const file of fs.readdirSync("./logs")) {
       if (!file.startsWith(prev_month) || !file.endsWith(".log")) continue;
       fs.unlinkSync(`./logs/${file}`);
