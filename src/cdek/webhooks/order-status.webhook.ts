@@ -261,6 +261,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
   }
 
   private async allReturn(direct_lead_id: number, cdek_return: GetOrder): Promise<number> {
+    const price = cdek_return.entity?.delivery_detail?.delivery_sum ?? 0;
     await Promise.all([
       this.amo.lead.updateLeadById(direct_lead_id, {
         status_id: AMO.STATUS.RETURN,
@@ -274,6 +275,10 @@ export class OrderStatusWebhook extends AbstractWebhook {
             field_id: AMO.CUSTOM_FIELD.CDEK_RETURN_INVOICE,
             values: [{ value: cdek_return.entity.cdek_number }],
           },
+          {
+            field_id: AMO.CUSTOM_FIELD.CDEK_RETURN_PRICE,
+            values: [{ value: price.toString() }],
+          },
         ],
         tags_to_add: [{ id: AMO.TAG.RETURN }],
       }),
@@ -282,7 +287,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
           entity_id: direct_lead_id,
           note_type: "common",
           params: {
-            text: `⇌ СДЕК ВОЗВРАТ: Сделка переведена в возвраты\nВозвратный трек-код: ${cdek_return.entity.cdek_number}\nВозвратный UUID: ${cdek_return.entity.uuid}\nВозвратная накладная: https://lk.cdek.ru/print/print-order?numberOrd=${cdek_return.entity.cdek_number}`,
+            text: `⇌ СДЕК ВОЗВРАТ: Сделка переведена в возвраты\nВозвратный трек-код: ${cdek_return.entity.cdek_number}\nВозвратный UUID: ${cdek_return.entity.uuid}\nВозвратная накладная: https://lk.cdek.ru/print/print-order?numberOrd=${cdek_return.entity.cdek_number}${price ? `\nСтоимость доставки: ${price}` : ""}`,
           },
         },
       ]),
@@ -313,6 +318,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
       });
     }
 
+    const price = cdek_return.entity?.delivery_detail?.delivery_sum ?? 0;
     const return_lead = await this.amo.lead.addLeads([
       {
         status_id: AMO.STATUS.RETURN,
@@ -329,6 +335,10 @@ export class OrderStatusWebhook extends AbstractWebhook {
           {
             field_id: AMO.CUSTOM_FIELD.CDEK_RETURN_INVOICE,
             values: [{ value: cdek_return.entity.cdek_number }],
+          },
+          {
+            field_id: AMO.CUSTOM_FIELD.CDEK_RETURN_PRICE,
+            values: [{ value: price.toString() }],
           },
         ],
         _embedded: {
@@ -361,7 +371,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
           entity_id: return_lead._embedded.leads[0].id,
           note_type: "common",
           params: {
-            text: `⇌ СДЕК ВОЗВРАТ:Частичный возврат по сделке ${direct_lead.id}, ссылка https://gerda.amocrm.ru/leads/detail/${direct_lead.id}, прямая накладная ${cdek_return.related_entities[0].cdek_number}`,
+            text: `⇌ СДЕК ВОЗВРАТ: Частичный возврат по сделке ${direct_lead.id}\nНакладная: https://gerda.amocrm.ru/leads/detail/${direct_lead.id}\nПрямая накладная ${cdek_return.related_entities[0].cdek_number}${price ? `\nСтоимость доставки: ${price}` : ""}`,
           },
         },
       ]),
