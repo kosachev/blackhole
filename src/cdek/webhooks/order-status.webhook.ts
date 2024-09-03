@@ -115,7 +115,6 @@ export class OrderStatusWebhook extends AbstractWebhook {
           ],
         );
         parsed.note = `✎ СДЭК${prefix}: получен трек-код ${data.attributes.cdek_number}, накладная https://lk.cdek.ru/print/print-order?numberOrd=${data.attributes.cdek_number} (1)`;
-        parsed.tag.push(AMO.TAG.TRACK);
         break;
       case "3":
         parsed.note = `ℹ СДЭК${prefix}: посылка принята на склад отправителя (3)`;
@@ -133,7 +132,6 @@ export class OrderStatusWebhook extends AbstractWebhook {
           };
           parsed.note = `✔ СДЭК${prefix}: возврат получен (4)`;
           parsed.status = AMO.STATUS.CLOSED;
-          parsed.loss_reason = AMO.LOSS_REASON.CDEK_PARTIAL_RETURN;
           parsed.pipeline = AMO.PIPELINE.RETURN;
           break;
         }
@@ -144,7 +142,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
         }
         if (data.attributes.status_reason_code !== "20") break;
         parsed.note = `✔ СДЭК${prefix}: частичный выкуп товаров адресатом (4/20)`;
-        parsed.tag.push(AMO.TAG.RETURN);
+        parsed.tag.push(AMO.TAG.PARTIAL_RETURN);
         break;
       case "5":
         parsed.note = `ℹ СДЭК${prefix}: посылка не вручена адресату (5)`;
@@ -266,6 +264,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
     await Promise.all([
       this.amo.lead.updateLeadById(direct_lead_id, {
         status_id: AMO.STATUS.RETURN,
+        loss_reason_id: AMO.LOSS_REASON.CDEK_RETURN,
         custom_fields_values: [
           {
             field_id: AMO.CUSTOM_FIELD.CDEK_RETURN_UUID,
@@ -318,8 +317,9 @@ export class OrderStatusWebhook extends AbstractWebhook {
       {
         status_id: AMO.STATUS.RETURN,
         pipeline_id: AMO.PIPELINE.RETURN,
-        name: `Возврат по сделке ${direct_lead.id}`,
+        name: `Частичный возврат по сделке ${direct_lead.id}`,
         price: return_total,
+        loss_reason_id: AMO.LOSS_REASON.CDEK_PARTIAL_RETURN,
         custom_fields_values: [
           ...direct_lead.custom_fields_values,
           {
@@ -333,7 +333,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
         ],
         _embedded: {
           contacts: [{ id: direct_lead._embedded.contacts[0].id }],
-          tags: [{ id: AMO.TAG.RETURN }],
+          tags: [{ id: AMO.TAG.PARTIAL_RETURN }],
         },
       },
     ]);
@@ -347,7 +347,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
       this.amo.lead.updateLeadById(direct_lead.id, {
         status_id: AMO.STATUS.SUCCESS,
         price: direct_lead.price - return_total,
-        tags_to_delete: [{ id: AMO.TAG.RETURN }],
+        tags_to_delete: [{ id: AMO.TAG.PARTIAL_RETURN }],
       }),
       this.amo.note.addNotes("leads", [
         {

@@ -74,7 +74,7 @@ export class PartialReturnService {
     const return_lead = await this.amo.client.lead.addLeads([
       {
         status_id: AMO.STATUS.RETURN,
-        name: `Возврат по сделке ${data.lead_id}`,
+        name: `Частичный возврат по сделке ${data.lead_id}`,
         price: data.return.reduce((acc, item) => acc + item.price, 0),
         custom_fields_values: data.custom_fields.map((item) => ({
           field_id: item.field_id,
@@ -82,7 +82,7 @@ export class PartialReturnService {
         })),
         _embedded: {
           contacts: [{ id: data.contact_id }],
-          tags: [{ id: AMO.TAG.RETURN }],
+          tags: [{ id: AMO.TAG.PARTIAL_RETURN }],
         },
       },
     ]);
@@ -108,6 +108,7 @@ export class PartialReturnService {
       this.amo.client.lead.updateLeadById(data.lead_id, {
         status_id: AMO.STATUS.SUCCESS,
         price: data.sold.reduce((acc, item) => acc + item.price, 0),
+        tags_to_add: [{ id: AMO.TAG.PARTIAL_RETURN }],
       }),
       this.amo.client.note.addNotes("leads", [
         {

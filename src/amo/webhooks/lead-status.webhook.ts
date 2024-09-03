@@ -425,7 +425,6 @@ export class LeadStatusWebhook extends AbstractWebhook {
                 ],
               },
             ],
-            tags_to_add: [{ id: AMO.TAG.TRACK }],
           }),
           this.amo.note.addNotes("leads", [
             {
