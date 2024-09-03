@@ -7,7 +7,7 @@ import { Cron } from "@nestjs/schedule";
 import { CronService } from "../cron.service";
 
 export class ArchiveLogsJob extends CronService {
-  @Cron("0 0 9 1 * *")
+  @Cron("0 9 1 1 * *")
   async archiveJob(): Promise<void> {
     const date = new Date();
 
