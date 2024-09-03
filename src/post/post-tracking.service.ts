@@ -186,7 +186,7 @@ export class PostTrackingService {
             out.return_completed.push(lead_id);
           }
         }
-        if (operation_type === "Возврат") {
+        if (operation_type === "Возврат" && status_id !== AMO.STATUS.RETURN) {
           out.notes.push({
             entity_id: lead_id,
             note_type: "common",
