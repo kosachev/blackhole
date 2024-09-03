@@ -44,7 +44,7 @@ describe("CDEK OrderStatusWebhook", () => {
         [1997427, "https://lk.cdek.ru/print/print-order?numberOrd=1197739374"],
       ],
       note: `✎ СДЭК: получен трек-код 1197739374, накладная https://lk.cdek.ru/print/print-order?numberOrd=1197739374 (1)`,
-      tag: [AMO.TAG.TRACK],
+      tag: [],
     });
   });
 
@@ -86,7 +86,7 @@ describe("CDEK OrderStatusWebhook", () => {
 
   test("4/20", () => {
     expect(service.parse(order_status_factory(4, 20))).toStrictEqual({
-      tag: [AMO.TAG.RETURN],
+      tag: [AMO.TAG.PARTIAL_RETURN],
       custom_fields: [[1997433, `4/20, Набережные Челны, ${new Date().toLocaleString("ru-RU")}`]],
       note: "✔ СДЭК: частичный выкуп товаров адресатом (4/20)",
     });
@@ -111,7 +111,6 @@ describe("CDEK OrderStatusWebhook", () => {
     ).toStrictEqual({
       tag: [],
       status: AMO.STATUS.CLOSED,
-      loss_reason: AMO.LOSS_REASON.CDEK_PARTIAL_RETURN,
       pipeline: AMO.PIPELINE.RETURN,
       custom_fields: [[1997433, `4/20, Набережные Челны, ${new Date().toLocaleString("ru-RU")}`]],
       note: "✔ СДЭК ВОЗВРАТ: возврат получен (4)",
