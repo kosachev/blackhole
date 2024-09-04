@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import { Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
 import { EntityLink } from "@shevernitskiy/amo";
 import { AMO } from "../amo/amo.constants";
 import { AmoService } from "../amo/amo.service";
@@ -25,6 +25,8 @@ export type RequestPartialReturn = {
 
 @Injectable()
 export class PartialReturnService {
+  protected readonly logger: Logger = new Logger(PartialReturnService.name);
+
   constructor(private readonly amo: AmoService) {}
 
   async handler(data: RequestPartialReturn) {
@@ -50,6 +52,8 @@ export class PartialReturnService {
         },
       ]),
     ]);
+
+    this.logger.log(`USERSCRIPT_SOLD, lead_id: ${data.lead_id}`);
   }
 
   async allReturn(data: RequestPartialReturn) {
@@ -68,6 +72,8 @@ export class PartialReturnService {
         },
       ]),
     ]);
+
+    this.logger.log(`USERSCRIPT_RETURN, lead_id: ${data.lead_id}`);
   }
 
   async partial(data: RequestPartialReturn) {
@@ -127,5 +133,9 @@ export class PartialReturnService {
         },
       ]),
     ]);
+
+    this.logger.log(
+      `USERSCRIPT_PARTIAL_RETURN, direct_id: ${data.lead_id}, return_id: ${return_lead_id}`,
+    );
   }
 }

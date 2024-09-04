@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import { Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
 import { AMO } from "../amo/amo.constants";
 import { AmoService } from "../amo/amo.service";
 import { CdekService } from "../cdek/cdek.service";
@@ -13,6 +13,8 @@ export type RequestCdekPickup = {
 
 @Injectable()
 export class CdekPickupService {
+  protected readonly logger: Logger = new Logger(CdekPickupService.name);
+
   constructor(
     private readonly amo: AmoService,
     private readonly cdek: CdekService,
@@ -66,5 +68,9 @@ export class CdekPickupService {
         },
       ]),
     ]);
+
+    this.logger.log(
+      `USERSCRIPT_PICKUP, lead_id: ${data.lead_id}, trackcode: ${data.track_code}, intake_date: ${data.intake_date}, intake_time: ${start_time}:00-${start_time + 3}:00`,
+    );
   }
 }
