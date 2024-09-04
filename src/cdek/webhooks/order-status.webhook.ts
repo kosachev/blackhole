@@ -58,6 +58,10 @@ export class OrderStatusWebhook extends AbstractWebhook {
 
     const parsed = this.parse(data);
 
+    this.logger.log(
+      `CDEK_ORDER_STATUS, lead_id: ${data.attributes.number}, uuid: ${data.uuid}, trackcode: ${data.attributes.cdek_number}, code: ${data.attributes.status_code}, returt: ${data.attributes.is_return}`,
+    );
+
     const promises: Promise<unknown>[] = [
       this.amo.lead.updateLeadById(Number(data.attributes.number), {
         updated_at: Math.round(Date.now() / 1000),
@@ -91,10 +95,6 @@ export class OrderStatusWebhook extends AbstractWebhook {
     }
 
     await Promise.all(promises);
-
-    this.logger.log(
-      `CDEK_ORDER_STATUS, lead_id: ${data.attributes.number}, uuid: ${data.uuid}, trackcode: ${data.attributes.cdek_number}, code: ${data.attributes.status_code}`,
-    );
   }
 
   parse(data: UpdateOrderStatus): ParsedWebhook {

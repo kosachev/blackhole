@@ -12,6 +12,8 @@ export class LeadStatusWebhook extends AbstractWebhook {
       load_contact: true,
     });
 
+    this.logger.log(`LEAD_STATUS, lead_id: ${lead.data.id}, status_id: ${lead.data.status_id}`);
+
     switch (lead.data.status_id) {
       case AMO.STATUS.REQUISITE: {
         await this.statusRequisite(lead);
@@ -40,7 +42,6 @@ export class LeadStatusWebhook extends AbstractWebhook {
     }
 
     await lead.saveToAmo();
-    this.logger.log(`LEAD_STATUS, lead_id: ${lead.data.id}, status_id: ${lead.data.status_id}`);
   }
 
   private async statusRequisite(lead: LeadHelper) {
