@@ -21,5 +21,6 @@ export class LeadAddWebhook extends AbstractWebhook {
     }
 
     await Promise.all([this.telegram.textToAdmin(message), this.telegram.textToManager(message)]);
+    this.logger.log(`LEAD_ADD, lead_id: ${lead.data.id}`);
   }
 }

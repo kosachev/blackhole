@@ -91,6 +91,10 @@ export class OrderStatusWebhook extends AbstractWebhook {
     }
 
     await Promise.all(promises);
+
+    this.logger.log(
+      `CDEK_ORDER_STATUS, lead_id: ${data.attributes.number}, uuid: ${data.uuid}, trackcode: ${data.attributes.cdek_number}, code: ${data.attributes.status_code}`,
+    );
   }
 
   parse(data: UpdateOrderStatus): ParsedWebhook {
@@ -293,6 +297,8 @@ export class OrderStatusWebhook extends AbstractWebhook {
       ]),
     ]);
 
+    this.logger.log(`CDEK_RETURN, lead_id: ${direct_lead_id}, uuid: ${cdek_return.entity.uuid}`);
+
     return direct_lead_id;
   }
 
@@ -376,6 +382,10 @@ export class OrderStatusWebhook extends AbstractWebhook {
         },
       ]),
     ]);
+
+    this.logger.log(
+      `CDEK_PARTIAL_RETURN, direct_id: ${direct_lead.id}, return_id: ${return_lead._embedded.leads[0].id}, return_uuid: ${cdek_return.entity.uuid}, return_trackcode: ${cdek_return.entity.cdek_number}`,
+    );
 
     return return_lead._embedded.leads[0].id;
   }

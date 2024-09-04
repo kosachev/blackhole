@@ -40,6 +40,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
     }
 
     await lead.saveToAmo();
+    this.logger.log(`LEAD_STATUS, lead_id: ${lead.data.id}, status_id: ${lead.data.source_id}`);
   }
 
   private async statusRequisite(lead: LeadHelper) {
@@ -90,6 +91,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
       });
 
       lead.note("✅ email: письмо с реквизитами отправлено");
+      this.logger.log(`STATUS_REQUISITE, lead_id: ${lead.data.id}, mail sent`);
     } catch (err) {
       this.logger.error(err);
       lead.note("❌ email: ошибка при отправке письма с реквизитами");
@@ -111,6 +113,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
       });
 
       lead.note("✅ email: письмо с подтверждением оплаты отправлено");
+      this.logger.log(`STATUS_PAYMENT, lead_id: ${lead.data.id}, mail sent`);
     } catch (err) {
       this.logger.error(err);
       lead.note("❌ email: ошибка при отправке письма с подтверждением оплаты");
@@ -166,6 +169,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
       );
 
       lead.note(`✎ Сформирован товарный чек: ${yadisk_url}`);
+      this.logger.log(`STATUS_DELIVERY, lead_id: ${lead.data.id}, pdf: ${yadisk_url}`);
     } catch (err) {
       this.logger.error(err);
       lead.note("❌ Товарный чек: ошибка при создании");
@@ -207,6 +211,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
       );
 
       lead.note(`✎ Сформирован почтовый бланк: ${yadisk_url}`);
+      this.logger.log(`STATUS_POST, lead_id: ${lead.data.id}, pdf: ${yadisk_url}`);
     } catch (err) {
       this.logger.error(err);
       lead.note("❌ Почтовый бланк: ошибка при создании");
@@ -238,6 +243,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
       });
 
       lead.note("✅ email: письмо с трек-кодом отправлено");
+      this.logger.log(`STATUS_SENT, lead_id: ${lead.data.id}, mail sent`);
     } catch (err) {
       this.logger.error(err);
       lead.note("❌ email: ошибка при отправке письма с трек-кодом");
@@ -363,11 +369,15 @@ export class LeadStatusWebhook extends AbstractWebhook {
         lead.note(
           `❌ СДЭК: ошибки при создании заказа\n${res.requests[0].errors?.map((err) => err.message)}`.trim(),
         );
+        this.logger.error(
+          `STATUS_CDEK, lead_id: ${lead.data.id}, error: ${res.requests[0].errors?.map((err) => err.message)}`,
+        );
       } else {
         lead.note(
           `✎ СДЭК: создан заказ на доставку${is_pvz ? " в ПВЗ" : ""} по тарифу ${lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TARIFF) as string}`,
         );
         lead.custom_fields.set(AMO.CUSTOM_FIELD.CDEK_UUID, res.entity.uuid);
+        this.logger.log(`STATUS_CDEK, lead_id: ${lead.data.id}, cdek_uuid: ${res.entity.uuid}`);
 
         setTimeout(async () => {
           const lead_new = await this.amo.lead.getLeadById(lead.data.id);
