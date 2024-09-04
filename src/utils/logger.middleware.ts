@@ -27,7 +27,7 @@ export class LoggerMiddleware implements NestMiddleware {
         if (typeof value !== "string") continue;
         req.headers[key] = value.replaceAll('"', "");
       }
-      this.logger.log({
+      this.logger.debug({
         data: {
           request: {
             method: req.method,

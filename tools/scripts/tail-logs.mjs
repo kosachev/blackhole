@@ -32,6 +32,7 @@ const COLORS = {
 };
 
 let file, host;
+let current_level = 2;
 
 for (const item of process.argv) {
   if (item.startsWith("--file=")) {
@@ -39,6 +40,9 @@ for (const item of process.argv) {
   }
   if (item.startsWith("--host=")) {
     host = item.replace("--host=", "");
+  }
+  if (item.startsWith("--level=")) {
+    current_level = level(item.replace("--level=", ""))[0];
   }
 }
 
@@ -56,18 +60,20 @@ const source = new EventSource(`${host}/log_viewer/tail${file ?? ""}`, {
 source.onmessage = (ev) => {
   try {
     const data = JSON.parse(ev.data);
-    console.log(
-      `${data.timestamp} %s${data.level.toUpperCase()}%s [%s${data.context}%s] ${data.message ? data.message : ""}`,
-      level(data.level),
-      COLORS.Reset,
-      COLORS.FgGreen,
-      COLORS.Reset,
-    );
-    if (data.data) {
-      console.log(inspect(data.data, false, null, true));
-    }
-    if (data.stack) {
-      console.log(inspect(data.stack, false, null, true));
+    if (level(data.level)[0] >= current_level) {
+      console.log(
+        `${data.timestamp} %s${data.level.toUpperCase()}%s [%s${data.context}%s] ${data.message ? data.message : ""}`,
+        level(data.level)[1],
+        COLORS.Reset,
+        COLORS.FgGreen,
+        COLORS.Reset,
+      );
+      if (data.data) {
+        console.log(inspect(data.data, false, null, true));
+      }
+      if (data.stack) {
+        console.log(inspect(data.stack, false, null, true));
+      }
     }
   } catch (err) {
     console.error("JSON.parse error", ev.data, err);
@@ -82,15 +88,15 @@ source.onerror = (err) => {
 
 function level(level) {
   switch (level) {
-    case "info":
-      return COLORS.FgYellow;
-    case "warn":
-      return COLORS.FgMagenta;
-    case "error":
-      return `${COLORS.Bright}${COLORS.BgRed}${COLORS.FgWhite}`;
     case "debug":
-      return COLORS.FgGray;
+      return [1, COLORS.FgGray];
+    case "info":
+      return [2, COLORS.FgYellow];
+    case "warn":
+      return [3, COLORS.FgMagenta];
+    case "error":
+      return [4, `${COLORS.Bright}${COLORS.BgRed}${COLORS.FgWhite}`];
     default:
-      return COLORS.Reset;
+      return [0, COLORS.Reset];
   }
 }
