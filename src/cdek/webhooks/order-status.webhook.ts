@@ -120,6 +120,17 @@ export class OrderStatusWebhook extends AbstractWebhook {
         );
         parsed.note = `✎ СДЭК${prefix}: получен трек-код ${data.attributes.cdek_number}, накладная https://lk.cdek.ru/print/print-order?numberOrd=${data.attributes.cdek_number} (1)`;
         break;
+      case "2":
+        parsed.custom_fields.push(
+          [AMO.CUSTOM_FIELD.TRACK_NUMBER, null],
+          [AMO.CUSTOM_FIELD.CDEK_CITY_ID, null],
+          [AMO.CUSTOM_FIELD.CDEK_PREIOD, null],
+          [AMO.CUSTOM_FIELD.CDEK_UUID, null],
+          [AMO.CUSTOM_FIELD.CDEK_INVOICE_URL, null],
+          [AMO.CUSTOM_FIELD.CDEK_STATUS, null],
+        );
+        parsed.note = `✎ СДЭК${prefix}: заказ удалён (2)`;
+        break;
       case "3":
         parsed.note = `ℹ СДЭК${prefix}: посылка принята на склад отправителя (3)`;
         parsed.status = data.attributes.is_return ? AMO.STATUS.RETURN : AMO.STATUS.SENT;
