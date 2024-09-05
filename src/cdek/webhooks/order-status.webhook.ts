@@ -176,6 +176,16 @@ export class OrderStatusWebhook extends AbstractWebhook {
         break;
       case "11":
         parsed.note = `ℹ СДЭК${prefix}: посылка выдана на доставку (11)`;
+        if (data.attributes.is_return) {
+          parsed.task = {
+            entity_id: +data.attributes.number,
+            entity_type: "leads",
+            complete_till: Math.round(Date.now() / 1000) + (23 - new Date().getHours()) * 3600,
+            task_type_id: AMO.TASK.PROCESS,
+            responsible_user_id: AMO.USER.ADMIN,
+            text: "Возврат выдан на доставку курьеру. Принять возврат",
+          };
+        }
         break;
       case "12":
         parsed.note = `ℹ СДЭК${prefix}: посылка прибыла на склад до востребования города-получателя ${data.attributes.city_name ?? ""}, ожидает забора клиентом (12)`;
