@@ -11,13 +11,13 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "npx spack && node ./tools/scripts/inline-env-to-client.mjs && nest start",
+    "start:prod": "npx rolldown ./client/main.ts -d ./public && node ./tools/scripts/inline-env-to-client.mjs && nest start",
     "lint": "oxlint \"{src,apps,libs,test,tools}/**/*.ts\" --fix",
     "test": "vitest run --config ./test/vitest.config.ts",
     "test:cov": "vitest run --coverage --config ./test/vitest.config.ts",
     "test:e2e": "vitest run --config ./test/vitest.config.ts",
     "boilerplate": "vitest run --config ./test/vitest.boilerplate.config.ts ./test/boilerplate.spec.ts",
-    "build:client": "npx spack && node ./tools/scripts/inline-env-to-client.mjs",
+    "build:client": "npx rolldown ./client/main.ts -d ./public && node ./tools/scripts/inline-env-to-client.mjs",
     "tail": "node ./tools/scripts/tail-logs.mjs"
   },
   "dependencies": {
@@ -66,6 +66,7 @@
     "oxlint": "^0.9.1",
     "pactum": "^3.7.1",
     "prettier": "^3.3.3",
+    "rolldown": "^0.13.2",
     "source-map-support": "^0.5.21",
     "ts-loader": "^9.4.3",
     "ts-node": "^10.9.1",
