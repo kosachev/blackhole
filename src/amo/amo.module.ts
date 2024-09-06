@@ -5,11 +5,18 @@ import { ConfigModule } from "@nestjs/config";
 import { LeadStatusWebhook } from "./webhooks/lead-status.webhook";
 import { LeadAddWebhook } from "./webhooks/lead-add.webhook";
 import { LeadChangeWebhook } from "./webhooks/lead-change.webhook";
+import { VisitReminderService } from "./visit-reminder.service";
 
 @Global()
 @Module({
   imports: [ConfigModule],
-  providers: [AmoService, LeadStatusWebhook, LeadAddWebhook, LeadChangeWebhook],
+  providers: [
+    AmoService,
+    LeadStatusWebhook,
+    LeadAddWebhook,
+    LeadChangeWebhook,
+    VisitReminderService,
+  ],
   controllers: [AmoController],
   exports: [AmoService],
 })
