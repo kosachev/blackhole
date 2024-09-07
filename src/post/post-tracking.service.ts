@@ -11,7 +11,7 @@ type ParsedHistories = {
   notes: RequestAddNote[];
   delivered: number[];
   returned: number[];
-  return_completed: number[];
+  return_delivered: number[];
 };
 
 @Injectable()
@@ -69,7 +69,7 @@ export class PostTrackingService {
       );
     }
 
-    if (to_update.return_completed.length > 0) {
+    if (to_update.return_delivered.length > 0) {
       promises.push(
         this.amo.client.lead.updateLeads(
           to_update.delivered.map((lead_id) => ({
@@ -137,57 +137,48 @@ export class PostTrackingService {
       notes: [],
       delivered: [],
       returned: [],
-      return_completed: [],
+      return_delivered: [],
     };
 
     for (const { history, lead_id, trackcode: _, status_id } of leads_with_history) {
       for (const { index: _, place, operation_type, operation_desc, datetime } of history.history) {
         const diff = (Date.now() - datetime.getTime()) / 1000;
-        // новые операции за последние сутки
-        if (diff < 60 * 60 * 24) {
-          out.notes.push(
-            ["Вручение", "Возврат"].includes(operation_type)
-              ? {
-                  entity_id: lead_id,
-                  note_type: "common",
-                  params: {
-                    text: `ℹ Почта: ${operation_type}, ${operation_desc} в ${place}, ${datetime.toLocaleString("ru-RU")}`,
-                  },
-                }
-              : {
-                  entity_id: lead_id,
-                  note_type: "extended_service_message",
-                  params: {
-                    text: `${operation_type}, ${operation_desc} в ${place}, ${datetime.toLocaleString("ru-RU")}`,
-                    service: "ℹ Почта",
-                  },
-                },
-          );
+        const is_return = status_id === AMO.STATUS.RETURN;
+
+        // get operations only for last 1 day
+        if (diff > 3600 * 24) continue;
+
+        // common statuses
+        if (operation_type !== "Вручение" && operation_type !== "Возврат") {
+          out.notes.push({
+            entity_id: lead_id,
+            note_type: "extended_service_message",
+            params: {
+              text: `${operation_type}, ${operation_desc} в ${place}, ${datetime.toLocaleString("ru-RU")}`,
+              service: is_return ? "ℹ Почта ВОЗВРАТ" : "ℹ Почта",
+            },
+          });
         }
 
         if (operation_type === "Вручение") {
-          if (status_id === AMO.STATUS.SENT) {
-            out.notes.push({
-              entity_id: lead_id,
-              note_type: "common",
-              params: {
-                text: `✔ Почта: заказ доставлен почтой и переведен в реализованные автоматически`,
-              },
-            });
+          out.notes.push({
+            entity_id: lead_id,
+            note_type: "common",
+            params: {
+              text: is_return
+                ? `✔ Почта ВОЗВРАТ: возврат получен`
+                : `✔ Почта: заказ доставлен почтой и переведен в реализованные автоматически`,
+            },
+          });
+
+          if (is_return) {
+            out.return_delivered.push(lead_id);
+          } else {
             out.delivered.push(lead_id);
           }
-          if (status_id === AMO.STATUS.RETURN) {
-            out.notes.push({
-              entity_id: lead_id,
-              note_type: "common",
-              params: {
-                text: `✔ Почта ВОЗВРАТ: возврат получен`,
-              },
-            });
-            out.return_completed.push(lead_id);
-          }
         }
-        if (operation_type === "Возврат" && status_id !== AMO.STATUS.RETURN) {
+
+        if (operation_type === "Возврат" && !is_return) {
           out.notes.push({
             entity_id: lead_id,
             note_type: "common",
