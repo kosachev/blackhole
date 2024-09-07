@@ -158,6 +158,17 @@ export class PostTrackingService {
               service: is_return ? "ℹ Почта ВОЗВРАТ" : "ℹ Почта",
             },
           });
+          if (operation_desc === "Прибыло в место вручения") {
+            out.notes.push({
+              entity_id: lead_id,
+              note_type: "common",
+              params: {
+                text: is_return
+                  ? `ℹ Почта ВОЗВРАТ: прибыло в место вручения`
+                  : `ℹ Почта: прибыло в место вручения и ожидает получения адресатом`,
+              },
+            });
+          }
         }
 
         if (operation_type === "Вручение") {
@@ -183,7 +194,7 @@ export class PostTrackingService {
             entity_id: lead_id,
             note_type: "common",
             params: {
-              text: `⇌ Почта ВОЗВРАТ: Сделка переведена в возвраты`,
+              text: `⇌ Почта ВОЗВРАТ: Сделка переведена в возвраты по причине: ${operation_desc}`,
             },
           });
           out.returned.push(lead_id);
