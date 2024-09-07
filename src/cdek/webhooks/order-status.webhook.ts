@@ -6,6 +6,7 @@ import { EntityLink, Task } from "@shevernitskiy/amo";
 import { ResponseGetLeadById } from "@shevernitskiy/amo/src/api/lead/types";
 import { AbstractWebhook } from "./abstract.webhook";
 import { AMO } from "../../amo/amo.constants";
+import { timestamp } from "../../utils/timestamp.function";
 
 const status_reason_code = {
   "1": " по причине неверного адреса (1)",
@@ -140,7 +141,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
           parsed.task = {
             entity_id: +data.attributes.number,
             entity_type: "leads",
-            complete_till: ~~(Date.now() / 1000) + 3600,
+            complete_till: timestamp("plus_one_hour"),
             task_type_id: AMO.TASK.PROCESS,
             responsible_user_id: AMO.USER.ADMIN,
             text: "Осмотреть товар на повреждения. Принять возврат",
@@ -180,7 +181,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
           parsed.task = {
             entity_id: +data.attributes.number,
             entity_type: "leads",
-            complete_till: Math.round(Date.now() / 1000) + (23 - new Date().getHours()) * 3600,
+            complete_till: timestamp("today_ending"),
             task_type_id: AMO.TASK.PROCESS,
             responsible_user_id: AMO.USER.ADMIN,
             text: "Возврат выдан на доставку курьеру. Принять возврат",

@@ -3,6 +3,7 @@ import { CdekService } from "./cdek.service";
 import { AmoService } from "../amo/amo.service";
 import { AMO } from "../amo/amo.constants";
 import { Cron } from "@nestjs/schedule";
+import { timestamp } from "../utils/timestamp.function";
 
 @Injectable()
 export class CdekPvzCheckService {
@@ -34,7 +35,7 @@ export class CdekPvzCheckService {
       statuses.map((item) => ({
         entity_id: item.lead_id,
         entity_type: "leads",
-        complete_till: ~~(Date.now() / 1000) + 3600,
+        complete_till: timestamp("today_ending"),
         task_type_id: AMO.TASK.PROCESS,
         responsible_user_id: AMO.USER.ADMIN,
         text: `Посылка не была получена в течение ${Math.floor((Date.now() - item.date.getTime()) / (1000 * 3600 * 24))}д.`,

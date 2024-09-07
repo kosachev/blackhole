@@ -4,6 +4,7 @@ import { Task } from "@shevernitskiy/amo";
 
 import { AmoService } from "./amo.service";
 import { AMO } from "./amo.constants";
+import { timestamp } from "../utils/timestamp.function";
 
 @Injectable()
 export class VisitReminderService {
@@ -33,7 +34,7 @@ export class VisitReminderService {
         tasks.push({
           entity_id: lead.id,
           entity_type: "leads",
-          complete_till: ~~(Date.now() / 1000) + 3600 * 12,
+          complete_till: timestamp("today_ending"),
           task_type_id: AMO.TASK.PROCESS,
           responsible_user_id: AMO.USER.ADMIN,
           text: "Подтвердить визит",
