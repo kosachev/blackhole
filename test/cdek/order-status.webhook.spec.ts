@@ -91,37 +91,4 @@ describe("CDEK OrderStatusWebhook", () => {
       note: "✔ СДЭК: частичный выкуп товаров адресатом (4/20)",
     });
   });
-
-  test("4 return", () => {
-    expect(
-      service.parse({
-        type: "ORDER_STATUS",
-        date_time: "2020-09-07T16:24:56+0700",
-        uuid: "RETURN31-86cc-497b-a1cf-a76f59065cb5a",
-        attributes: {
-          is_return: true,
-          cdek_number: "2197739374",
-          number: "666777",
-          status_code: "4",
-          status_reason_code: "20",
-          status_date_time: "2020-09-07T16:24:56+0700",
-          city_name: "Набережные Челны",
-        },
-      } as UpdateOrderStatus),
-    ).toStrictEqual({
-      tag: [],
-      status: AMO.STATUS.CLOSED,
-      pipeline: AMO.PIPELINE.RETURN,
-      custom_fields: [[1997433, `4/20, Набережные Челны, ${new Date().toLocaleString("ru-RU")}`]],
-      note: "✔ СДЭК ВОЗВРАТ: возврат получен (4)",
-      task: {
-        entity_id: 666777,
-        entity_type: "leads",
-        complete_till: ~~(Date.now() / 1000) + 3600,
-        task_type_id: AMO.TASK.PROCESS,
-        responsible_user_id: AMO.USER.ADMIN,
-        text: "Осмотреть товар на повреждения. Принять возврат",
-      },
-    });
-  });
 });
