@@ -1,14 +1,16 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Cron } from "@nestjs/schedule";
-import { AmoService } from "../amo/amo.service";
-import { AMO } from "../amo/amo.constants";
-
+import type { Task } from "@shevernitskiy/amo";
 import { PostTracking, type TrackingHistory } from "@shevernitskiy/post-tracking";
 import type { RequestAddNote } from "@shevernitskiy/amo/src/api/note/types";
+import { AmoService } from "../amo/amo.service";
+import { AMO } from "../amo/amo.constants";
+import { timestamp } from "../utils/timestamp.function";
 
 type ParsedHistories = {
   notes: RequestAddNote[];
+  tasks: Partial<Task>[];
   delivered: number[];
   returned: number[];
   return_delivered: number[];
@@ -43,6 +45,10 @@ export class PostTrackingService {
 
     if (to_update.notes.length > 0) {
       promises.push(this.amo.client.note.addNotes("leads", to_update.notes));
+    }
+
+    if (to_update.tasks.length > 0) {
+      promises.push(this.amo.client.task.addTasks(to_update.tasks));
     }
 
     if (to_update.delivered.length > 0) {
@@ -135,6 +141,7 @@ export class PostTrackingService {
   ): ParsedHistories {
     const out: ParsedHistories = {
       notes: [],
+      tasks: [],
       delivered: [],
       returned: [],
       return_delivered: [],
@@ -168,6 +175,16 @@ export class PostTrackingService {
                   : `ℹ Почта: прибыло в место вручения и ожидает получения адресатом`,
               },
             });
+            if (is_return) {
+              out.tasks.push({
+                entity_id: lead_id,
+                entity_type: "leads",
+                complete_till: timestamp("tommorow_ending"),
+                task_type_id: AMO.TASK.PROCESS,
+                responsible_user_id: AMO.USER.ADMIN,
+                text: "Забрать товар из отделения почты",
+              });
+            }
           }
         }
 
