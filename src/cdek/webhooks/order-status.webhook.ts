@@ -68,7 +68,6 @@ export class OrderStatusWebhook extends AbstractWebhook {
         updated_at: Math.round(Date.now() / 1000),
         status_id: parsed.status,
         pipeline_id: parsed.pipeline,
-        loss_reason_id: parsed.loss_reason,
         custom_fields_values: parsed.custom_fields.map((item) => ({
           field_id: item[0],
           values: [{ value: item[1] }],
@@ -291,7 +290,6 @@ export class OrderStatusWebhook extends AbstractWebhook {
     await Promise.all([
       this.amo.lead.updateLeadById(direct_lead_id, {
         status_id: AMO.STATUS.RETURN,
-        loss_reason_id: AMO.LOSS_REASON.CDEK_RETURN,
         custom_fields_values: [
           {
             field_id: AMO.CUSTOM_FIELD.CDEK_RETURN_UUID,
@@ -353,7 +351,6 @@ export class OrderStatusWebhook extends AbstractWebhook {
         pipeline_id: AMO.PIPELINE.RETURN,
         name: `Частичный возврат по сделке ${direct_lead.id}`,
         price: return_total,
-        loss_reason_id: AMO.LOSS_REASON.CDEK_PARTIAL_RETURN,
         custom_fields_values: [
           ...direct_lead.custom_fields_values,
           {

@@ -39,6 +39,10 @@ export class LeadStatusWebhook extends AbstractWebhook {
         await this.statusSent(lead);
         break;
       }
+      case AMO.STATUS.CLOSED: {
+        await this.statusClosed(lead);
+        break;
+      }
     }
 
     await lead.saveToAmo();
@@ -465,6 +469,20 @@ export class LeadStatusWebhook extends AbstractWebhook {
         ]);
       }
     }, 1000 * attemps);
+  }
+
+  private async statusClosed(lead: LeadHelper) {
+    if (lead.data.pipeline_id === AMO.PIPELINE.RETURN) {
+      const loss_reason = lead.tags.has(AMO.TAG.RETURN)
+        ? AMO.LOSS_REASON.CDEK_RETURN
+        : lead.tags.has(AMO.TAG.PARTIAL_RETURN)
+          ? AMO.LOSS_REASON.CDEK_PARTIAL_RETURN
+          : undefined;
+
+      if (loss_reason) {
+        lead.data.loss_reason_id = loss_reason;
+      }
+    }
   }
 
   private validation({
