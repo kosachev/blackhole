@@ -206,7 +206,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
       with: ["catalog_elements"],
       query: uuid,
     });
-    const lead = result._embedded.leads.find(
+    const lead = result?._embedded?.leads?.find(
       (item) => item.status_id === AMO.STATUS.RETURN && item.pipeline_id === AMO.PIPELINE.RETURN,
     );
 
