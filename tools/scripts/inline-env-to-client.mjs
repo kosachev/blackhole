@@ -1,8 +1,7 @@
-import { readFileSync, writeFileSync, existsSync, unlinkSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { exit } from "node:process";
 
-const INPUT_USERSCRIPT = "./public/main.js";
 const OUTPUT_USERSCRIPT = "./public/gerda_userscript.js";
 
 const env_file = existsSync(resolve("./.env.dev"))
@@ -29,9 +28,8 @@ if (!backend_base || !backend_base.startsWith("http")) {
   exit(1);
 }
 
-let client_file = readFileSync(resolve(INPUT_USERSCRIPT), "utf8");
+let client_file = readFileSync(resolve(OUTPUT_USERSCRIPT), "utf8");
 client_file = client_file.replace("process.env.BACKEND_BASE", `"${backend_base}"`);
 writeFileSync(resolve(OUTPUT_USERSCRIPT), client_file);
-unlinkSync(resolve(INPUT_USERSCRIPT));
 
 console.log(`Finish inlining data, used ${env_file} and BACKEND_BASE ${backend_base}`);
