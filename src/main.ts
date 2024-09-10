@@ -8,6 +8,8 @@ import { AppModule } from "./app.module";
 
 import { GlobalExceptionFilter } from "./utils/global-exception.filter";
 
+const timestamp_tz = () => new Date().toLocaleString("ru-RU", { timeZone: "Europe/Moscow" });
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     httpsOptions:
@@ -23,7 +25,7 @@ async function bootstrap() {
         new winston.transports.Console({
           format: winston.format.combine(
             winston.format.colorize({ all: true }),
-            winston.format.timestamp(),
+            winston.format.timestamp({ format: timestamp_tz }),
             winston.format.printf(
               (item) =>
                 `${item.timestamp} ${item.level} ${item.context ? "[" + item.context + "]" : ""}: ${item.message ?? ""}${item.data ? "\n" + JSON.stringify(item.data, null, 2) : ""}${item.stack ? "\n" + JSON.stringify(item.stack, null, 2) : ""}`,
@@ -34,7 +36,10 @@ async function bootstrap() {
           filename: "%DATE%.log",
           dirname: "logs",
           level: "debug",
-          format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
+          format: winston.format.combine(
+            winston.format.timestamp({ format: timestamp_tz }),
+            winston.format.json(),
+          ),
         }),
       ],
     }),
