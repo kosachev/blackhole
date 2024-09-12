@@ -65,7 +65,7 @@ export class PostTrackingService {
     if (to_update.returned.length > 0) {
       promises.push(
         this.amo.client.lead.updateLeads(
-          to_update.delivered.map((lead_id) => ({
+          to_update.returned.map((lead_id) => ({
             id: lead_id,
             status_id: AMO.STATUS.RETURN,
             tags_to_add: [{ id: AMO.TAG.RETURN }],
@@ -78,7 +78,7 @@ export class PostTrackingService {
     if (to_update.return_delivered.length > 0) {
       promises.push(
         this.amo.client.lead.updateLeads(
-          to_update.delivered.map((lead_id) => ({
+          to_update.return_delivered.map((lead_id) => ({
             id: lead_id,
             status_id: AMO.STATUS.CLOSED,
             pipeline_id: AMO.PIPELINE.RETURN,
