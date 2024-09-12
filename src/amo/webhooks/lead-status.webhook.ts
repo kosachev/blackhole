@@ -43,6 +43,10 @@ export class LeadStatusWebhook extends AbstractWebhook {
         await this.statusClosed(lead);
         break;
       }
+      case AMO.STATUS.SUCCESS: {
+        await this.statusSuccess(lead);
+        break;
+      }
     }
 
     await lead.saveToAmo();
@@ -482,6 +486,49 @@ export class LeadStatusWebhook extends AbstractWebhook {
       if (loss_reason) {
         lead.data.loss_reason_id = loss_reason;
       }
+    }
+  }
+
+  private async statusSuccess(lead: LeadHelper) {
+    const counter = lead.custom_fields.get(AMO.CUSTOM_FIELD.YM_COUNTER);
+    if (!counter || isNaN(Number(counter))) return;
+
+    const data = {
+      Target: "purchase",
+      DateTime: Math.round(Date.now() / 1000) - 10,
+      Price: lead.data.price,
+      Currency: "RUB",
+    };
+
+    const yclid = lead.custom_fields.get(AMO.CUSTOM_FIELD.YD_YCLID);
+    const client_id = lead.custom_fields.get(AMO.CUSTOM_FIELD.YM_CLIENT_ID);
+
+    let ymtype: string;
+
+    try {
+      if (yclid) {
+        await this.yametrika.upload(
+          Number(counter),
+          { Yclid: yclid, ...data },
+          `AmoCRM ID:${lead.data.id} YD`,
+        );
+        ymtype = `Yclid: ${yclid}`;
+      } else if (client_id) {
+        await this.yametrika.upload(
+          Number(counter),
+          { ClientId: client_id, ...data },
+          `AmoCRM ID:${lead.data.id} YM`,
+        );
+        ymtype = `ClientId: ${client_id}`;
+      }
+
+      if (ymtype) {
+        this.logger.log(`YANDEX_METRIKA, counter ${counter}, ${ymtype}`);
+        lead.note(`✅ Яндекс Метрика: данные загружены, счётчик ${counter} (${ymtype})`);
+      }
+    } catch (err) {
+      this.logger.error(err);
+      lead.note(`❌ Яндекс Метрика: не удалось отправить данные - ${err.message}`);
     }
   }
 

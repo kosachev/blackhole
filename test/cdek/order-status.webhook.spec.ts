@@ -1,4 +1,3 @@
-import { UpdateOrderStatus } from "cdek/src/types/api/webhook";
 import { mockAmoService } from "test/mocks/amo.mock";
 import { order_status_factory } from "test/mocks/cdek.mock";
 import { mockGoogleSheetsService } from "test/mocks/google-sheets.mock";

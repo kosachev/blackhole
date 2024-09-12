@@ -10,8 +10,8 @@ import { WebModule } from "./web/web.module";
 import { PDFModule } from "./pdf/pdf.module";
 import { TelegramModule } from "./telegram/telegram.module";
 import { YandexDiskModule } from "./yandex-disk/yandex-disk.module";
+import { YandexMetrikaModule } from "./yandex-metrika/yandex-metrika.module";
 import { LogViewerModule } from "./log-viewer/log-viewer.module";
-
 import { LoggerMiddleware } from "./utils/logger.middleware";
 import { PostModule } from "./post/post.module";
 import { ServeStaticModule } from "@nestjs/serve-static";
@@ -31,6 +31,7 @@ import { resolve } from "path";
     CronModule,
     MailModule,
     YandexDiskModule,
+    YandexMetrikaModule,
     PDFModule,
     GoogleSheetsModule,
     WebModule,
