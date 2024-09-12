@@ -23,7 +23,7 @@ export class VisitReminderService {
     const tasks: Partial<Task>[] = [];
 
     for (const lead of leads._embedded.leads) {
-      const visit_ts = lead.custom_fields_values.find(
+      const visit_ts = lead.custom_fields_values?.find(
         (item) => item.field_id === AMO.CUSTOM_FIELD.DATE,
       )?.values[0].value;
 
