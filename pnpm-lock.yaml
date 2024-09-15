@@ -37,8 +37,8 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1
       '@shevernitskiy/amo':
-        specifier: ^0.2.8
-        version: 0.2.8
+        specifier: ^0.2.9
+        version: 0.2.9
       '@shevernitskiy/post-calculator':
         specifier: ^0.1.3
         version: 0.1.3(undici@6.19.4)
@@ -1025,8 +1025,8 @@ packages:
   '@selderee/plugin-htmlparser2@0.11.0':
     resolution: {integrity: sha512-P33hHGdldxGabLFjPPpaTxVolMrzrcegejx+0GxjrIb9Zv48D8yAIA/QTDR2dFl7Uz7urX8aX6+5bCZslr+gWQ==}
 
-  '@shevernitskiy/amo@0.2.8':
-    resolution: {integrity: sha512-o9Zi/IgkFoPMVTW18DfmPSciynhAz7DNtVDJ9DR2S/yM5d1NRg41CBI5bbGLZVTzUn03nG7/Xo1cP8T4bIIcXA==}
+  '@shevernitskiy/amo@0.2.9':
+    resolution: {integrity: sha512-tlsJagtJ6oD+wtlISNaJPOrNOLjGQJwen2+mKwQ7GlgnO2kPzlmqlQ3kFCHVPvgXVWCYKJSqBfWE00NtO7u2dA==}
     engines: {node: '>= 18'}
 
   '@shevernitskiy/post-calculator@0.1.3':
@@ -4875,7 +4875,7 @@ snapshots:
       selderee: 0.11.0
     optional: true
 
-  '@shevernitskiy/amo@0.2.8': {}
+  '@shevernitskiy/amo@0.2.9': {}
 
   '@shevernitskiy/post-calculator@0.1.3(undici@6.19.4)':
     dependencies:
