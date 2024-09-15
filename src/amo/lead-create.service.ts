@@ -108,7 +108,7 @@ export class LeadCreateService {
 
     const errors = this.validateRequieredFields(data);
     if (errors) {
-      this.logger.error(`LEAD_CREATE, failed to create lead, validation errors: ${errors}$`);
+      this.logger.error(`LEAD_CREATE, failed to create lead, validation errors: ${errors}`);
       throw new BadRequestException(errors);
     }
 
