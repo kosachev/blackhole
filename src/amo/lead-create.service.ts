@@ -4,6 +4,8 @@ import {
   InternalServerErrorException,
   Logger,
 } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { TelegramService } from "../telegram/telegram.service";
 import {
   RequestAddCatalogElement,
   RequestUpdateCatalogElement,
@@ -90,18 +92,28 @@ const FIELD_MAP = {
   first_visit: AMO.CUSTOM_FIELD.FIRST_VISIT,
   yclid: AMO.CUSTOM_FIELD.YD_YCLID,
   client_id: AMO.CUSTOM_FIELD.YM_CLIENT_ID,
-  counter: AMO.CUSTOM_FIELD.YM_COUNTER,
+  counter: AMO.CUSTOM_FIELD.COUNTER,
   source_site: AMO.CUSTOM_FIELD.SOURCE_SITE,
   device_type: AMO.CUSTOM_FIELD.DEVICE_TYPE,
-  region: 0, // FIXME: no cf for this value
+  region: AMO.CUSTOM_FIELD.REGION,
   utm: AMO.CUSTOM_FIELD.UTM,
+
+  // goods
+  sku: AMO.CATALOG.CUSTOM_FIELD.SKU,
+  price: AMO.CATALOG.CUSTOM_FIELD.PRICE,
+  quantity: AMO.CATALOG.CUSTOM_FIELD.QUANTITY,
+  weight: AMO.CATALOG.CUSTOM_FIELD.WEIGHT,
 } as const;
 
 @Injectable()
 export class LeadCreateService {
   protected readonly logger: Logger = new Logger(LeadCreateService.name);
 
-  constructor(private readonly amo: AmoService) {}
+  constructor(
+    private readonly config: ConfigService,
+    private readonly telegram: TelegramService,
+    private readonly amo: AmoService,
+  ) {}
 
   async handle(data: Order) {
     this.logger.log(`LEAD_CREATE, name: ${data.name}`);
@@ -182,7 +194,8 @@ export class LeadCreateService {
     }
 
     this.logger.log(`LEAD_CREATE, success, lead_id: ${lead[0].id}, price: ${price}`);
-    // FIXME: need to send telegram messages
+    const message = `💰 Новый заказ: <a href="https://${this.config.get<string>("AMO_DOMAIN")}/leads/detail/${lead[0].id}">${data.name}</a> (<b>${price}</b> руб.)\n\n${data.goods.map((item) => `${item.name} - ${item.quantity}шт`).join("\n")}`;
+    Promise.all([this.telegram.textToAdmin(message), this.telegram.textToManager(message)]);
   }
 
   private async findContactByPhone(phone: string): Promise<number | undefined> {
@@ -211,51 +224,27 @@ export class LeadCreateService {
       const good = goods[i];
 
       if (amo_good && amo_good._embedded?.elements?.length > 0) {
-        const el = amo_good._embedded?.elements[0];
         update_goods.push({
           name: good.name,
           id: amo_good._embedded?.elements[0].id,
-          custom_fields_values: [
-            {
-              field_id: AMO.CATALOG.CUSTOM_FIELD.PRICE,
-              values: [{ value: good.price.toString() }],
-            },
-            {
-              field_id: AMO.CATALOG.CUSTOM_FIELD.WEIGHT,
-              values: [
-                {
-                  value:
-                    good.weight?.toString() ??
-                    el.custom_fields_values?.find(
-                      (item) => item.field_id === AMO.CATALOG.CUSTOM_FIELD.WEIGHT,
-                    )?.values[0].value ??
-                    "500", // FIXME: used default weight! need to fix!
-                },
-              ],
-            },
-          ],
+          custom_fields_values: this.valuesToCf({
+            price: good.price.toString(),
+            weight:
+              good.weight?.toString() ??
+              amo_good._embedded?.elements[0].custom_fields_values?.find(
+                (item) => item.field_id === AMO.CATALOG.CUSTOM_FIELD.WEIGHT,
+              )?.values[0].value,
+          }),
         });
       } else {
         add_goods.push({
           name: good.name,
-          custom_fields_values: [
-            {
-              field_id: AMO.CATALOG.CUSTOM_FIELD.SKU,
-              values: [{ value: good.sku }],
-            },
-            {
-              field_id: AMO.CATALOG.CUSTOM_FIELD.PRICE,
-              values: [{ value: good.price.toString() }],
-            },
-            {
-              field_id: AMO.CATALOG.CUSTOM_FIELD.QUANTITY,
-              values: [{ value: "0" }],
-            },
-            {
-              field_id: AMO.CATALOG.CUSTOM_FIELD.WEIGHT,
-              values: [{ value: good.weight?.toString() ?? "500" }], // FIXME: used default weight! need to fix!
-            },
-          ],
+          custom_fields_values: this.valuesToCf({
+            sku: good.sku,
+            price: good.price.toString(),
+            quantity: "0",
+            weight: good.weight?.toString(),
+          }),
         });
       }
     }
