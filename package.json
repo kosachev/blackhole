@@ -42,7 +42,6 @@
     "nodemailer": "^6.9.14",
     "number-to-words-ru": "^2.4.1",
     "pdf-lib": "^1.17.1",
-    "puppeteer": "^23.3.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "tar-fs": "^3.0.6",
