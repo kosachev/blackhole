@@ -13,6 +13,12 @@ export class CdekPvzCheckService {
   ) {}
 
   // executes in 10:05 everyday
+  @Cron("0 0 10 * * * ")
+  async refreshToken() {
+    await this.cdek.client.refreshToken();
+  }
+
+  // executes in 10:05 everyday
   @Cron("0 5 10 * * *")
   async handler() {
     const leads = await this.getLeadsInCdekDelivery();
@@ -80,8 +86,8 @@ export class CdekPvzCheckService {
     const res = await this.cdek.client.getOrderByUUID(uuid);
     return {
       lead_id,
-      code: res.entity.statuses[0].code, // last status will be first in array, because it datetime sorted
-      date: new Date(res.entity.statuses[0].date_time),
+      code: res.entity?.statuses[0]?.code, // last status will be first in array, because it datetime sorted
+      date: new Date(res.entity?.statuses[0]?.date_time),
     };
   }
 }
