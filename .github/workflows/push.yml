@@ -20,6 +20,7 @@ on:
       - "tsconfig.json"
       - "tsconfig.build.json"
       - ".github/workflows/**"
+      - "tools/**"
 
 env:
   FORCE_COLOR: true
