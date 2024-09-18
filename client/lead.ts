@@ -6,6 +6,7 @@ import { PrintPdf } from "./print-pdf";
 import { CFV, deliveryTariff, deliveryType, validateIndexCf, validatePVZCf } from "./common";
 import { PVZPicker } from "./pvz-picker";
 import { LeadPrice } from "./lead-price";
+import { Permit } from "./permit";
 
 export class Lead {
   private to_destruct: CallableFunction[] = [];
@@ -21,6 +22,7 @@ export class Lead {
     const delivery_price = new DeliveryPrice(lead_id);
     const pvz_picker = new PVZPicker(lead_id);
     const lead_price = new LeadPrice(lead_id);
+    const permit = new Permit(lead_id);
 
     this.timezone();
     this.deleteCompanyField();
@@ -36,6 +38,7 @@ export class Lead {
       delivery_price.destructor();
       pvz_picker.destructor();
       lead_price.destructor();
+      permit.destructor();
     });
   }
 
