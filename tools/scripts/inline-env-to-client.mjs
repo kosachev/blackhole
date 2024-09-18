@@ -11,8 +11,7 @@ const env_file = existsSync(resolve("./.env.dev"))
     : "./.env.example";
 
 if (env_file === "./.env.example") {
-  console.error("No env file found");
-  exit(1);
+  console.warn("No env file found, using .env.example");
 }
 
 const env = readFileSync(resolve(env_file), "utf8");
