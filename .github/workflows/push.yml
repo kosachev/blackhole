@@ -66,6 +66,9 @@ jobs:
         run: pnpm run lint
 
       - name: Build
+        run: pnpm run build:client
+
+      - name: Build Backend
         run: pnpm run build
 
       - name: Test
