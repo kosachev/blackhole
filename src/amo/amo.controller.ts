@@ -3,7 +3,7 @@ import { AutoOkResponse } from "../utils/auto-ok-response.interceptor";
 import { LeadStatusWebhook } from "./webhooks/lead-status.webhook";
 import { LeadAddWebhook } from "./webhooks/lead-add.webhook";
 import { LeadChangeWebhook } from "./webhooks/lead-change.webhook";
-import { LeadCreateService, type Order } from "./lead-create.service";
+import { LeadCreateService, type Order, type Good } from "./lead-create.service";
 
 @Controller("amo")
 export class AmoController {
@@ -37,7 +37,13 @@ export class AmoController {
 
   @Post("lead_create")
   async leadCreate(@Body() data: Order): Promise<string> {
-    await this.lead_create.handle(data);
+    await this.lead_create.leadCreateHandler(data);
+    return "OK";
+  }
+
+  @Post("good_emplace")
+  async goodEmplace(@Body() data: Good): Promise<string> {
+    await this.lead_create.goodEmplaceHandler(data);
     return "OK";
   }
 }
