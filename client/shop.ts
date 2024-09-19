@@ -70,8 +70,9 @@ type Data = {
       return;
     }
 
+    await navigator.clipboard.writeText(sku);
     alert(
-      `${name}\nАртикул: ${sku}\nРазмер: ${data.size ?? "-"}\nЦена: ${data.price}\n\nРезультат: ✅ УСПЕШНО`,
+      `${name}\nАртикул: ${sku}\nРазмер: ${data.size ?? "-"}\nЦена: ${data.price}\n\nРезультат: ✅ УСПЕШНО\n\nАртикул скопирован в буфер обмена`,
     );
   }
 
