@@ -11,13 +11,13 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "npx esbuild ./client/main.ts --bundle --outfile=./public/gerda_userscript.js --target=esnext --format=esm && node ./tools/scripts/inline-env-to-client.mjs && nest start",
+    "start:prod": "pnpm build:client && nest start",
     "lint": "oxlint \"{src,apps,libs,test,tools}/**/*.ts\" --fix",
     "test": "vitest run --config ./test/vitest.config.ts",
     "test:cov": "vitest run --coverage --config ./test/vitest.config.ts",
     "test:e2e": "vitest run --config ./test/vitest.config.ts",
     "boilerplate": "vitest run --config ./test/vitest.boilerplate.config.ts ./test/boilerplate.spec.ts",
-    "build:client": "npx esbuild ./client/main.ts --bundle --outfile=./public/gerda_userscript.js --target=esnext --format=esm && node ./tools/scripts/inline-env-to-client.mjs",
+    "build:client": "npx esbuild ./client/main.ts --bundle --outfile=./public/gerda_userscript.js --target=esnext --format=esm && npx esbuild ./client/shop.ts --bundle --outfile=./public/shop_userscript.js --target=esnext --format=esm && node ./tools/scripts/inline-env-to-client.mjs",
     "tail": "node ./tools/scripts/tail-logs.mjs"
   },
   "dependencies": {

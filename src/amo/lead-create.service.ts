@@ -15,7 +15,7 @@ import { CustomFieldsValue, Tag } from "@shevernitskiy/amo/src/typings/entities"
 import { AmoService } from "./amo.service";
 import { AMO } from "./amo.constants";
 
-type Good = {
+export type Good = {
   name: string;
   sku: string;
   price: number;
@@ -115,7 +115,22 @@ export class LeadCreateService {
     private readonly amo: AmoService,
   ) {}
 
-  async handle(data: Order) {
+  async goodEmplaceHandler(data: Good) {
+    if (!data.sku || isNaN(data.price) || isNaN(data.quantity)) {
+      this.logger.error("GOOD_EMPLACE, failed to create good, bad data");
+      throw new BadRequestException("ERROR");
+    }
+
+    try {
+      await this.addOrUpdateGoods([data]);
+    } catch (err) {
+      this.logger.error(`GOOD_EMPLACE, failed to create good`);
+      throw new InternalServerErrorException(err);
+    }
+    this.logger.log(`GOOD_EMPLACE, sku: ${data.sku}, name: ${data.name}`);
+  }
+
+  async leadCreateHandler(data: Order) {
     this.logger.log(`LEAD_CREATE, name: ${data.name}`);
 
     const errors = this.validateRequieredFields(data);
