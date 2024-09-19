@@ -35,7 +35,7 @@ export class VisitReminderService {
           entity_id: lead.id,
           entity_type: "leads",
           complete_till: timestamp("today_ending"),
-          task_type_id: AMO.TASK.PROCESS,
+          task_type_id: AMO.TASK.CALL,
           responsible_user_id: AMO.USER.ADMIN,
           text: "Подтвердить визит",
         });
