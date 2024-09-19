@@ -40,7 +40,7 @@ type Data = {
 
   async function sendData(data: Data) {
     const sku = generateSku(data.category_id, data.product_id, data.size);
-    const name = `${data.name} ${data.size ? "размер: " + data.size : ""}`;
+    const name = `${data.name}${data.size ? " размер: " + data.size : ""}`.trim();
     console.debug("SEND DATA", data, sku, name);
 
     try {
