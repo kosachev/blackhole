@@ -25,7 +25,10 @@ export class CdekPvzCheckService {
     if (leads.length === 0) return;
 
     let statuses = await Promise.all(
-      leads.map((lead) => this.getLastStatus(lead.lead_id, lead.uuid)),
+      leads.map(async (lead) => {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        return this.getLastStatus(lead.lead_id, lead.uuid);
+      }),
     );
     statuses = statuses.filter((item) => {
       const duration = Date.now() - item.date.getTime();
