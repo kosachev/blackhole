@@ -24,12 +24,17 @@ export class CdekPvzCheckService {
     const leads = await this.getLeadsInCdekDelivery();
     if (leads.length === 0) return;
 
-    let statuses = await Promise.all(
-      leads.map(async (lead) => {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        return this.getLastStatus(lead.lead_id, lead.uuid);
-      }),
-    );
+    let statuses: {
+      lead_id: number;
+      code: string;
+      date: Date;
+    }[] = [];
+
+    for (const lead of leads) {
+      statuses.push(await this.getLastStatus(lead.lead_id, lead.uuid));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+
     statuses = statuses.filter((item) => {
       const duration = Date.now() - item.date.getTime();
       return (
