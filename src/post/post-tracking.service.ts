@@ -69,7 +69,6 @@ export class PostTrackingService {
             id: lead_id,
             status_id: AMO.STATUS.RETURN,
             tags_to_add: [{ id: AMO.TAG.RETURN }],
-            loss_reason_id: AMO.LOSS_REASON.REFUSED,
           })),
         ),
       );
