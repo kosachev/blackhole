@@ -68,7 +68,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
         "building_exists",
         "prepay_exists",
       ],
-      warnings: ["index_exists", "flat_exists"],
+      warnings: ["index_exists"],
     });
 
     if (lead.errors.length > 0 || lead.warnings.length > 0) {
