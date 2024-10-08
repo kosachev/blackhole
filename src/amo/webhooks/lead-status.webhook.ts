@@ -210,8 +210,14 @@ export class LeadStatusWebhook extends AbstractWebhook {
         sum_cash_on_delivery:
           price -
           lead.getAbsoluteDiscount() +
-          Number((lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_COST) as string) ?? "0") -
-          Number((lead.custom_fields.get(AMO.CUSTOM_FIELD.PREPAY) as string) ?? "0"),
+          Number(
+            ((lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_COST) as string) ?? "0").split(
+              ",",
+            )[0],
+          ) -
+          Number(
+            ((lead.custom_fields.get(AMO.CUSTOM_FIELD.PREPAY) as string) ?? "0").split(",")[0],
+          ),
       });
 
       const yadisk_url = await this.yadisk.upload(
