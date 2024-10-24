@@ -53,14 +53,14 @@ export class OrderStatusWebhook extends AbstractWebhook {
   async handle(data: UpdateOrderStatus) {
     if (!data?.attributes?.status_code || !data?.attributes?.cdek_number) return;
     if (data?.attributes?.is_return) {
-      data.attributes.number = (await this.handleReturn(data)).toString();
+      data.attributes.number = (await this.getLeadIdForReverseOrder(data)).toString();
     }
     if (!data?.attributes?.number || Number(data.attributes.number) <= 99999) return;
 
     const parsed = this.parse(data);
 
     this.logger.log(
-      `CDEK_ORDER_STATUS, lead_id: ${data.attributes.number}, uuid: ${data.uuid}, trackcode: ${data.attributes.cdek_number}, code: ${data.attributes.status_code}, returt: ${data.attributes.is_return}`,
+      `CDEK_ORDER_STATUS, lead_id: ${data.attributes.number}, uuid: ${data.uuid}, trackcode: ${data.attributes.cdek_number}, code: ${data.attributes.status_code}, return: ${data.attributes.is_return}`,
     );
 
     const promises: Promise<unknown>[] = [
@@ -158,12 +158,13 @@ export class OrderStatusWebhook extends AbstractWebhook {
         if (data.attributes.status_reason_code !== "20") break;
         parsed.note = `✔ СДЭК${prefix}: частичный выкуп товаров адресатом (4/20)`;
         parsed.tag.push(AMO.TAG.PARTIAL_RETURN);
+        this.handlePartialReturn(data);
         break;
       case "5":
-        parsed.note = `ℹ СДЭК${prefix}: посылка не вручена адресату (5)`;
+        parsed.note = `ℹ СДЭК${prefix}: посылка не вручена адресату (5)${status_reason_code[data.attributes.status_reason_code] ?? ""}\n⇌ СДЕК ВОЗВРАТ: Сделка переведена в возвраты`;
         parsed.tag.push(AMO.TAG.RETURN);
-        if (!data.attributes.status_reason_code) break;
-        parsed.note += status_reason_code[data.attributes.status_reason_code] ?? "";
+        parsed.status = AMO.STATUS.RETURN;
+        parsed.pipeline = AMO.PIPELINE.RETURN;
         break;
       case "6":
         parsed.status = data.attributes.is_return ? AMO.STATUS.RETURN : AMO.STATUS.SENT;
@@ -198,174 +199,54 @@ export class OrderStatusWebhook extends AbstractWebhook {
     return parsed;
   }
 
-  private async getLeadByUUID(uuid?: string): Promise<{ first?: number; return?: number }> {
-    if (!uuid) return { first: undefined, return: undefined };
-
-    const result = await this.amo.lead.getLeads({
-      with: ["catalog_elements"],
-      query: uuid,
-    });
-    const lead = result?._embedded?.leads?.find(
-      (item) => item.status_id === AMO.STATUS.RETURN && item.pipeline_id === AMO.PIPELINE.RETURN,
-    );
-
-    return { first: result?._embedded?.leads?.at(0)?.id, return: lead?.id };
-  }
-
-  async handleReturn(data: UpdateOrderStatus): Promise<number> {
-    // if return lead with uuid exists -> return lead id
-    const { first: lead_exist_id, return: _ } = await this.getLeadByUUID(data.uuid);
-    if (lead_exist_id) return lead_exist_id;
-
-    // if partial return lead exists without uuid -> return lead id
-    const { first: direct_lead_exist_id, return: return_lead_exist_id } = await this.getLeadByUUID(
-      data.attributes.related_entities?.at(0)?.uuid,
-    );
-    if (return_lead_exist_id) {
-      await this.amo.lead.updateLeadById(return_lead_exist_id, {
-        custom_fields_values: [
-          {
-            field_id: AMO.CUSTOM_FIELD.CDEK_RETURN_UUID,
-            values: [{ value: data.uuid }],
-          },
-          {
-            field_id: AMO.CUSTOM_FIELD.CDEK_RETURN_INVOICE,
-            values: [{ value: data.attributes.cdek_number }],
-          },
-        ],
-      });
-      return return_lead_exist_id;
-    }
-
-    // return UUID not found -> first occurence of return webhook
-    const cdek_return = await this.cdek.getOrderByUUID(data.uuid);
-
-    // case when package has no items, treat order all return
-    if (
-      !cdek_return.entity.packages?.at(0)?.items ||
-      cdek_return.entity.packages?.at(0)?.items.length === 0
-    ) {
-      if (direct_lead_exist_id) {
-        return this.allReturn(direct_lead_exist_id, cdek_return);
-      } else {
-        this.logger.error(`Unable to handle cdek return order ${data.uuid}`);
-        throw new InternalServerErrorException(
-          `Unable to handle cdek return order ${data.uuid} without direct lead`,
-        );
-      }
-    }
-
-    const direct_lead_id = +cdek_return.entity.packages?.at(0)?.items?.at(0)?.return_item_detail
-      ?.direct_package_number;
-    if (!direct_lead_id) {
-      throw new InternalServerErrorException(
-        `Unable to fetch direct lead id from return cdek order with: ${JSON.stringify(data)}`,
-      );
-    }
-    const direct_lead = await this.amo.lead.getLeadById(direct_lead_id, {
+  async handlePartialReturn(data: UpdateOrderStatus): Promise<void> {
+    const order = await this.cdek.getOrderByUUID(data.uuid);
+    const direct_lead = await this.amo.lead.getLeadById(+data.attributes.number, {
       with: ["catalog_elements", "contacts"],
     });
-    if (!direct_lead) {
-      throw new InternalServerErrorException("Unable to fetch direct lead from amo");
-    }
 
-    // TODO: remove hardcoded CAT ID
-    const total_direct = direct_lead._embedded.catalog_elements.reduce(
-      (acc, item) =>
-        item.metadata.catalog_id == AMO.CATALOG.GOODS ? acc + item.metadata.quantity : acc,
-      0,
-    );
-    const total_return = cdek_return.entity.packages[0].items.reduce(
-      (acc, item) => acc + item.amount,
-      0,
+    const direct_cat_els = await Promise.all(
+      direct_lead._embedded.catalog_elements.map((item) =>
+        this.amo.catalog.getCatalogElementById(item.id, AMO.CATALOG.GOODS),
+      ),
     );
 
-    return total_direct === total_return
-      ? this.allReturn(direct_lead_id, cdek_return)
-      : this.partialReturn(direct_lead, cdek_return);
-  }
-
-  private async allReturn(direct_lead_id: number, cdek_return: GetOrder): Promise<number> {
-    const price = cdek_return.entity?.delivery_detail?.delivery_sum ?? 0;
-    await Promise.all([
-      this.amo.lead.updateLeadById(direct_lead_id, {
-        status_id: AMO.STATUS.RETURN,
-        custom_fields_values: [
-          {
-            field_id: AMO.CUSTOM_FIELD.CDEK_RETURN_UUID,
-            values: [{ value: cdek_return.entity.uuid }],
-          },
-          {
-            field_id: AMO.CUSTOM_FIELD.CDEK_RETURN_INVOICE,
-            values: [{ value: cdek_return.entity.cdek_number }],
-          },
-          {
-            field_id: AMO.CUSTOM_FIELD.CDEK_RETURN_PRICE,
-            values: [{ value: price.toString() }],
-          },
-        ],
-        tags_to_add: [{ id: AMO.TAG.RETURN }],
-      }),
-      this.amo.note.addNotes("leads", [
-        {
-          entity_id: direct_lead_id,
-          note_type: "common",
-          params: {
-            text: `⇌ СДЕК ВОЗВРАТ: Сделка переведена в возвраты\nВозвратный трек-код: ${cdek_return.entity.cdek_number}\nВозвратный UUID: ${cdek_return.entity.uuid}\nВозвратная накладная: https://lk.cdek.ru/print/print-order?numberOrd=${cdek_return.entity.cdek_number}${price ? `\nСтоимость доставки: ${price}` : ""}`,
-          },
-        },
-      ]),
-    ]);
-
-    this.logger.log(`CDEK_RETURN, lead_id: ${direct_lead_id}, uuid: ${cdek_return.entity.uuid}`);
-
-    return direct_lead_id;
-  }
-
-  private async partialReturn(
-    direct_lead: ResponseGetLeadById,
-    cdek_return: GetOrder,
-  ): Promise<number> {
     let return_total = 0;
     const return_goods: Partial<EntityLink>[] = [];
-    for (const item of cdek_return.entity.packages[0].items) {
-      return_total += item.cost;
-      const [catalog_id, catalog_element_id] = item.ware_key.split("-");
-      if (!catalog_id || !catalog_element_id) {
-        throw new InternalServerErrorException("Unable to parse ware_key");
+
+    // count return goods
+    for (const item of order.entity?.packages?.[0]?.items) {
+      const diff_amount = Math.abs(item.amount - (item.delivery_amount ?? item.amount));
+      if (diff_amount === 0) continue; // all items sold
+
+      return_total += item.cost * diff_amount;
+
+      // better to use warekey, bit is's not always be setted
+      const catalog_element = direct_cat_els.find((el) => item.name === el.name);
+
+      if (!catalog_element) {
+        this.logger.error(`Can't find catalog element for ${item.name}`);
+        continue;
       }
+
       return_goods.push({
-        to_entity_id: +catalog_element_id,
+        to_entity_id: catalog_element.id,
         to_entity_type: "catalog_elements",
         metadata: {
-          catalog_id: +catalog_id,
-          quantity: item.amount,
+          catalog_id: AMO.CATALOG.GOODS,
+          quantity: diff_amount,
         },
       });
     }
 
-    const price = cdek_return.entity?.delivery_detail?.delivery_sum ?? 0;
+    // create return lead
     const return_lead = await this.amo.lead.addLeads([
       {
         status_id: AMO.STATUS.RETURN,
         pipeline_id: AMO.PIPELINE.RETURN,
         name: `Частичный возврат по сделке ${direct_lead.id}`,
         price: return_total,
-        custom_fields_values: [
-          ...direct_lead.custom_fields_values,
-          {
-            field_id: AMO.CUSTOM_FIELD.CDEK_RETURN_UUID,
-            values: [{ value: cdek_return.entity.uuid }],
-          },
-          {
-            field_id: AMO.CUSTOM_FIELD.CDEK_RETURN_INVOICE,
-            values: [{ value: cdek_return.entity.cdek_number }],
-          },
-          {
-            field_id: AMO.CUSTOM_FIELD.CDEK_RETURN_PRICE,
-            values: [{ value: price.toString() }],
-          },
-        ],
+        custom_fields_values: direct_lead.custom_fields_values,
         _embedded: {
           contacts: [{ id: direct_lead._embedded.contacts[0].id }],
           tags: [{ id: AMO.TAG.PARTIAL_RETURN }],
@@ -376,13 +257,13 @@ export class OrderStatusWebhook extends AbstractWebhook {
       throw new InternalServerErrorException("Unable to create return lead");
     }
 
+    // delete return goods from direct, add it to return lead
     await Promise.all([
       this.amo.link.deleteLinksByEntityId(direct_lead.id, "leads", return_goods),
       this.amo.link.addLinksByEntityId(return_lead._embedded.leads[0].id, "leads", return_goods),
       this.amo.lead.updateLeadById(direct_lead.id, {
         status_id: AMO.STATUS.SUCCESS,
         price: direct_lead.price - return_total,
-        tags_to_delete: [{ id: AMO.TAG.PARTIAL_RETURN }],
       }),
       this.amo.note.addNotes("leads", [
         {
@@ -396,16 +277,78 @@ export class OrderStatusWebhook extends AbstractWebhook {
           entity_id: return_lead._embedded.leads[0].id,
           note_type: "common",
           params: {
-            text: `⇌ СДЕК ВОЗВРАТ: Частичный возврат по сделке ${direct_lead.id}\nНакладная: https://gerda.amocrm.ru/leads/detail/${direct_lead.id}\nПрямая накладная ${cdek_return.related_entities[0].cdek_number}${price ? `\nСтоимость доставки: ${price}` : ""}`,
+            text: `⇌ СДЕК ВОЗВРАТ: Частичный возврат по сделке ${direct_lead.id}`,
           },
         },
       ]),
     ]);
 
     this.logger.log(
-      `CDEK_PARTIAL_RETURN, direct_id: ${direct_lead.id}, return_id: ${return_lead._embedded.leads[0].id}, return_uuid: ${cdek_return.entity.uuid}, return_trackcode: ${cdek_return.entity.cdek_number}`,
+      `CDEK_PARTIAL_RETURN, direct_id: ${direct_lead.id}, return_id: ${return_lead._embedded.leads[0].id}`,
+    );
+  }
+
+  private async getReturnLeadByCdekUUID(uuid: string): Promise<number | undefined> {
+    const result = await this.amo.lead.getLeads({
+      query: uuid,
+    });
+
+    const lead = result?._embedded?.leads?.find(
+      (item) => item.status_id === AMO.STATUS.RETURN && item.pipeline_id === AMO.PIPELINE.RETURN,
     );
 
-    return return_lead._embedded.leads[0].id;
+    return lead?.id;
+  }
+
+  async getLeadIdForReverseOrder(data: UpdateOrderStatus): Promise<number> {
+    // if return lead with uuid exists -> return lead id
+    const lead_by_return_id = await this.getReturnLeadByCdekUUID(data.uuid);
+    if (lead_by_return_id) return lead_by_return_id;
+
+    // if partial return lead exists without uuid -> return lead id, update data
+    if (!data.attributes.related_entities?.at(0)?.uuid) {
+      throw new InternalServerErrorException("Not found related entity uuid in reverse order");
+    }
+    const lead_by_direct_uuid = await this.getReturnLeadByCdekUUID(
+      data.attributes.related_entities[0].uuid,
+    );
+    if (!lead_by_direct_uuid) {
+      await this.telegram.textToAdmin(
+        `Для возвратного заказа сдэка ${data.attributes.cdek_number} не найдено сделок по прямом и обратному uuid`,
+      );
+      throw new InternalServerErrorException("Not found lead for direct and  reverse uuid");
+    }
+    const reverse_order = await this.cdek.getOrderByUUID(data.uuid);
+
+    const reverse_price = reverse_order.entity?.delivery_detail?.delivery_sum ?? 0;
+    await Promise.all([
+      this.amo.lead.updateLeadById(lead_by_direct_uuid, {
+        custom_fields_values: [
+          {
+            field_id: AMO.CUSTOM_FIELD.CDEK_RETURN_UUID,
+            values: [{ value: data.uuid }],
+          },
+          {
+            field_id: AMO.CUSTOM_FIELD.CDEK_RETURN_INVOICE,
+            values: [{ value: data.attributes.cdek_number }],
+          },
+          {
+            field_id: AMO.CUSTOM_FIELD.CDEK_RETURN_PRICE,
+            values: [{ value: reverse_price.toString() }],
+          },
+        ],
+      }),
+      this.amo.note.addNotes("leads", [
+        {
+          entity_id: lead_by_direct_uuid,
+          note_type: "common",
+          params: {
+            text: `ℹ СДЕК ВОЗВРАТ\nВозвратный UUID: ${data.uuid}\nВозвратная накладная: https://lk.cdek.ru/print/print-order?numberOrd=${data.attributes.cdek_number}${reverse_price ? `\nСтоимость доставки: ${reverse_price}` : ""}`,
+          },
+        },
+      ]),
+    ]);
+
+    return lead_by_direct_uuid;
   }
 }
