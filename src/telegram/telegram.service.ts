@@ -23,9 +23,9 @@ export class TelegramService {
         }
       });
 
-      if (this.config.get<string>("NODE_ENV") === "development") {
-        TelegramService.instance.start();
-      }
+      // if (this.config.get<string>("NODE_ENV") === "development") {
+      //   TelegramService.instance.start();
+      // }
     }
   }
 
