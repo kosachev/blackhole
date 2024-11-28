@@ -1,9 +1,7 @@
-import { GetOrder } from "cdek/src/types/api/response";
 import { UpdateOrderStatus } from "cdek/src/types/api/webhook";
 
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { EntityLink, Task } from "@shevernitskiy/amo";
-import { ResponseGetLeadById } from "@shevernitskiy/amo/src/api/lead/types";
 import { AbstractWebhook } from "./abstract.webhook";
 import { AMO } from "../../amo/amo.constants";
 import { timestamp } from "../../utils/timestamp.function";
