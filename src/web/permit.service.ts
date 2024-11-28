@@ -411,6 +411,7 @@ Content-Disposition: form-data; name="DXScript"
 
     const res = await fetch("https://2an.ru/new_order.aspx", {
       method: "POST",
+      signal: AbortSignal.timeout(5000),
       headers: {
         Cookie: session_id,
         Accept:
@@ -446,6 +447,7 @@ Content-Disposition: form-data; name="DXScript"
   private async getSessionId(): Promise<string> {
     const main = await fetch("https://2an.ru/", {
       method: "GET",
+      signal: AbortSignal.timeout(5000),
       headers: {
         Authorization: this.auth,
       },
