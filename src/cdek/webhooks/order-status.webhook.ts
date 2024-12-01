@@ -192,6 +192,15 @@ export class OrderStatusWebhook extends AbstractWebhook {
         break;
       case "12":
         parsed.note = `ℹ СДЭК${prefix}: посылка прибыла на склад до востребования города-получателя ${data.attributes.city_name ?? ""}, ожидает забора клиентом (12)`;
+        if (!data.attributes.is_return) {
+          this.amo.salesbot.runTask([
+            {
+              bot_id: AMO.SALESBOT.ORDER_AT_PVZ,
+              entity_type: 2, // lead
+              entity_id: +data.attributes.number,
+            },
+          ]);
+        }
         break;
       case "19":
         parsed.status = data.attributes.is_return ? AMO.STATUS.RETURN : AMO.STATUS.SENT;

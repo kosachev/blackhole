@@ -3,12 +3,12 @@ import { describe, test, beforeAll, afterAll } from "vitest";
 import { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { AppModule } from "../src/app.module";
-import { PDFService } from "../src/pdf/pdf.service";
-import fs from "fs";
+import { AmoService } from "src/amo/amo.service";
+import { AMO } from "src/amo/amo.constants";
 
-describe("CDEK OrderStatusWebhook", () => {
+describe("Boilerplate", () => {
   let app: INestApplication;
-  let service: PDFService;
+  let service: AmoService;
 
   // mockAmoService();
   // mockMailService();
@@ -17,11 +17,11 @@ describe("CDEK OrderStatusWebhook", () => {
   beforeAll(async () => {
     const module_ref = await Test.createTestingModule({
       imports: [AppModule],
-      providers: [PDFService],
+      providers: [AmoService],
     }).compile();
 
     app = module_ref.createNestApplication();
-    service = module_ref.get<PDFService>(PDFService);
+    service = module_ref.get<AmoService>(AmoService);
 
     await app.init();
   });
@@ -33,14 +33,14 @@ describe("CDEK OrderStatusWebhook", () => {
   test("code here", async () => {
     console.log("Boilerplate starts");
 
-    const data = await service.post7p({
-      recipient: "ПРИВЕТ",
-      recipient_address: "улица такая то",
-      recipient_index: 12312,
-      sum_insured: 124124,
-      sum_cash_on_delivery: 1232,
-    });
+    const data = await service.client.salesbot.runTask([
+      {
+        bot_id: AMO.SALESBOT.ORDER_AT_PVZ,
+        entity_type: 2,
+        entity_id: 39525641,
+      },
+    ]);
 
-    fs.writeFileSync("./test.pdf", data);
+    console.log(data);
   });
 });
