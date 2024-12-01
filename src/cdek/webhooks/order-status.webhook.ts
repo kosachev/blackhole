@@ -146,6 +146,10 @@ export class OrderStatusWebhook extends AbstractWebhook {
           parsed.note = `✔ СДЭК${prefix}: возврат получен (4)`;
           parsed.status = AMO.STATUS.CLOSED;
           parsed.pipeline = AMO.PIPELINE.RETURN;
+          this.cancelTasksByText(
+            +data.attributes.number,
+            "Возврат выдан на доставку курьеру. Принять возврат",
+          );
           break;
         }
         if (!data.attributes.status_reason_code) {
@@ -188,6 +192,15 @@ export class OrderStatusWebhook extends AbstractWebhook {
         break;
       case "12":
         parsed.note = `ℹ СДЭК${prefix}: посылка прибыла на склад до востребования города-получателя ${data.attributes.city_name ?? ""}, ожидает забора клиентом (12)`;
+        if (!data.attributes.is_return) {
+          this.amo.salesbot.runTask([
+            {
+              bot_id: AMO.SALESBOT.ORDER_AT_PVZ,
+              entity_type: 2, // lead
+              entity_id: +data.attributes.number,
+            },
+          ]);
+        }
         break;
       case "19":
         parsed.status = data.attributes.is_return ? AMO.STATUS.RETURN : AMO.STATUS.SENT;
@@ -195,6 +208,26 @@ export class OrderStatusWebhook extends AbstractWebhook {
     }
 
     return parsed;
+  }
+
+  async cancelTasksByText(lead_id: number, text: string): Promise<void> {
+    const data = await this.amo.task.getTasks({
+      filter: (filter) => filter.single("entity_id", lead_id),
+    });
+
+    const tasks_to_close = data._embedded.tasks
+      .filter((task) => task.text === text)
+      .map((task) => task.id);
+
+    if (tasks_to_close.length > 0) {
+      await this.amo.task.updateTasks(
+        tasks_to_close.map((id) => ({
+          id,
+          is_completed: true,
+          result: { text: "Задача отменена автоматически" },
+        })),
+      );
+    }
   }
 
   async handlePartialReturn(data: UpdateOrderStatus): Promise<void> {
