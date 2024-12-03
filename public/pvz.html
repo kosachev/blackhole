@@ -146,6 +146,23 @@
           transform: rotate(360deg);
         }
       }
+
+      #search {
+        position: absolute;
+        z-index: 100;
+        top: 10px;
+        left: 70px;
+      }
+
+      #search-input {
+        width: 250px;
+        height: 30px;
+        border-radius: 10px;
+        padding-left: 10px;
+        padding-right: 10px;
+        font-family: "PT Sans", Arial, sans-serif;
+        font-size: 1rem;
+      }
     </style>
   </head>
   <body>
@@ -153,6 +170,9 @@
       <div id="loading">
         <div class="spinner"></div>
       </div>
+    </div>
+    <div id="search">
+      <input type="text" id="search-input" placeholder="улица, дом..." />
     </div>
     <script type="module">
       const url = new URL(window.location.href);
@@ -168,7 +188,7 @@
 
         const [res, location, _] = await Promise.all([
           fetch(`${BACKEND_BASE}/web/pvz_picker?index=${INDEX}`),
-          locationByIndex(INDEX),
+          geocodeLocation(INDEX),
           DG,
         ]);
 
@@ -200,7 +220,7 @@
           }),
         })
           .addTo(map)
-          .bindLabel("Клиент");
+          .bindLabel(`Индекс ${INDEX}`);
 
         for (const item of data) {
           DG.marker([item.location.latitude, item.location.longitude])
@@ -216,15 +236,15 @@
             });
         }
 
-        async function locationByIndex(index) {
+        async function geocodeLocation(search) {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(index + ", Russia")}`,
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(search + ", Russia")}`,
           );
 
-          if (!res.ok) throw new Error(`Unable to fetch location for index ${index}`);
+          if (!res.ok) throw new Error(`Unable to fetch location for index ${search}`);
           const data = await res.json();
           if (!data[0]?.lat || !data[0].lon) {
-            throw new Error(`Unable to fetch location for index ${index}`);
+            throw new Error(`Unable to fetch location for index ${search}`);
           }
 
           return [data[0]?.lat, data[0].lon];
@@ -244,6 +264,20 @@
             ORIGIN,
           );
         };
+
+        document.getElementById("search-input").addEventListener("change", async (e) => {
+          const search = e.target.value;
+          if (!search) return;
+
+          try {
+            const [lat, lon] = await geocodeLocation(`${search}, ${INDEX}`);
+            DG.popup().setLatLng([lat, lon]).setContent(search).openOn(map);
+            map.setView([lat, lon], 15);
+          } catch (e) {
+            console.error(e);
+            alert("Не удалось найти такой адрес");
+          }
+        });
 
         function showInfo(item) {
           const el = document.getElementById("info");
