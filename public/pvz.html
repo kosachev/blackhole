@@ -157,11 +157,21 @@
       #search-input {
         width: 250px;
         height: 30px;
-        border-radius: 10px;
         padding-left: 10px;
         padding-right: 10px;
         font-family: "PT Sans", Arial, sans-serif;
         font-size: 1rem;
+
+        border-radius: 20px;
+        border: 4px solid #3d3d3d;
+
+        box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
+        background-image: linear-gradient(to bottom, #fff 0, #efefef 100%);
+      }
+
+      #search-input:focus {
+        outline: none;
+        background-image: linear-gradient(to top, #fff 0, #efefef 100%);
       }
     </style>
   </head>
@@ -179,6 +189,7 @@
       const BACKEND_BASE = url.searchParams.get("backend");
       const ORIGIN = url.searchParams.get("origin");
       const INDEX = url.searchParams.get("index");
+      const QUERY = url.searchParams.get("query");
 
       try {
         if (!BACKEND_BASE || !ORIGIN || !INDEX) {
@@ -203,11 +214,7 @@
           zoom: 13,
         });
 
-        document
-          .getElementsByClassName(
-            "dg-control-round__icon dg-control-round__icon_name_fullscreen",
-          )[0]
-          .setAttribute("title", "Закрыть");
+        document.getElementsByClassName("leaflet-right")[0].style.display = "none";
 
         // client icon
         DG.marker(location, {
@@ -234,6 +241,15 @@
             .on("popupclose", (e) => {
               hideInfo();
             });
+        }
+
+        if (QUERY && QUERY.length > 3) {
+          try {
+            const [lat, lon] = await geocodeLocation(`${QUERY}, ${INDEX}`);
+            DG.popup().setLatLng([lat, lon]).setContent(QUERY).openOn(map);
+          } catch (e) {
+            console.error(e);
+          }
         }
 
         async function geocodeLocation(search) {

@@ -53,9 +53,20 @@ export class PVZPicker {
   }
 
   private modal() {
+    let url = `${BACKEND_BASE_URL}/public/pvz.html?backend=${BACKEND_BASE_URL}&origin=${window.location.origin}&index=${CFV(AMO.CUSTOM_FIELD.INDEX).val()}`;
+    const query = `${CFV(AMO.CUSTOM_FIELD.STREET).val()}, ${CFV(AMO.CUSTOM_FIELD.BUILDING).val()}`;
+
+    if (
+      CFV(AMO.CUSTOM_FIELD.STREET).val() &&
+      CFV(AMO.CUSTOM_FIELD.BUILDING).val() &&
+      query.length > 3
+    ) {
+      url += `&query=${query}`;
+    }
+
     $("body").css("overflow", "hidden").attr("data-body-fixed", 1);
     $("body").append(
-      `<div id="modalPVZPicker" class="modal modal-list"><div class="modal-body" style="position: fixed; display: block; top: 10%; left: 10%; margin-left: 0; margin-bottom: 0; width: 80%; height: 80%; padding: 0"><div id="PVZPickerInner"><iframe style="position: absolute; height: 100%; width: 100%; border: none" src="${BACKEND_BASE_URL}/public/pvz.html?backend=${BACKEND_BASE_URL}&origin=${window.location.origin}&index=${CFV(AMO.CUSTOM_FIELD.INDEX).val()}"></iframe><div id="closeModalPVZPicker"style="position: absolute; right: 16px; top: 25px; width: 30px; height: 30px; cursor: pointer"></div></div></div>`,
+      `<div id="modalPVZPicker" class="modal modal-list"><div class="modal-body" style="position: fixed; display: block; top: 10%; left: 10%; margin-left: 0; margin-bottom: 0; width: 80%; height: 80%; padding: 0"><div id="PVZPickerInner"><iframe style="position: absolute; height: 100%; width: 100%; border: none" src="${url}"></iframe><div id="closeModalPVZPicker" >✖</div><style>#closeModalPVZPicker { position: absolute; top: 10px; right: 10px; z-index: 100; width: 20px; height: 20px; border-radius: 50%; border: 5px solid #3d3d3d; padding: 5px; color: rgb(78, 78, 78); background-image: linear-gradient(to bottom, #fff 0, #e0e0e0 100%); font-size: 22px; text-align: center; line-height: 20px; cursor: pointer; } #closeModalPVZPicker:hover { background-image: linear-gradient(to top, #fff 0, #e0e0e0 100%) }</style></div></div>`,
     );
     $("#closeModalPVZPicker").on("click", this.close);
   }
