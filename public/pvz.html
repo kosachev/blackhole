@@ -209,15 +209,20 @@
 
         data = data.filter((item) => !item.take_only && item.type == "PVZ");
 
+        if (location.length == 0) {
+          alert("Не удалось определить местоположение по индексу");
+          throw new Error("Location not found");
+        }
+
         const map = DG.map("map", {
-          center: location,
+          center: location[0],
           zoom: 13,
         });
 
         document.getElementsByClassName("leaflet-right")[0].style.display = "none";
 
         // client icon
-        DG.marker(location, {
+        DG.marker(location[0], {
           icon: DG.icon({
             iconUrl: "https://maps.api.2gis.ru/2.0/img/DGCustomization__markerHover.png",
             iconRetinaUrl: "https://maps.api.2gis.ru/2.0/img/DGCustomization__markerHover.png",
@@ -243,27 +248,39 @@
             });
         }
 
-        if (QUERY && QUERY.length > 3) {
-          try {
-            const [lat, lon] = await geocodeLocation(`${QUERY}, ${INDEX}`);
-            DG.popup().setLatLng([lat, lon]).setContent(QUERY).openOn(map);
-          } catch (e) {
-            console.error(e);
+        async function geocodeLocation(search, bounds) {
+          let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(search)}&countrycodes=ru`;
+          if (bounds && bounds.length === 2) {
+            url += `&bounded=1&viewbox=${+bounds[1] - 0.5},${+bounds[0] - 0.25},${+bounds[1] + 0.5},${+bounds[0] + 0.25}`;
+          }
+
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`Unable to fetch location for index ${search}`);
+          const data = await res.json();
+
+          return data.map((item) => [item.lat, item.lon]);
+        }
+
+        async function searchAddress(search) {
+          const results = await geocodeLocation(search, location[0]);
+          if (results.length > 0) {
+            const popups = DG.featureGroup();
+            for (let i = 0; i < results.length; i++) {
+              DG.popup()
+                .setLatLng(results[i])
+                .setContent(`#${i + 1} ${search}`)
+                .addTo(popups);
+            }
+            popups.addTo(map);
+            map.fitBounds(popups.getBounds());
+          } else {
+            alert(`Не удалось найти адрес ${search}`);
           }
         }
 
-        async function geocodeLocation(search) {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(search + ", Russia")}`,
-          );
-
-          if (!res.ok) throw new Error(`Unable to fetch location for index ${search}`);
-          const data = await res.json();
-          if (!data[0]?.lat || !data[0].lon) {
-            throw new Error(`Unable to fetch location for index ${search}`);
-          }
-
-          return [data[0]?.lat, data[0].lon];
+        if (QUERY && QUERY.length > 3) {
+          document.getElementById("search-input").value = QUERY;
+          await searchAddress(QUERY);
         }
 
         function hideInfo() {
@@ -284,15 +301,7 @@
         document.getElementById("search-input").addEventListener("change", async (e) => {
           const search = e.target.value;
           if (!search) return;
-
-          try {
-            const [lat, lon] = await geocodeLocation(`${search}, ${INDEX}`);
-            DG.popup().setLatLng([lat, lon]).setContent(search).openOn(map);
-            map.setView([lat, lon], 15);
-          } catch (e) {
-            console.error(e);
-            alert("Не удалось найти такой адрес");
-          }
+          await searchAddress(search);
         });
 
         function showInfo(item) {
