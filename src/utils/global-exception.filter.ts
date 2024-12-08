@@ -19,7 +19,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       return;
     }
     // workaround for AutoOkResponseInterceptor
-    if ((exception as unknown as { code: string }).code === "ERR_HTTP_HEADERS_SENT") {
+    if ((exception as unknown as { code: string })?.code === "ERR_HTTP_HEADERS_SENT") {
       return;
     }
 

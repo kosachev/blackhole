@@ -7,14 +7,21 @@ export class Permit {
     console.debug("PERMIT LOADED", lead_id);
     const toplist = $("div.card-fields__top-name-more").find("ul");
     if ($(toplist).find("li div#permit").length === 0) {
-      $(toplist).append(
-        '<li class="button-input__context-menu__item  element__ "><div id="permit" class="button-input__context-menu__item__inner"><span class="button-input__context-menu__item__icon-container">🪪</span><span class="button-input__context-menu__item__text "> Заказ пропуска</span></div></li>',
-      );
+      $(toplist).append(/*html*/ `
+        <li class="button-input__context-menu__item  element__ ">
+          <div id="permit" class="button-input__context-menu__item__inner">
+            <span class="button-input__context-menu__item__icon-container">🪪</span
+            ><span class="button-input__context-menu__item__text "> Заказ пропуска</span>
+          </div>
+        </li>`);
     }
     $("#permit").on("click", () => this.render());
-    $("head").append(
-      '<style class="permit" type="text/css">input.datetime_input:invalid + span:after { content: "\u274C" }</style>',
-    );
+    $("head").append(/*html*/ `
+      <style class="permit" type="text/css">
+        input.datetime_input:invalid + span:after {
+          content: "❌";
+        }
+      </style>`);
   }
 
   destructor() {
@@ -24,9 +31,23 @@ export class Permit {
 
   private render() {
     $("body").css("overflow", "hidden").attr("data-body-fixed", 1);
-    $("body").append(
-      `<div id="modalPermit" class="modal modal-list"><div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; top: 20%; left: calc(50% - 250px); margin-left: 0; margin-bottom: 0; width: 500px;"><div class="modal-body__inner"><span class="modal-body__close"><span id="closeModalPermit" class="icon icon-modal-close"></span></span><h2 class="modal-body__caption head_2">🪪 Заказ пропуска</h2><div id="permitInner"></div></div></div></div></div>`,
-    );
+    $("body").append(/*html*/ `
+      <div id="modalPermit" class="modal modal-list">
+        <div class="modal-scroller custom-scroll">
+          <div
+            class="modal-body"
+            style="display: block; top: 20%; left: calc(50% - 250px); margin-left: 0; margin-bottom: 0; width: 500px;"
+          >
+            <div class="modal-body__inner">
+              <span class="modal-body__close">
+                <span id="closeModalPermit" class="icon icon-modal-close"></span>
+              </span>
+              <h2 class="modal-body__caption head_2">🪪 Заказ пропуска</h2>
+              <div id="permitInner"></div>
+            </div>
+          </div>
+        </div>
+      </div> `);
 
     const min_date = this.calculateMinDate();
     const max_date = this.calculateMaxDate();
@@ -39,31 +60,88 @@ export class Permit {
 
     const [last, first, middle] = $("input.js-linked-name-view").attr("value")?.split(" ");
 
-    $("div#permitInner").append(`
-      <form>
-      <div>
-      <label for="permitDate" style="display: inline-block; width: 70px; text-align: right; padding-right: 10px">Дата:</label>
-      <input type="date" id="permitDate" class="datetime_input" name="permitDate" value="${target_date}" min="${this.formatDate(min_date)}" max="${this.formatDate(
-        max_date,
-      )}" required /><span class="validity"></span>
-      </div>
-      <div>
-      <label for="permitLast" style="display: inline-block; width: 70px; text-align: right; padding-right: 10px">Фамилия:</label>
-      <input type="text" id="permitLast" class="datetime_input" ${last ? "value=" + last : ""} style=" width: 100px" pattern="[а-яА-Я]{3,}" required title="3 символа и более" /><span class="validity"></span>
-      </div>
-      <div>
-      <label for="permitFirst" style="display: inline-block; width: 70px; text-align: right; padding-right: 10px">Имя:</label>
-      <input type="text" id="permitFirst" class="datetime_input" ${first ? "value=" + first : ""} style=" width: 100px" pattern="[а-яА-Я]{3,}" required title="3 символа и более" /><span class="validity"></span>
-      </div>
-      <div>
-      <label for="permitMiddle" style="display: inline-block; width: 70px; text-align: right; padding-right: 10px">Отчество:</label>
-      <input type="text" id="permitMiddle" class="datetime_input" ${middle ? "value=" + middle : ""} style=" width: 100px" pattern="[а-яА-Я]{3,}" required title="3 символа и более" /><span class="validity"></span>
-      </div>
+    $("div#permitInner").append(/*html*/ ` <form>
+        <div>
+          <label
+            for="permitDate"
+            style="display: inline-block; width: 70px; text-align: right; padding-right: 10px"
+            >Дата:</label
+          >
+          <input
+            type="date"
+            id="permitDate"
+            class="datetime_input"
+            name="permitDate"
+            value="${target_date}"
+            min="${this.formatDate(min_date)}"
+            max="${this.formatDate(max_date)}"
+            required
+          /><span class="validity"></span>
+        </div>
+        <div>
+          <label
+            for="permitLast"
+            style="display: inline-block; width: 70px; text-align: right; padding-right: 10px"
+            >Фамилия:</label
+          >
+          <input
+            type="text"
+            id="permitLast"
+            class="datetime_input"
+            ${last ? "value=" + last : ""}
+            style=" width: 100px"
+            pattern="[а-яА-Я]{3,}"
+            required
+            title="3 символа и более"
+          /><span class="validity"></span>
+        </div>
+        <div>
+          <label
+            for="permitFirst"
+            style="display: inline-block; width: 70px; text-align: right; padding-right: 10px"
+            >Имя:</label
+          >
+          <input
+            type="text"
+            id="permitFirst"
+            class="datetime_input"
+            ${first ? "value=" + first : ""}
+            style=" width: 100px"
+            pattern="[а-яА-Я]{3,}"
+            required
+            title="3 символа и более"
+          /><span class="validity"></span>
+        </div>
+        <div>
+          <label
+            for="permitMiddle"
+            style="display: inline-block; width: 70px; text-align: right; padding-right: 10px"
+            >Отчество:</label
+          >
+          <input
+            type="text"
+            id="permitMiddle"
+            class="datetime_input"
+            ${middle ? "value=" + middle : ""}
+            style=" width: 100px"
+            pattern="[а-яА-Я]{3,}"
+            required
+            title="3 символа и более"
+          /><span class="validity"></span>
+        </div>
       </form>`);
 
-    $("div#permitInner").append(
-      '<hr><button id="permitButtonGo" type="button" class="button-input button-cancel"><span class="button-input-inner "><span class="button-input-inner__text">Заказать</span></span></button><button id="permitButtonCancel" type="button" class="button-input button-cancel"><span class="button-input-inner "><span class="button-input-inner__text">Отмена</span></span></button>',
-    );
+    $("div#permitInner").append(/*html*/ `
+        <hr />
+        <button id="permitButtonGo" type="button" class="button-input button-cancel">
+          <span class="button-input-inner "
+            ><span class="button-input-inner__text">Заказать</span></span
+          ></button
+        ><button id="permitButtonCancel" type="button" class="button-input button-cancel">
+          <span class="button-input-inner "
+            ><span class="button-input-inner__text">Отмена</span></span
+          >
+        </button>`);
 
     $("#closeModalPermit").on("click", this.close);
     $("#permitButtonCancel").on("click", this.close);
@@ -150,8 +228,16 @@ export class Permit {
   }
 
   private operationResult(result: string) {
-    $("div#modalPermit").html(
-      `<div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; top: 30%; left: calc(50% - 100px); margin-left: 0; margin-bottom: 0; width: 200px;"><div class="modal-body__inner" style="text-align: center;"><h2 class="head_2" style="font-size: 18pt;">${result}</h2></div></div></div>`,
-    );
+    $("div#modalPermit").html(/*html*/ `
+      <div class="modal-scroller custom-scroll">
+        <div
+          class="modal-body"
+          style="display: block; top: 30%; left: calc(50% - 100px); margin-left: 0; margin-bottom: 0; width: 200px;"
+        >
+          <div class="modal-body__inner" style="text-align: center;">
+            <h2 class="head_2" style="font-size: 18pt;">${result}</h2>
+          </div>
+        </div>
+      </div>`);
   }
 }

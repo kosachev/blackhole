@@ -104,7 +104,11 @@ export async function setLeadPrice(
   form.append("lead[PIPELINE_ID]", pipeline_id.toString());
   form.append("ID", lead_id.toString());
 
-  await fetch(`https://gerda.amocrm.ru/ajax/leads/detail/`, {
+  return setLeadFields(lead_id, form);
+}
+
+export async function setLeadFields(lead_id: number, form: FormData) {
+  return fetch(`https://gerda.amocrm.ru/ajax/leads/detail/`, {
     method: "POST",
     body: form,
     headers: {
