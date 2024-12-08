@@ -21,7 +21,7 @@ export class AddressSanitizerService {
   constructor(private readonly config: ConfigService) {}
 
   async handler(data: RequestAddressSanitizer): Promise<SanitizedAddress> {
-    this.logger.log(`USERSCRIPT_ADDRESS_SANITIZER, leadid: ${data.lead_id}, query: ${data.query}`);
+    this.logger.log(`leadid: ${data.lead_id}, query: ${data.query}`);
 
     try {
       const res = await fetch("https://cleaner.dadata.ru/api/v1/clean/address", {
