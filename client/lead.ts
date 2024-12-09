@@ -9,6 +9,7 @@ import { LeadPrice } from "./lead-price";
 import { Permit } from "./permit";
 import { AddressSanitizer } from "./address-sanitizer";
 import { Modal } from "./modal";
+import { CloneLead } from "./clone-lead";
 
 export class Lead {
   private to_destruct: CallableFunction[] = [];
@@ -26,6 +27,7 @@ export class Lead {
     const lead_price = new LeadPrice(lead_id);
     const permit = new Permit(lead_id);
     const address_sanitizer = new AddressSanitizer(lead_id);
+    const clone_lead = new CloneLead(lead_id);
 
     this.timezone();
     this.deleteCompanyField();

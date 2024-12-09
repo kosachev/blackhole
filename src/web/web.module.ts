@@ -8,6 +8,7 @@ import { PVZPickerService } from "./pvz-picker.service";
 import { PermitService } from "./permit.service";
 import { AddressSanitizerService } from "./address-sanitizer.service";
 import { ConfigModule } from "@nestjs/config";
+import { CloneLeadService } from "./clone-lead.service";
 
 @Module({
   imports: [ConfigModule],
@@ -19,6 +20,7 @@ import { ConfigModule } from "@nestjs/config";
     PVZPickerService,
     PermitService,
     AddressSanitizerService,
+    CloneLeadService,
   ],
   controllers: [WebController],
 })

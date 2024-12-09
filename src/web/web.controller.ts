@@ -9,6 +9,7 @@ import { GlobalExceptionFilter } from "../utils/global-exception.filter";
 import { PVZPickerService, RequestPVZPicker } from "./pvz-picker.service";
 import { PermitService, RequestPermit } from "./permit.service";
 import { AddressSanitizerService, RequestAddressSanitizer } from "./address-sanitizer.service";
+import { CloneLeadService, RequestCloneLead } from "./clone-lead.service";
 
 @Controller("web")
 @UseFilters(GlobalExceptionFilter)
@@ -21,6 +22,7 @@ export class WebController {
     private readonly pvz_picker: PVZPickerService,
     private readonly permit_service: PermitService,
     private readonly address_sanitizer: AddressSanitizerService,
+    private readonly clone_lead: CloneLeadService,
   ) {}
 
   @Post("partial_return")
@@ -64,5 +66,10 @@ export class WebController {
   @Post("address_sanitizer")
   async addressSanitizer(@Body() data: RequestAddressSanitizer) {
     return this.address_sanitizer.handler(data);
+  }
+
+  @Post("clone_lead")
+  async cloneLead(@Body() data: RequestCloneLead) {
+    return this.clone_lead.handler(data);
   }
 }
