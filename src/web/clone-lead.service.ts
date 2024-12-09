@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { AMO } from "../amo/amo.constants";
 import { AmoService } from "../amo/amo.service";
 import { RequestAddComplex } from "@shevernitskiy/amo/src/api/lead/types";

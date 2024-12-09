@@ -27,7 +27,7 @@ export class Lead {
     const lead_price = new LeadPrice(lead_id);
     const permit = new Permit(lead_id);
     const address_sanitizer = new AddressSanitizer(lead_id);
-    const clone_lead = new CloneLead(lead_id);
+    const _clone_lead = new CloneLead(lead_id);
 
     this.timezone();
     this.deleteCompanyField();
