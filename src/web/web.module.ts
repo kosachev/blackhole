@@ -6,8 +6,11 @@ import { PrintPdfService } from "./print-pdf.service";
 import { DeliveryPriceService } from "./delivery-price.service";
 import { PVZPickerService } from "./pvz-picker.service";
 import { PermitService } from "./permit.service";
+import { AddressSanitizerService } from "./address-sanitizer.service";
+import { ConfigModule } from "@nestjs/config";
 
 @Module({
+  imports: [ConfigModule],
   providers: [
     PartialReturnService,
     CdekPickupService,
@@ -15,6 +18,7 @@ import { PermitService } from "./permit.service";
     DeliveryPriceService,
     PVZPickerService,
     PermitService,
+    AddressSanitizerService,
   ],
   controllers: [WebController],
 })

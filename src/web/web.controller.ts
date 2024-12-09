@@ -8,6 +8,7 @@ import { DeliveryPriceService, RequestDeliveryPrice } from "./delivery-price.ser
 import { GlobalExceptionFilter } from "../utils/global-exception.filter";
 import { PVZPickerService, RequestPVZPicker } from "./pvz-picker.service";
 import { PermitService, RequestPermit } from "./permit.service";
+import { AddressSanitizerService, RequestAddressSanitizer } from "./address-sanitizer.service";
 
 @Controller("web")
 @UseFilters(GlobalExceptionFilter)
@@ -19,6 +20,7 @@ export class WebController {
     private readonly delivery_price: DeliveryPriceService,
     private readonly pvz_picker: PVZPickerService,
     private readonly permit_service: PermitService,
+    private readonly address_sanitizer: AddressSanitizerService,
   ) {}
 
   @Post("partial_return")
@@ -57,5 +59,10 @@ export class WebController {
   @Post("permit")
   async permit(@Body() data: RequestPermit) {
     return this.permit_service.handler(data);
+  }
+
+  @Post("address_sanitizer")
+  async addressSanitizer(@Body() data: RequestAddressSanitizer) {
+    return this.address_sanitizer.handler(data);
   }
 }
