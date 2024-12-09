@@ -36,7 +36,7 @@ export class AddressSanitizerService {
 
       const [parsed_data] = await res.json();
 
-      return {
+      const result = {
         index: parsed_data.postal_code ?? "",
         city: parsed_data.city
           ? (parsed_data.city_type ? parsed_data.city_type + ". " : "") + parsed_data.city
@@ -51,6 +51,13 @@ export class AddressSanitizerService {
           ? (parsed_data.flat_type ? parsed_data.flat_type + ". " : "") + parsed_data.flat
           : "",
       };
+
+      if (parsed_data.region_type_full === "город" && result.city === "") {
+        result.city =
+          (parsed_data.region_type ? parsed_data.region_type + ". " : "") + parsed_data.region;
+      }
+
+      return result;
     } catch (err) {
       this.logger.error("ADDRESS SANITIZER ERROR", err);
       throw err;

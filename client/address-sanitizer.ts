@@ -1,5 +1,6 @@
 import { AMO } from "../src/amo/amo.constants";
 import { BACKEND_BASE_URL, CFV, setLeadFields } from "./common";
+import { Modal } from "./modal";
 
 type Query = {
   lead_id: number;
@@ -16,41 +17,47 @@ type SanitizedAddress = {
 
 export class AddressSanitizer {
   readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/address_sanitizer`;
+  private modal: Modal;
 
   constructor(private lead_id: number) {
     console.debug("ADDRESS SANITIZER LOADED", lead_id);
 
+    this.modal = new Modal("address_sanitizer", {
+      title: "🚩 Разбор адреса",
+      width: 700,
+    });
+
     $(`div[data-id=${AMO.CUSTOM_FIELD.CITY}] > div`)
       .first()
-      .append(`<span id="address_sanitizer" style="margin-left: 5px; cursor: pointer">⟳</span>`);
+      .append(
+        `<span id="address_sanitizer_trigger" style="margin-left: 5px; cursor: pointer">⟳</span>`,
+      );
 
     $("head").append(/*html*/ `<style class="address_sanitizer_style" type="text/css">
-        .address_sanitizer_table {
+        ${this.modal.id} .table {
           display: grid;
           grid-template-columns: 80px 1fr 1fr;
           border: 0.8px solid #c5c5c5;
           width: 100%;
         }
-        .address_sanitizer_cell {
+
+        ${this.modal.id} .cell {
           border: 0.8px solid #c5c5c5;
           padding: 6px;
           text-align: center;
         }
-        .address_sanitizer_cell input {
+
+        ${this.modal.id} .cell.bold {
+          font-weight: bold;
+        }
+
+        ${this.modal.id} .cell input {
           text-align: center;
-        }
-        @keyframes address_sanitizer_rotate {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .address_sanitizer_loading {
-          display: inline-block;
-          animation: address_sanitizer_rotate 4s linear infinite;
         }
       </style>`);
 
     CFV(AMO.CUSTOM_FIELD.CITY).on("input", this.render);
-    $("#address_sanitizer").on("click", async () => await this.modalCreate());
+    $("#address_sanitizer_trigger").on("click", async () => await this.modalCreate());
   }
 
   destructor() {
@@ -66,113 +73,53 @@ export class AddressSanitizer {
       CFV(AMO.CUSTOM_FIELD.CITY).val() === null ||
       CFV(AMO.CUSTOM_FIELD.CITY).val() === undefined
     ) {
-      $("#address_sanitizer").css("display", "none").css("color", "");
+      $("#address_sanitizer_trigger").css("display", "none").css("color", "");
     } else {
-      $("#address_sanitizer").css("display", "inherit");
+      $("#address_sanitizer_trigger").css("display", "inherit");
     }
   }
 
   async modalCreate() {
-    $("body").css("overflow", "hidden").attr("data-body-fixed", 1);
-    $("body").append(/*html*/ `
-      <div id="modalAddressSanitizer" class="modal modal-list">
-        <div class="modal-scroller custom-scroll">
-          <div
-            class="modal-body"
-            style="display: block; top: 20%; left: calc(50% - 350px); margin-left: 0; margin-bottom: 0; width: 700px;"
-          >
-            <div class="modal-body__inner">
-              <span class="modal-body__close">
-                <span id="closeAddressSanitizer" class="icon icon-modal-close"></span>
-              </span>
-              <h2 class="modal-body__caption head_2">
-                🚩 Разбор адреса
-                <div class="address_sanitizer_loading">⏳</div>
-                <div class="address_sanitizer_success" style="display: none;">✔</div>
-                <div class="address_sanitizer_error" style="display: none;">✘</div>
-              </h2>
-              <div id="addressSanitizerInner">
-                <div class="address_sanitizer_table">
-                  <div class="address_sanitizer_cell">Индекс</div>
-                  <div class="address_sanitizer_cell">
-                    ${CFV(AMO.CUSTOM_FIELD.INDEX).val() ?? ""}
-                  </div>
-                  <div class="address_sanitizer_cell">
-                    <input type="text" placeholder="..." id="address_sanitizer_index" />
-                  </div>
-                  <div class="address_sanitizer_cell">Город</div>
-                  <div class="address_sanitizer_cell">
-                    ${CFV(AMO.CUSTOM_FIELD.CITY).val() ?? ""}
-                  </div>
-                  <div class="address_sanitizer_cell">
-                    <input type="text" placeholder="..." id="address_sanitizer_city" />
-                  </div>
-                  <div class="address_sanitizer_cell">Улица</div>
-                  <div class="address_sanitizer_cell">
-                    ${CFV(AMO.CUSTOM_FIELD.STREET).val() ?? ""}
-                  </div>
-                  <div class="address_sanitizer_cell">
-                    <input type="text" placeholder="..." id="address_sanitizer_street" />
-                  </div>
-                  <div class="address_sanitizer_cell">Дом</div>
-                  <div class="address_sanitizer_cell">
-                    ${CFV(AMO.CUSTOM_FIELD.BUILDING).val() ?? ""}
-                  </div>
-                  <div class="address_sanitizer_cell">
-                    <input type="text" placeholder="..." id="address_sanitizer_building" />
-                  </div>
-                  <div class="address_sanitizer_cell">Квартира</div>
-                  <div class="address_sanitizer_cell">
-                    ${CFV(AMO.CUSTOM_FIELD.FLAT).val() ?? ""}
-                  </div>
-                  <div class="address_sanitizer_cell">
-                    <input type="text" placeholder="..." id="address_sanitizer_flat" />
-                  </div>
-                </div>
-              </div>
-              <br />
-              <button
-                id="addressSanitizerButtonGo"
-                type="button"
-                class="button-input button-cancel"
-              >
-                <span class="button-input-inner "
-                  ><span class="button-input-inner__text">Обновить сделку</span></span
-                ></button
-              ><button
-                id="addressSanitizerButtonCancel"
-                type="button"
-                class="button-input button-cancel"
-              >
-                <span class="button-input-inner "
-                  ><span class="button-input-inner__text">Отмена</span></span
-                >
-              </button>
-            </div>
-          </div>
+    this.modal.create(/*html*/ `
+       <div class="table">
+        <div class="cell bold">Индекс</div>
+        <div class="cell">${CFV(AMO.CUSTOM_FIELD.INDEX).val() ?? ""}</div>
+        <div class="cell">
+          <input type="text" placeholder="..." id="address_sanitizer_index" />
         </div>
-      </div>
-    `);
+        <div class="cell bold">Город</div>
+        <div class="cell">${CFV(AMO.CUSTOM_FIELD.CITY).val() ?? ""}</div>
+        <div class="cell">
+          <input type="text" placeholder="..." id="address_sanitizer_city" />
+        </div>
+        <div class="cell bold">Улица</div>
+        <div class="cell">${CFV(AMO.CUSTOM_FIELD.STREET).val() ?? ""}</div>
+        <div class="cell">
+          <input type="text" placeholder="..." id="address_sanitizer_street" />
+        </div>
+        <div class="cell bold">Дом</div>
+        <div class="cell">${CFV(AMO.CUSTOM_FIELD.BUILDING).val() ?? ""}</div>
+        <div class="cell">
+          <input type="text" placeholder="..." id="address_sanitizer_building" />
+        </div>
+        <div class="cell bold">Квартира</div>
+        <div class="cell">${CFV(AMO.CUSTOM_FIELD.FLAT).val() ?? ""}</div>
+        <div class="cell">
+          <input type="text" placeholder="..." id="address_sanitizer_flat" />
+        </div>
+      </div>`);
 
-    $("#closeAddressSanitizer").on("click", () => this.modalClose());
-    $("#addressSanitizerButtonCancel").on("click", () => this.modalClose());
-    $("#addressSanitizerButtonGo").on("click", () => this.updateLeadData());
-    $("#addressSanitizerInner input").on("input", () => this.validateData());
+    $(`${this.modal.id} input`).on("input", () => this.validateData());
+    this.modal.onSubmit("Обновить сделку", () => this.updateLeadData());
 
     await this.modalUpdate();
   }
 
-  modalClose() {
-    $("body").attr("data-body-fixed", 0).attr("style", "");
-    $("#modalAddressSanitizer").remove();
-  }
-
   async modalUpdate() {
     try {
+      this.modal.loading = true;
       const { index, city, street, building, flat } = await this.sendRequest();
-      $(".address_sanitizer_loading").css("display", "none");
-      $(".address_sanitizer_success").css("display", "inline-block").css("color", "green");
-      setTimeout(() => $(".address_sanitizer_success").css("display", "none"), 2000);
+      this.modal.loading = false;
 
       $("#address_sanitizer_index").val(index);
       $("#address_sanitizer_city").val(city);
@@ -182,8 +129,8 @@ export class AddressSanitizer {
 
       this.validateData();
     } catch (error) {
-      $(".address_sanitizer_loading").css("display", "none");
-      $(".address_sanitizer_error").css("display", "inline-block").css("color", "red");
+      this.modal.loading = false;
+      this.modal.error("ОШИБКА БЭКЭНДА");
       console.error("ADDRESS SANITIZER ERROR", error);
     }
   }
@@ -202,18 +149,13 @@ export class AddressSanitizer {
       (building && building.length > 0) ||
       (flat && flat.length > 0)
     ) {
-      $("#addressSanitizerButtonGo").attr("class", "button-input button-input_blue");
+      this.modal.submitActive();
     } else {
-      $("#addressSanitizerButtonGo").attr("class", "button-input button-cancel");
+      this.modal.submitInactive();
     }
   }
 
   async updateLeadData() {
-    if ($("#addressSanitizerButtonGo").attr("class") !== "button-input button-input_blue") {
-      return;
-    }
-    $("#addressSanitizerButtonGo").attr("class", "button-input button-cancel");
-
     const index = $("#address_sanitizer_index").val() as string;
     const city = $("#address_sanitizer_city").val() as string;
     const street = $("#address_sanitizer_street").val() as string;
@@ -237,27 +179,13 @@ export class AddressSanitizer {
 
     try {
       const res = await setLeadFields(this.lead_id, form);
-      this.operationResult(res.ok ? "✔ УСПЕШНО" : "✘ ОШИБКА");
+      this.modal.operationResult(res.ok ? "✔ УСПЕШНО" : "✘ ОШИБКА АМО");
     } catch (error) {
-      this.operationResult("✘ ОШИБКА");
+      this.modal.operationResult("✘ ОШИБКА АМО");
       console.error("ADDRESS SANITIZER ERROR", error);
     }
 
-    setTimeout(this.modalClose, 1000);
-  }
-
-  operationResult(result: string) {
-    $("#modalAddressSanitizer").html(/*html*/ `
-      <div class="modal-scroller custom-scroll">
-        <div
-          class="modal-body"
-          style="display: block; top: 30%; left: calc(50% - 100px); margin-left: 0; margin-bottom: 0; width: 200px;"
-        >
-          <div class="modal-body__inner" style="text-align: center;">
-            <h2 class="head_2" style="font-size: 18pt;">${result}</h2>
-          </div>
-        </div>
-      </div>`);
+    setTimeout(this.modal.close, 1000);
   }
 
   async sendRequest(): Promise<SanitizedAddress> {

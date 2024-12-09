@@ -8,6 +8,7 @@ import { PVZPicker } from "./pvz-picker";
 import { LeadPrice } from "./lead-price";
 import { Permit } from "./permit";
 import { AddressSanitizer } from "./address-sanitizer";
+import { Modal } from "./modal";
 
 export class Lead {
   private to_destruct: CallableFunction[] = [];
@@ -127,8 +128,18 @@ export class Lead {
   }
 
   private styles() {
-    $("head").append(
-      '<style class="userstyles" type="text/css">#widgets_block { display: none !important; } #card_holder { padding-right: 0 !important; } li.multisuggest__list-item { max-width: 130px }</style>',
-    );
+    $("head").append(/*html*/ `
+      <style class="userstyles" type="text/css">
+        #widgets_block {
+          display: none !important;
+        }
+        #card_holder {
+          padding-right: 0 !important;
+        }
+        li.multisuggest__list-item {
+          max-width: 130px;
+        }
+        ${Modal.styles}
+      </style>`);
   }
 }
