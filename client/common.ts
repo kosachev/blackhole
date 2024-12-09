@@ -22,6 +22,14 @@ export function deliveryTariff(): string {
   return $(`div[data-id="${AMO.CUSTOM_FIELD.DELIVERY_TARIFF}"] > div > div > button`).text().trim();
 }
 
+export function contactId(): JQuery<HTMLElement> {
+  return $(`input[name="ID"]`);
+}
+
+export function responsibleId(): JQuery<HTMLElement> {
+  return $(`input[name="lead[MAIN_USER]"]`);
+}
+
 export type Good = {
   id: number;
   name: string;
