@@ -57,6 +57,8 @@ export class AddressSanitizer {
       </style>`);
 
     CFV(AMO.CUSTOM_FIELD.CITY).on("input", this.render);
+    CFV(AMO.CUSTOM_FIELD.CITY).on("change", this.render);
+    this.render();
     $("#address_sanitizer_trigger").on("click", async () => await this.modalCreate());
   }
 
@@ -65,6 +67,7 @@ export class AddressSanitizer {
 
     $("head").find("style.address_sanitizer_style").remove();
     CFV(AMO.CUSTOM_FIELD.CITY).off("input");
+    CFV(AMO.CUSTOM_FIELD.CITY).off("change");
   }
 
   render() {
@@ -163,11 +166,11 @@ export class AddressSanitizer {
     const flat = $("#address_sanitizer_flat").val() as string;
 
     const form = new FormData();
-    form.append(`CFV[${AMO.CUSTOM_FIELD.INDEX}]`, index);
-    form.append(`CFV[${AMO.CUSTOM_FIELD.CITY}]`, city);
-    form.append(`CFV[${AMO.CUSTOM_FIELD.STREET}]`, street);
-    form.append(`CFV[${AMO.CUSTOM_FIELD.BUILDING}]`, building);
-    form.append(`CFV[${AMO.CUSTOM_FIELD.FLAT}]`, flat);
+    if (index?.length > 0) form.append(`CFV[${AMO.CUSTOM_FIELD.INDEX}]`, index);
+    if (city?.length > 0) form.append(`CFV[${AMO.CUSTOM_FIELD.CITY}]`, city);
+    if (street?.length > 0) form.append(`CFV[${AMO.CUSTOM_FIELD.STREET}]`, street);
+    if (building?.length > 0) form.append(`CFV[${AMO.CUSTOM_FIELD.BUILDING}]`, building);
+    if (flat?.length > 0) form.append(`CFV[${AMO.CUSTOM_FIELD.FLAT}]`, flat);
     form.append(
       `lead[STATUS]`,
       $("div#card_status_view_mode[data-status-id]").attr("data-status-id"),
