@@ -57,6 +57,23 @@ export class AddressSanitizerService {
           (parsed_data.region_type ? parsed_data.region_type + ". " : "") + parsed_data.region;
       }
 
+      if (result.city === "" && parsed_data.settlement) {
+        result.city =
+          (parsed_data.region_type ? parsed_data.region_type + ". " : "") +
+          parsed_data.region +
+          ", " +
+          (parsed_data.area_type ? parsed_data.area_type + ". " : "") +
+          parsed_data.area +
+          ", " +
+          (parsed_data.settlement_type ? parsed_data.settlement_type + ". " : "") +
+          parsed_data.settlement;
+      }
+
+      if (parsed_data.block) {
+        result.building +=
+          " " + (parsed_data.block_type ? parsed_data.block_type + ". " : "") + parsed_data.block;
+      }
+
       return result;
     } catch (err) {
       this.logger.error("ADDRESS SANITIZER ERROR", err);
