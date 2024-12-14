@@ -21,7 +21,6 @@ export class AmoService {
         redirect_uri: this.config.get<string>("AMO_REDIRECT_URI"),
       },
       {
-        request_delay: 150,
         on_token: (new_token) => {
           writeFileSync(
             this.config.get<string>("AMO_TOKEN_PATH"),
