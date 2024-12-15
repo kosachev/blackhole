@@ -47,6 +47,18 @@ export class LeadStatusWebhook extends AbstractWebhook {
         await this.statusSuccess(lead);
         break;
       }
+      case AMO.STATUS.IN_WORK: {
+        this.statusInWork(lead);
+        break;
+      }
+      case AMO.STATUS.CALLBACK: {
+        this.statusCallback(lead);
+        break;
+      }
+      case AMO.STATUS.WAITING: {
+        this.statusWaiting(lead);
+        break;
+      }
     }
 
     await lead.saveToAmo();
@@ -479,6 +491,25 @@ export class LeadStatusWebhook extends AbstractWebhook {
         ]);
       }
     }, 1000 * attemps);
+  }
+
+  private statusInWork(lead: LeadHelper) {
+    this.setOrderFromLeadId(lead);
+  }
+
+  private statusCallback(lead: LeadHelper) {
+    this.setOrderFromLeadId(lead);
+  }
+
+  private statusWaiting(lead: LeadHelper) {
+    this.setOrderFromLeadId(lead);
+  }
+
+  private async setOrderFromLeadId(lead: LeadHelper) {
+    if (!lead.custom_fields.has(AMO.CUSTOM_FIELD.ORDER_ID)) {
+      lead.custom_fields.set(AMO.CUSTOM_FIELD.ORDER_ID, lead.data.id.toString());
+      lead.note(`✅ Номер заказа -> id сделки ${lead.data.id.toString()}`);
+    }
   }
 
   private async statusClosed(lead: LeadHelper) {
