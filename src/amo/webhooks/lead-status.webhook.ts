@@ -494,18 +494,18 @@ export class LeadStatusWebhook extends AbstractWebhook {
   }
 
   private statusInWork(lead: LeadHelper) {
-    this.setOrderFroLeadId(lead);
+    this.setOrderFromLeadId(lead);
   }
 
   private statusCallback(lead: LeadHelper) {
-    this.setOrderFroLeadId(lead);
+    this.setOrderFromLeadId(lead);
   }
 
   private statusWaiting(lead: LeadHelper) {
-    this.setOrderFroLeadId(lead);
+    this.setOrderFromLeadId(lead);
   }
 
-  private async setOrderFroLeadId(lead: LeadHelper) {
+  private async setOrderFromLeadId(lead: LeadHelper) {
     if (!lead.custom_fields.has(AMO.CUSTOM_FIELD.ORDER_ID)) {
       lead.custom_fields.set(AMO.CUSTOM_FIELD.ORDER_ID, lead.data.id.toString());
       lead.note(`✅ Номер заказа -> id сделки ${lead.data.id.toString()}`);
