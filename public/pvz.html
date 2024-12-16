@@ -2,6 +2,7 @@
 <html>
   <head>
     <title>Выбор ПВЗ</title>
+    <meta http-equiv="Permissions-Policy" content="clipboard-write=(self)" />
     <script src="https://maps.api.2gis.ru/2.0/loader.js"></script>
     <style>
       body {
@@ -138,6 +139,19 @@
         animation: spin 1s linear infinite;
       }
 
+      #drawer-close {
+        position: absolute;
+        top: 0px;
+        right: 7px;
+        font-size: 20px;
+        cursor: pointer;
+        z-index: 1000;
+      }
+
+      #drawer-close:hover {
+        color: #ff0000;
+      }
+
       @keyframes spin {
         0% {
           transform: rotate(0deg);
@@ -151,7 +165,7 @@
         position: absolute;
         z-index: 100;
         top: 10px;
-        left: 70px;
+        right: 70px;
         opacity: 0;
         transition: opacity 0.3s ease-in-out;
       }
@@ -246,9 +260,6 @@
             .on("click", (e) => {
               showInfo(item);
               map.setView([e.latlng.lat, e.latlng.lng]);
-            })
-            .on("popupclose", (e) => {
-              hideInfo();
             });
         }
 
@@ -289,7 +300,7 @@
 
         function hideInfo() {
           const el = document.getElementById("info");
-          el.classList.remove("show");
+          el?.classList?.remove("show");
         }
 
         window.choosePoint = () => {
@@ -363,6 +374,7 @@
 
           el.innerHTML = `
           <div>
+            <div id="drawer-close">✖</div>
             <h2>${item.name}</h2>
             <ul>
               <li class="feature_list_item">
@@ -384,6 +396,8 @@
           </div>
           <button id="send" onclick="window.choosePoint()">Выбрать</button>
         `;
+
+          document.getElementById("drawer-close").addEventListener("click", hideInfo);
 
           window.choosedPointData = item;
           el.classList.add("show");
