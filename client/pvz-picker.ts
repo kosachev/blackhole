@@ -54,15 +54,15 @@ export class PVZPicker {
 
   private modal() {
     let url = `${BACKEND_BASE_URL}/public/pvz.html?backend=${BACKEND_BASE_URL}&origin=${window.location.origin}&index=${CFV(AMO.CUSTOM_FIELD.INDEX).val()}`;
-    const query = `${CFV(AMO.CUSTOM_FIELD.STREET).val()}, ${CFV(AMO.CUSTOM_FIELD.BUILDING).val()}`;
+    // const query = `${CFV(AMO.CUSTOM_FIELD.STREET).val()}, ${CFV(AMO.CUSTOM_FIELD.BUILDING).val()}`;
 
-    if (
-      CFV(AMO.CUSTOM_FIELD.STREET).val() &&
-      CFV(AMO.CUSTOM_FIELD.BUILDING).val() &&
-      query.length > 3
-    ) {
-      url += `&query=${query}`;
-    }
+    // if (
+    //   CFV(AMO.CUSTOM_FIELD.STREET).val() &&
+    //   CFV(AMO.CUSTOM_FIELD.BUILDING).val() &&
+    //   query.length > 3
+    // ) {
+    //   url += `&query=${query}`;
+    // }
 
     $("body").css("overflow", "hidden").attr("data-body-fixed", 1);
     $("body").append(
