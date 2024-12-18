@@ -153,6 +153,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
         "city_exists",
         "street_exists",
         "building_exists",
+        "price_greater_than_zero",
       ],
       warnings: ["flat_exists", "delivery_time_exists", "discount_is_percent"],
     });
@@ -686,6 +687,10 @@ export class LeadStatusWebhook extends AbstractWebhook {
       track_number_exists: [
         lead.custom_fields.get(AMO.CUSTOM_FIELD.TRACK_NUMBER) ? true : false,
         "Не указан трэк-код",
+      ],
+      price_greater_than_zero: [
+        Number(lead.data.price) > 0 ? true : false,
+        "Стоимость заказа не может быть меньше или равна нулю",
       ],
     };
 
