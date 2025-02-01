@@ -72,11 +72,11 @@ jobs:
       - name: Build Backend
         run: pnpm run build
 
-      # - name: Test
-      #   run: pnpm run test:cov
+      - name: Test
+        run: pnpm run test:cov
 
-      # - name: Report Coverage
-      #   if: always()
-      #   uses: davelosert/vitest-coverage-report-action@v2
-      #   with:
-      #     vite-config-path: ./test/vitest.config.ts
+      - name: Report Coverage
+        if: always()
+        uses: davelosert/vitest-coverage-report-action@v2
+        with:
+          vite-config-path: ./test/vitest.config.ts
