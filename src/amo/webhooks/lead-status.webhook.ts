@@ -535,7 +535,6 @@ export class LeadStatusWebhook extends AbstractWebhook {
     if (!counter || isNaN(Number(counter))) return;
 
     const data = {
-      Target: "purchase",
       DateTime: Math.round(Date.now() / 1000) - 10,
       Price: lead.data.price,
       Currency: "RUB",
@@ -550,14 +549,14 @@ export class LeadStatusWebhook extends AbstractWebhook {
       if (yclid) {
         await this.yametrika.upload(
           Number(counter),
-          { Yclid: yclid, ...data },
+          { Yclid: yclid, Target: "implemented", ...data },
           `AmoCRM ID:${lead.data.id} YD`,
         );
         ymtype = `Yclid: ${yclid}`;
       } else if (client_id) {
         await this.yametrika.upload(
           Number(counter),
-          { ClientId: client_id, ...data },
+          { ClientId: client_id, Target: "purchase", ...data },
           `AmoCRM ID:${lead.data.id} YM`,
         );
         ymtype = `ClientId: ${client_id}`;
