@@ -411,7 +411,7 @@ Content-Disposition: form-data; name="DXScript"
 
     const res = await fetch("https://2an.ru/new_order.aspx", {
       method: "POST",
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(10000),
       headers: {
         Cookie: session_id,
         Accept:
