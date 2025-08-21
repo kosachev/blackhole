@@ -385,9 +385,10 @@ export class OrderStatusWebhook extends AbstractWebhook {
   }
 
   private async getPrintForm(cdek_number: string, lead_id: number): Promise<void> {
-    async function getReceipt(cdek_number: string): Promise<ReadableStream<Uint8Array> | null> {
+    try {
+      let pdf: ReadableStream<Uint8Array> | null = null;
       const printRequest = await this.cdek.createOrderReceipt({
-        orders: [{ cdek_number }],
+        orders: [{ cdek_number: +cdek_number }],
         copy_count: 1,
       });
       if (!printRequest.entity?.uuid) return null;
@@ -397,16 +398,11 @@ export class OrderStatusWebhook extends AbstractWebhook {
         await new Promise((resolve) => setTimeout(resolve, 2000));
         const res = await this.cdek.getOrderReceipt(printRequest.entity.uuid);
         if (res.entity?.statuses.at(-1)?.code === "READY") {
-          return await this.cdek.downloadOrderReceipt(printRequest.entity.uuid);
+          pdf = await this.cdek.downloadOrderReceipt(printRequest.entity.uuid);
+          break;
         }
         l++;
       }
-
-      return null;
-    }
-
-    try {
-      const pdf = await getReceipt(cdek_number);
 
       if (!pdf) throw new Error("cannot get pdf from cdek, cdek_number: " + cdek_number);
       const buffer = Buffer.from(await new Response(pdf).arrayBuffer());
@@ -418,7 +414,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
           entity_id: lead_id,
           note_type: "common",
           params: {
-            text: `✎ Форма для печати накладной ${cdek_number}: ${yadisk_url}`,
+            text: `✎ Форма для печати ${yadisk_url}`,
           },
         },
       ]);
