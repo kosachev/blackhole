@@ -7,7 +7,11 @@ import { PrintPdfService } from "./print-pdf.service";
 import { DeliveryPriceService, RequestDeliveryPrice } from "./delivery-price.service";
 import { GlobalExceptionFilter } from "../utils/global-exception.filter";
 import { PVZPickerService, RequestPVZPicker } from "./pvz-picker.service";
-import { PermitService, RequestPermit } from "./permit.service";
+import {
+  PermitService,
+  type RequestPermitAuto,
+  type RequestPermitCustomer,
+} from "./permit.service";
 import { AddressSanitizerService, RequestAddressSanitizer } from "./address-sanitizer.service";
 import { CloneLeadService, RequestCloneLead } from "./clone-lead.service";
 
@@ -59,8 +63,13 @@ export class WebController {
   }
 
   @Post("permit")
-  async permit(@Body() data: RequestPermit) {
-    return this.permit_service.handler(data);
+  async permit(@Body() data: RequestPermitCustomer) {
+    return this.permit_service.handlerPermitCustomer(data);
+  }
+
+  @Post("permit_auto")
+  async permitAuto(@Body() data: RequestPermitAuto) {
+    return this.permit_service.handlerPermitAuto(data);
   }
 
   @Post("address_sanitizer")
