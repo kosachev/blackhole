@@ -4,7 +4,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { AmoService } from "../../amo/amo.service";
 import { CdekService } from "../cdek.service";
 import { TelegramService } from "../../telegram/telegram.service";
-import { YandexDiskService } from "src/yandex-disk/yandex-disk.service";
+import { YandexDiskService } from "../../yandex-disk/yandex-disk.service";
 
 @Injectable()
 export abstract class AbstractWebhook {

@@ -7,7 +7,6 @@ import { DownloadPhotoWebhook } from "./webhooks/download-photo.webhook";
 import { PrealertCloseWebhook } from "./webhooks/prealert-close.webhook";
 import { PrintFormWebhook } from "./webhooks/print-form.webhook";
 import { CdekPvzCheckService } from "./cdek-pvz-check.service";
-import { YandexDiskService } from "src/yandex-disk/yandex-disk.service";
 
 @Global()
 @Module({
@@ -19,7 +18,6 @@ import { YandexDiskService } from "src/yandex-disk/yandex-disk.service";
     PrealertCloseWebhook,
     PrintFormWebhook,
     CdekPvzCheckService,
-    YandexDiskService,
   ],
   controllers: [CdekController],
   exports: [CdekService],
