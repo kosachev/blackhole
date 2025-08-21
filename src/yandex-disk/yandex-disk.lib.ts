@@ -46,7 +46,7 @@ export class YandexDiskClient {
     try {
       await fetch(url, {
         method: "PUT",
-        body: data,
+        body: data as BodyInit,
       });
     } catch (error) {
       const err = new YandexDiskError(`API request fialure: ${error.message}`);
