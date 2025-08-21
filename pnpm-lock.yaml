@@ -46,8 +46,8 @@ importers:
         specifier: ^0.1.2
         version: 0.1.2
       cdek:
-        specifier: ^1.0.12
-        version: 1.0.12
+        specifier: ^1.0.13
+        version: 1.0.13
       google-auth-library:
         specifier: ^9.15.1
         version: 9.15.1
@@ -1806,8 +1806,8 @@ packages:
   caniuse-lite@1.0.30001707:
     resolution: {integrity: sha512-3qtRjw/HQSMlDWf+X79N206fepf4SOOU6SQLMaq/0KkZLmSjPxAkBOQQ+FxbHKfHmYLZFfdWsO3KA90ceHPSnw==}
 
-  cdek@1.0.12:
-    resolution: {integrity: sha512-6Dpwc9IOCBkEw52OsyH4i1VVIYekfitKWYm+IhrE+l8DbhvOLkejPKkGwuTU8fTn7stCQOn/2BJ9H+DN9ukVHg==}
+  cdek@1.0.13:
+    resolution: {integrity: sha512-noT9z6Gte72zD6FOw5ZzcyMqwlW6q/PDhXMxX7gjD+6SgSp0+nrh/GISkehB5sQPqu7gDcFBVODwISMS62ZAcA==}
     engines: {node: '>= 18'}
 
   centra@2.7.0:
@@ -5921,7 +5921,7 @@ snapshots:
 
   caniuse-lite@1.0.30001707: {}
 
-  cdek@1.0.12: {}
+  cdek@1.0.13: {}
 
   centra@2.7.0:
     dependencies:

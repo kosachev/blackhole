@@ -7,6 +7,7 @@ import { describe, test, beforeAll, afterAll } from "vitest";
 import { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { AppModule } from "../src/app.module";
+import { mockYandexDiskService } from "test/mocks/yadisk.mock";
 
 describe("App e2e", () => {
   let app: INestApplication;
@@ -14,6 +15,7 @@ describe("App e2e", () => {
   mockAmoService();
   mockMailService();
   mockGoogleSheetsService();
+  mockYandexDiskService();
 
   beforeAll(async () => {
     const module_ref = await Test.createTestingModule({

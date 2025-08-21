@@ -28,7 +28,7 @@ export class PrintPdf {
 
   render() {
     $("div.feed-note-wrapper-note").each((i, el) => {
-      const e = $(el).find("div.feed-note__body p");
+      const e = $(el).find("div.feed-note__body span");
       if (e) {
         this.handleNote(e);
       }
