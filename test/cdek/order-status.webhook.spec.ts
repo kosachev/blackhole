@@ -42,9 +42,9 @@ describe("CDEK OrderStatusWebhook", () => {
       custom_fields: [
         [1997433, `1/20, Набережные Челны, ${new Date().toLocaleString("ru-RU")}`],
         [1430854, "1197739374"],
-        [1997427, "https://lk.cdek.ru/print/print-order?numberOrd=1197739374"],
+        [1997427, "https://lk.cdek.ru/order-history/1197739374/view"],
       ],
-      note: `✎ СДЭК: получен трек-код 1197739374, накладная https://lk.cdek.ru/print/print-order?numberOrd=1197739374 (1)`,
+      note: `✎ СДЭК: получен трек-код 1197739374, накладная https://lk.cdek.ru/order-history/1197739374/view (1)`,
       tag: [],
     });
   });
