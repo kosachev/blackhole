@@ -36,6 +36,8 @@ const status_reason_code = {
   "27": " по причине не востребованности, утилизация (27)",
 } as const;
 
+const orderUrl = (cdek_number: string) => `https://lk.cdek.ru/order-history/${cdek_number}/view`;
+
 type ParsedWebhook = {
   note?: string;
   tag: (typeof AMO.TAG)[keyof typeof AMO.TAG][];
@@ -111,12 +113,9 @@ export class OrderStatusWebhook extends AbstractWebhook {
       case "1":
         parsed.custom_fields.push(
           [AMO.CUSTOM_FIELD.TRACK_NUMBER, data.attributes.cdek_number],
-          [
-            AMO.CUSTOM_FIELD.CDEK_INVOICE_URL,
-            `https://lk.cdek.ru/print/print-order?numberOrd=${data.attributes.cdek_number}`,
-          ],
+          [AMO.CUSTOM_FIELD.CDEK_INVOICE_URL, orderUrl(data.attributes.cdek_number)],
         );
-        parsed.note = `✎ СДЭК${prefix}: получен трек-код ${data.attributes.cdek_number}, накладная https://lk.cdek.ru/print/print-order?numberOrd=${data.attributes.cdek_number} (1)`;
+        parsed.note = `✎ СДЭК${prefix}: получен трек-код ${data.attributes.cdek_number}, накладная ${orderUrl(data.attributes.cdek_number)} (1)`;
         this.getPrintForm(data.attributes.cdek_number, +data.attributes.number);
         break;
       case "2":
@@ -375,7 +374,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
           entity_id: lead_by_direct_uuid,
           note_type: "common",
           params: {
-            text: `ℹ СДЕК ВОЗВРАТ\nВозвратный UUID: ${data.uuid}\nВозвратная накладная: https://lk.cdek.ru/print/print-order?numberOrd=${data.attributes.cdek_number}${reverse_price ? `\nСтоимость доставки: ${reverse_price}` : ""}`,
+            text: `ℹ СДЕК ВОЗВРАТ\nВозвратный UUID: ${data.uuid}\nВозвратная накладная: ${orderUrl(data.attributes.cdek_number)}${reverse_price ? `\nСтоимость доставки: ${reverse_price}` : ""}`,
           },
         },
       ]),
