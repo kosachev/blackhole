@@ -413,7 +413,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
           entity_id: lead_id,
           note_type: "common",
           params: {
-            text: `✎ Форма для печати ${yadisk_url}`,
+            text: `✎ СДЕК: Форма для печати ${yadisk_url}`,
           },
         },
       ]);
@@ -424,7 +424,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
           entity_id: lead_id,
           note_type: "common",
           params: {
-            text: `❌ Ошибка при получении формы для накладной ${cdek_number}`,
+            text: `❌ СДЕК: Ошибка при получении формы для накладной ${cdek_number}`,
           },
         },
       ]);
