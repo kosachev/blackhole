@@ -7,7 +7,7 @@ export class PrintPdf {
     console.debug("PRINT PDF LOADED", lead_id);
 
     $("div.card-holder").on("DOMNodeInserted", "div.feed-note-wrapper-note", (el) => {
-      const e = $(el.currentTarget).find("div.feed-note__body p");
+      const e = $(el.currentTarget).find("div.feed-note__body span");
       if (e) {
         this.handleNote(e);
       }
