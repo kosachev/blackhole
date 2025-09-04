@@ -1,4 +1,4 @@
-import EventSource from "eventsource";
+import { EventSource } from "eventsource";
 import { inspect } from "node:util";
 
 const COLORS = {
