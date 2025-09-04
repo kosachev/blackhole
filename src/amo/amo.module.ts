@@ -20,6 +20,6 @@ import { LeadCreateService } from "./lead-create.service";
     LeadCreateService,
   ],
   controllers: [AmoController],
-  exports: [AmoService],
+  exports: [AmoService, LeadCreateService],
 })
 export class AmoModule {}

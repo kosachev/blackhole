@@ -530,7 +530,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
   private async statusSuccess(lead: LeadHelper) {
     // TODO: remove YM_COUNTER after adoption lead_create
     const counter =
-      lead.custom_fields.get(AMO.CUSTOM_FIELD.COUNTER) ??
+      lead.custom_fields.get(AMO.CUSTOM_FIELD.AD_COUNTER) ??
       lead.custom_fields.get(AMO.CUSTOM_FIELD.YM_COUNTER);
     if (!counter || isNaN(Number(counter))) return;
 
@@ -540,8 +540,8 @@ export class LeadStatusWebhook extends AbstractWebhook {
       Currency: "RUB",
     };
 
-    const yclid = lead.custom_fields.get(AMO.CUSTOM_FIELD.YD_YCLID);
-    const client_id = lead.custom_fields.get(AMO.CUSTOM_FIELD.YM_CLIENT_ID);
+    const yclid = lead.custom_fields.get(AMO.CUSTOM_FIELD.AD_YD_YCLID);
+    const client_id = lead.custom_fields.get(AMO.CUSTOM_FIELD.AD_YM_CLIENT_ID);
 
     let ymtype: string;
 

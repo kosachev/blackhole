@@ -4,7 +4,7 @@ import { PrealertCloseWebhook } from "./webhooks/prealert-close.webhook";
 import { DownloadPhotoWebhook } from "./webhooks/download-photo.webhook";
 import { PrintFormWebhook } from "./webhooks/print-form.webhook";
 import { ExecutionTime } from "../utils/execution-time.interceptor";
-import { AutoOkResponse } from "src/utils/auto-ok-response.interceptor";
+import { AutoOkResponse } from "../utils/auto-ok-response.interceptor";
 
 @Controller("cdek")
 export class CdekController {

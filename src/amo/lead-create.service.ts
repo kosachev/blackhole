@@ -29,7 +29,7 @@ export type Order = {
   delivery_type?: "PICKUP" | "COURIER_OUTSIDE_MKAD" | "COURIER" | "CDEK" | "POST";
   delivery_cost?: number;
   comment?: string;
-  tag?: "SITE"[];
+  tag?: ("SITE" | "TILDA")[];
   location?: {
     city?: string;
     street?: string;
@@ -45,14 +45,23 @@ export type Order = {
   };
   goods: Good[];
   ad?: {
-    first_visit?: string;
-    yclid?: string;
-    client_id?: string;
-    counter?: string;
-    source_site?: string;
-    device_type?: string;
-    region?: string;
     utm?: string;
+    ym_counter?: string;
+    ym_client_id?: string;
+    yclid?: string;
+    first_visit?: string;
+    utm_campaign_name?: string;
+    utm_refferer?: string;
+    utm_refferertype?: string;
+    device_type?: string;
+    utm_region?: string;
+    utm_source?: string;
+    utm_group?: string;
+    utm_medium?: string;
+    utm_content?: string;
+    utm_campaign?: string;
+    utm_term?: string;
+    user_agent?: string;
   };
 };
 
@@ -66,6 +75,7 @@ const DELIVERY_TYPE_MAP = {
 
 const TAG_MAP = {
   SITE: AMO.TAG.SITE,
+  TILDA: AMO.TAG.TILDA,
 } as const;
 
 const FIELD_MAP = {
@@ -89,14 +99,23 @@ const FIELD_MAP = {
   client_address: AMO.CONTACT.ADDRESS,
 
   // ad
-  first_visit: AMO.CUSTOM_FIELD.FIRST_VISIT,
-  yclid: AMO.CUSTOM_FIELD.YD_YCLID,
-  client_id: AMO.CUSTOM_FIELD.YM_CLIENT_ID,
-  counter: AMO.CUSTOM_FIELD.COUNTER,
-  source_site: AMO.CUSTOM_FIELD.SOURCE_SITE,
-  device_type: AMO.CUSTOM_FIELD.DEVICE_TYPE,
-  region: AMO.CUSTOM_FIELD.REGION,
-  utm: AMO.CUSTOM_FIELD.UTM,
+  utm: AMO.CUSTOM_FIELD.AD_UTM,
+  ym_counter: AMO.CUSTOM_FIELD.AD_COUNTER,
+  ym_client_id: AMO.CUSTOM_FIELD.AD_YM_CLIENT_ID,
+  yclid: AMO.CUSTOM_FIELD.AD_YD_YCLID,
+  first_visit: AMO.CUSTOM_FIELD.AD_FIRST_VISIT,
+  utm_campaign_name: AMO.CUSTOM_FIELD.AD_UTM_CAMPAIGN_NAME,
+  utm_refferer: AMO.CUSTOM_FIELD.AD_UTM_REFFERER,
+  utm_refferertype: AMO.CUSTOM_FIELD.AD_UTM_REFFERER_TYPE,
+  device_type: AMO.CUSTOM_FIELD.AD_DEVICE_TYPE,
+  utm_region: AMO.CUSTOM_FIELD.AD_UTM_REGION,
+  utm_source: AMO.CUSTOM_FIELD.AD_UTM_SOURCE,
+  utm_group: AMO.CUSTOM_FIELD.AD_UTM_GROUP,
+  utm_medium: AMO.CUSTOM_FIELD.AD_UTM_MEDIUM,
+  utm_content: AMO.CUSTOM_FIELD.AD_UTM_CONTENT,
+  utm_campaign: AMO.CUSTOM_FIELD.AD_UTM_CAMPAIGN,
+  utm_term: AMO.CUSTOM_FIELD.AD_UTM_TERM,
+  user_agent: AMO.CUSTOM_FIELD.AD_USER_AGENT,
 
   // goods
   sku: AMO.CATALOG.CUSTOM_FIELD.SKU,

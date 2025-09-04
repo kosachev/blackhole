@@ -10,7 +10,7 @@ import { Test } from "@nestjs/testing";
 import { AppModule } from "../../src/app.module";
 import { OrderStatusWebhook } from "../../src/cdek/webhooks/order-status.webhook";
 
-import { AMO } from "src/amo/amo.constants";
+import { AMO } from "../../src/amo/amo.constants";
 
 describe("CDEK OrderStatusWebhook", () => {
   let app: INestApplication;
