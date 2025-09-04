@@ -40,14 +40,24 @@ export const AMO = {
     /* ------------------------------ Статистика ------------------------------- */
     YM_COUNTER: 2094409, // яндекс счетчик @deprecated remove
     /* ------------------------------- Реклама --------------------------------- */
-    UTM: 1999999, // UTM
-    COUNTER: 2146369, // Счетчик метрика
-    YM_CLIENT_ID: 1999991, // client_id yandex metrika
-    YD_YCLID: 2000039, // yclid yandex direct
-    FIRST_VISIT: 2000003, // Дата первого визита
-    SOURCE_SITE: 2001451, // Площадка РСЯ
-    DEVICE_TYPE: 2111151, // Устройство
-    REGION: 2146371, // Регион
+    AD_UTM: 1999999, // UTM
+    AD_GOOGLE_UID: 1999989, // Google UID
+    AD_COUNTER: 2146369, // Счетчик метрика
+    AD_YM_CLIENT_ID: 1999991, // client_id yandex metrika
+    AD_YD_YCLID: 2000039, // yclid yandex direct
+    AD_FIRST_VISIT: 2000003, // Дата первого визита
+    AD_UTM_CAMPAIGN_NAME: 2147453, // Название кампании
+    AD_UTM_REFFERER: 2001451, // Площадка РСЯ
+    AD_UTM_REFFERER_TYPE: 2147451, // Тип площадки
+    AD_DEVICE_TYPE: 2111151, // Тип устройства
+    AD_UTM_REGION: 2146371, // Регион
+    AD_UTM_SOURCE: 2147435, // utm_source
+    AD_UTM_GROUP: 2147437, // utm_group
+    AD_UTM_MEDIUM: 2147439, // utm_medium
+    AD_UTM_CONTENT: 2147441, // utm_content
+    AD_UTM_CAMPAIGN: 2147443, // utm_campaign
+    AD_UTM_TERM: 2147445, // utm_term
+    AD_USER_AGENT: 2147447, // User-Agent
   },
   /* ------------------------------ Поля контакта ----------------------------- */
   CONTACT: {
@@ -76,10 +86,11 @@ export const AMO = {
   },
   /* ---------------------------------- Тэги ---------------------------------- */
   TAG: {
-    SITE: 92650, // с стайта
+    SITE: 92650, // с сайта
     CALL_REQUEST: 683220, // Заказ зввонка
     RETURN: 732639, // возврат
     PARTIAL_RETURN: 735999, // частичный возврат
+    TILDA: 737071, // tilda
   },
   /* ------------------------------ Пользователи ------------------------------ */
   USER: {

@@ -15,7 +15,7 @@ import { LogViewerModule } from "./log-viewer/log-viewer.module";
 import { LoggerMiddleware } from "./utils/logger.middleware";
 import { PostModule } from "./post/post.module";
 import { ServeStaticModule } from "@nestjs/serve-static";
-
+import { TildaModule } from "./tilda/tilda.module";
 import { resolve } from "path";
 
 @Module({
@@ -27,6 +27,7 @@ import { resolve } from "path";
       envFilePath: [".env.dev", ".env.prod", ".env.example"],
       isGlobal: true,
     }),
+    TildaModule,
     TelegramModule,
     CronModule,
     MailModule,

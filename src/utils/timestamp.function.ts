@@ -10,3 +10,8 @@ export function timestamp(when: "today_ending" | "plus_one_hour" | "tommorow_end
       return Math.round(Date.now() / 1000);
   }
 }
+
+export function timestampToDateString(timestamp: number): string {
+  const d = new Date(timestamp);
+  return `${d.getDate().toString().padStart(2, "0")}.${(d.getMonth() + 1).toString().padStart(2, "0")}.${d.getFullYear()}`;
+}
