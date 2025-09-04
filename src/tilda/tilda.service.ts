@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { LeadCreateService, type Order } from "src/amo/lead-create.service";
-import { timestampToDateString } from "src/utils/timestamp.function";
+import { LeadCreateService, type Order } from "../amo/lead-create.service";
+import { timestampToDateString } from "../utils/timestamp.function";
 
 const DELIVERY_TYPE_MAP = {
   Самовывоз: "PICKUP",
@@ -62,7 +62,7 @@ export type TildaOrderData = {
 @Injectable()
 export class TildaService {
   private readonly logger = new Logger(TildaService.name);
-  constructor(private readonly leadCreate: LeadCreateService) {}
+  constructor(private readonly leadCreateService: LeadCreateService) {}
 
   async handler(data: TildaOrderData, headers: Headers): Promise<void> {
     this.logger.log(`TILDA_NEW_ORDER, id: ${data.payment.orderid}, amount: ${data.payment.amount}`);
@@ -75,7 +75,7 @@ export class TildaService {
       order.ad.device_type = order.ad.user_agent.includes("Mobile") ? "Mobile" : "PC";
     }
 
-    await this.leadCreate.leadCreateHandler(order);
+    await this.leadCreateService.leadCreateHandler(order);
   }
 
   tildaOrderDTO(data: TildaOrderData): Order {
