@@ -12,6 +12,8 @@ export class TildaController {
 
   @Post("new_order")
   async webhook(@Body() data: any, @Headers() headers: Headers): Promise<string> {
+    if (data["test"] === "test") return "OK";
+
     if (data["sigma"] !== this.config.get("TILDA_SECRET_KEY")) {
       throw new ForbiddenException("Unouthorized, wrong secret key");
     }
