@@ -1,7 +1,6 @@
 import { Body, Controller, Post, ForbiddenException, Headers } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { TildaService } from "./tilda.service";
-import { Head } from "rxjs";
 
 @Controller("tilda")
 export class TildaController {
