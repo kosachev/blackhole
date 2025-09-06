@@ -81,6 +81,10 @@ type Data = {
     if (!check(data)) return;
 
     $(".productRight .extra_fields").prepend(
+      `<div><span class="extra_fields_name">Артикул</span>: <span class="extra_fields_value" id="sku">${generateSku(data.category_id, data.product_id, data.size)}</span></div>`,
+    );
+
+    $(".productRight .extra_fields").prepend(
       `<div class="button" id="send_data" style="background: #4C8BF7; padding: 4px 20px; margin: 0px 0px 5px 0px; width: 60px; color: white; cursor: pointer; text-align: center">В АМО</div>`,
     );
 
@@ -90,8 +94,15 @@ type Data = {
       await sendData(data);
     });
 
+    $('.productRight input[name="jshop_attr_id[2]"]').click((el) => {
+      const size = (el.target as HTMLInputElement).labels[0]?.textContent;
+      if (size && size.length > 0) {
+        $(".extra_fields #sku").text(generateSku(data.category_id, data.product_id, size));
+      }
+    });
+
     $(".productRight .extra_fields").append(
-      `<div><span class="extra_fields_name">Артикул</span>: <span class="extra_fields_value">${generateSku(data.category_id, data.product_id, data.size)}</span></div>`,
+      `<div><span class="extra_fields_name" id="name>Название</span>: <span class="extra_fields_value">${data.name}</span></div>`,
     );
   });
 })(window["jQuery"].noConflict(true));
