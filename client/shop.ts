@@ -80,13 +80,18 @@ type Data = {
     const data = parseData();
     if (!check(data)) return;
 
-    $(".extra_fields").prepend(
+    $(".productRight .extra_fields").prepend(
       `<div class="button" id="send_data" style="background: #4C8BF7; padding: 4px 20px; margin: 0px 0px 5px 0px; width: 60px; color: white; cursor: pointer; text-align: center">В АМО</div>`,
     );
-    $("#send_data").on("click", async () => {
+
+    $("#send_data").click(async () => {
       const data = parseData();
       if (!check(data)) return;
       await sendData(data);
     });
+
+    $(".productRight .extra_fields").append(
+      `<div><span class="extra_fields_name">Артикул</span>: <span class="extra_fields_value">${generateSku(data.category_id, data.product_id, data.size)}</span></div>`,
+    );
   });
 })(window["jQuery"].noConflict(true));
