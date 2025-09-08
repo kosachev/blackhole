@@ -229,7 +229,8 @@ export class LeadCreateService {
 
     this.logger.log(`LEAD_CREATE, success, lead_id: ${lead[0].id}, price: ${price}`);
     const message = `💰 Новый заказ: <a href="https://${this.config.get<string>("AMO_DOMAIN")}/leads/detail/${lead[0].id}">${data.name}</a> (<b>${price}</b> руб.)\n\n${data.goods.map((item) => `${item.name} - ${item.quantity}шт`).join("\n")}`;
-    Promise.all([this.telegram.textToAdmin(message), this.telegram.textToManager(message)]);
+    // TODO: bring it back when lead_add notify will be erased
+    // Promise.all([this.telegram.textToAdmin(message), this.telegram.textToManager(message)]);
   }
 
   private async findContactByPhone(phone: string): Promise<number | undefined> {
