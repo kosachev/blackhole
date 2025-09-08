@@ -32,7 +32,7 @@ export type TildaOrderData = {
       quantity: number;
       amount: number;
       price: string;
-      sku: string;
+      sku?: string;
       options: {
         option: string;
         variant: string;
@@ -107,7 +107,7 @@ export class TildaService {
           name: `${good.name}${size}`,
           quantity: good.quantity,
           price: +good.price,
-          sku: good.sku,
+          sku: good.sku ?? `F${Math.random().toString().slice(2, 13)}`, // generate fake sku if not provided
         };
       }),
       ad: {
