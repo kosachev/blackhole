@@ -17,6 +17,7 @@ import { PostModule } from "./post/post.module";
 import { ServeStaticModule } from "@nestjs/serve-static";
 import { TildaModule } from "./tilda/tilda.module";
 import { resolve } from "path";
+import { AnalyticsModule } from "./analytics/analytics.module";
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { resolve } from "path";
       isGlobal: true,
     }),
     TildaModule,
+    AnalyticsModule,
     TelegramModule,
     CronModule,
     MailModule,
