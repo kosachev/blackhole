@@ -44,3 +44,4 @@ lerna-debug.log*
 */amo_token.json
 
 .vscode
+run.ts
