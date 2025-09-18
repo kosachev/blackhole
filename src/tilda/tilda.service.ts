@@ -88,6 +88,7 @@ export class TildaService {
     const order = {
       name: `Тильда ${data.payment.orderid}`,
       number: Number.isNaN(+data.payment.orderid) ? undefined : +data.payment.orderid,
+      responsible_user: "MANAGER1",
       delivery_type:
         data.delivery in DELIVERY_TYPE_MAP
           ? DELIVERY_TYPE_MAP[data.delivery as keyof typeof DELIVERY_TYPE_MAP]
