@@ -49,7 +49,7 @@ export class FirstLeadInteractionService {
     ]);
 
     this.logger.log(
-      `USERSCRIPT_FTI, lead_id: ${data.leadId}, user_name: ${data.userName}, tti: ${tti}, date_create: ${timestampToDateTimeString(data.dateCreate)}`,
+      `USERSCRIPT_FLI, lead_id: ${data.leadId}, user_name: ${data.userName}, tti: ${tti}, date_create: ${timestampToDateTimeString(data.dateCreate)}`,
     );
   }
 }
