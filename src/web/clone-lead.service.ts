@@ -14,6 +14,7 @@ export type RequestCloneLead = {
   building?: string;
   flat?: string;
   pvz?: string;
+  tags: number[];
 };
 
 @Injectable()
@@ -30,6 +31,7 @@ export class CloneLeadService {
       responsible_user_id:
         data.responsible_id && data.responsible_id !== "" ? +data.responsible_id : AMO.USER.ADMIN,
       custom_fields_values: [],
+      tags_to_add: data.tags.map((id) => ({ id })),
       _embedded: {},
     };
 

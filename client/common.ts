@@ -40,6 +40,13 @@ export function responsibleId(): JQuery<HTMLElement> {
   return $(`input[name="lead[MAIN_USER]"]`);
 }
 
+export function tags(): number[] {
+  return $("#add_tags li.js-multisuggest-item")
+    .map((_, el) => Number($(el).attr("data-id")))
+    .get()
+    .filter((id) => !isNaN(id));
+}
+
 export type Good = {
   id: number;
   name: string;

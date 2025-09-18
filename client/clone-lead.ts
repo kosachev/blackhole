@@ -1,4 +1,4 @@
-import { BACKEND_BASE_URL, CFV, contactId, deliveryType, responsibleId } from "./common";
+import { BACKEND_BASE_URL, CFV, contactId, deliveryType, responsibleId, tags } from "./common";
 import { AMO } from "../src/amo/amo.constants";
 
 type RequestCloneLead = {
@@ -12,6 +12,7 @@ type RequestCloneLead = {
   building?: string;
   flat?: string;
   pvz?: string;
+  tags: number[];
 };
 
 export class CloneLead {
@@ -44,6 +45,7 @@ export class CloneLead {
       building: CFV(AMO.CUSTOM_FIELD.BUILDING).val()?.toString() ?? "",
       flat: CFV(AMO.CUSTOM_FIELD.FLAT).val()?.toString() ?? "",
       pvz: CFV(AMO.CUSTOM_FIELD.PVZ).val()?.toString() ?? "",
+      tags: tags(),
     };
 
     console.debug("SEND DATA CLONE LEAD", data);

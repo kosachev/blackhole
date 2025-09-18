@@ -26,7 +26,7 @@ export class FirstLeadInteraction {
       Math.floor(
         card().notes.notes.models.filter(
           (item) => item.attributes.type === 1 && item.attributes.object_type.code === "event",
-        )[0].attributes.date_create,
+        )[0]?.attributes?.date_create,
       ) * 1000;
     const fti = CFV(AMO.CUSTOM_FIELD.FIRST_TIME_INTERACTION).val().toString() ?? "";
 
