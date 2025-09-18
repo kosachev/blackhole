@@ -26,6 +26,7 @@ export type Good = {
 export type Order = {
   name: string;
   number?: number;
+  responsible_user?: "ADMIN" | "MANAGER1" | "MANAGER2";
   delivery_type?: "PICKUP" | "COURIER_OUTSIDE_MKAD" | "COURIER" | "CDEK" | "POST";
   delivery_cost?: number;
   comment?: string;
@@ -76,6 +77,12 @@ const DELIVERY_TYPE_MAP = {
 const TAG_MAP = {
   SITE: AMO.TAG.SITE,
   TILDA: AMO.TAG.TILDA,
+} as const;
+
+const RESPONSIBLE_USER_MAP = {
+  ADMIN: AMO.USER.ADMIN,
+  MANAGER1: AMO.USER.MANAGER1,
+  MANAGER2: AMO.USER.MANAGER2,
 } as const;
 
 const FIELD_MAP = {
@@ -167,6 +174,7 @@ export class LeadCreateService {
         name: data.name,
         price: price,
         tags_to_add: this.valuesToTags(data.tag),
+        responsible_user_id: RESPONSIBLE_USER_MAP[data.responsible_user] ?? AMO.USER.ADMIN,
         custom_fields_values: [
           ...this.deliveryTypeToCf(data.delivery_type),
           ...this.valuesToCf({
