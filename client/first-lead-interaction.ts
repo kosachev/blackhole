@@ -26,7 +26,7 @@ export class FirstLeadInteraction {
     const fti = CFV(AMO.CUSTOM_FIELD.FIRST_TIME_INTERACTION).val().toString() ?? "";
 
     if (isNaN(dateCreate) || fti !== "") return;
-    if (card().user.id === AMO.USER.ADMIN) {
+    if (card().user.id == AMO.USER.ADMIN) {
       console.debug("FIRST LEAD INTERACTION, ADMIN USER, SKIP ");
       return;
     }
