@@ -14,6 +14,10 @@ import {
 } from "./permit.service";
 import { AddressSanitizerService, RequestAddressSanitizer } from "./address-sanitizer.service";
 import { CloneLeadService, RequestCloneLead } from "./clone-lead.service";
+import {
+  FirstLeadInteractionService,
+  type RequestFirstTimeInteraction,
+} from "./first-lead-interaction.service";
 
 @Controller("web")
 @UseFilters(GlobalExceptionFilter)
@@ -27,6 +31,7 @@ export class WebController {
     private readonly permit_service: PermitService,
     private readonly address_sanitizer: AddressSanitizerService,
     private readonly clone_lead: CloneLeadService,
+    private readonly first_lead_interaction: FirstLeadInteractionService,
   ) {}
 
   @Post("partial_return")
@@ -80,5 +85,10 @@ export class WebController {
   @Post("clone_lead")
   async cloneLead(@Body() data: RequestCloneLead) {
     return this.clone_lead.handler(data);
+  }
+
+  @Post("first_lead_interaction")
+  async firstLeadInteraction(@Body() data: RequestFirstTimeInteraction) {
+    return this.first_lead_interaction.handler(data);
   }
 }

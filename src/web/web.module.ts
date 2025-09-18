@@ -9,6 +9,7 @@ import { PermitService } from "./permit.service";
 import { AddressSanitizerService } from "./address-sanitizer.service";
 import { ConfigModule } from "@nestjs/config";
 import { CloneLeadService } from "./clone-lead.service";
+import { FirstLeadInteractionService } from "./first-lead-interaction.service";
 
 @Module({
   imports: [ConfigModule],
@@ -21,6 +22,7 @@ import { CloneLeadService } from "./clone-lead.service";
     PermitService,
     AddressSanitizerService,
     CloneLeadService,
+    FirstLeadInteractionService,
   ],
   controllers: [WebController],
 })
