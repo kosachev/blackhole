@@ -71,9 +71,6 @@ export class TildaService {
     if (headers["User-Agent"] || headers["user-agent"]) {
       order.ad.user_agent = headers["User-Agent"] || headers["user-agent"];
     }
-    if (!order.ad?.device_type && order.ad?.user_agent) {
-      order.ad.device_type = order.ad.user_agent.includes("Mobile") ? "mobile" : "desktop";
-    }
 
     await this.leadCreateService.leadCreateHandler(order);
   }

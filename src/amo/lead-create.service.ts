@@ -169,6 +169,10 @@ export class LeadCreateService {
     const goods_with_id = await this.addOrUpdateGoods(data.goods);
     const price = data.goods.reduce((acc, good) => acc + good.price * good.quantity, 0);
 
+    if (!data.ad?.device_type && data.ad?.user_agent) {
+      data.ad.device_type = data.ad.user_agent.includes("Mobile") ? "mobile" : "desktop";
+    }
+
     const lead = await this.amo.client.lead.addComplex([
       {
         name: data.name,
