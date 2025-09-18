@@ -10,6 +10,7 @@ import { Permit } from "./permit";
 import { AddressSanitizer } from "./address-sanitizer";
 import { Modal } from "./modal";
 import { CloneLead } from "./clone-lead";
+import { FirstLeadInteraction } from "./first-lead-interaction";
 
 export class Lead {
   private to_destruct: CallableFunction[] = [];
@@ -28,6 +29,7 @@ export class Lead {
     const permit = new Permit(lead_id);
     const address_sanitizer = new AddressSanitizer(lead_id);
     const _clone_lead = new CloneLead(lead_id);
+    const _first_lead_interaction = new FirstLeadInteraction(lead_id);
 
     this.timezone();
     this.deleteCompanyField();

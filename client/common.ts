@@ -1,5 +1,15 @@
 import { AMO } from "../src/amo/amo.constants";
 
+declare global {
+  interface Window {
+    AMOCRM: any;
+  }
+}
+
+export function card(): any {
+  return window.AMOCRM.data.current_card;
+}
+
 export function CFV(field_id: number): JQuery<HTMLElement> {
   return $(`input[name="CFV[${field_id}]"]`);
 }
