@@ -17,8 +17,9 @@ export class UtmService {
 
   add(entry: UtmEntry): void {
     if (!entry?.ym_client_id || !entry?.utm) throw new BadRequestException("Bad post body");
-    this.cache.set(entry.ym_client_id, entry.utm);
-    this.logger.log(`UTM added: ${entry.ym_client_id}: ${entry.utm}`);
+    const utm = entry.utm.replaceAll("|||", "&");
+    this.cache.set(entry.ym_client_id, utm);
+    this.logger.log(`UTM added: ${entry.ym_client_id}: ${utm}`);
   }
 
   has(ym_client_id: string): boolean {

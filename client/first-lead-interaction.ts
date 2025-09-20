@@ -22,15 +22,18 @@ export class FirstLeadInteraction {
   }
 
   check() {
+    const fti = CFV(AMO.CUSTOM_FIELD.FIRST_TIME_INTERACTION).val().toString() ?? "";
+    if (fti !== "") return;
+
     const dateCreate =
       Math.floor(
         card().notes.notes.models.filter(
           (item) => item.attributes.type === 1 && item.attributes.object_type.code === "event",
         )[0]?.attributes?.date_create,
       ) * 1000;
-    const fti = CFV(AMO.CUSTOM_FIELD.FIRST_TIME_INTERACTION).val().toString() ?? "";
+    console.debug("FIRST LEAD INTERACTION date create", dateCreate, "fti", fti);
 
-    if (isNaN(dateCreate) || fti !== "") return;
+    if (isNaN(dateCreate)) return;
     if (card().user.id == AMO.USER.ADMIN) {
       console.debug("FIRST LEAD INTERACTION, ADMIN USER, SKIP ");
       return;
