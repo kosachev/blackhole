@@ -195,6 +195,8 @@ export class LeadCreateService {
               ? { id: contact_id }
               : {
                   name: data.client.name,
+                  responsible_user_id:
+                    RESPONSIBLE_USER_MAP[data.responsible_user] ?? AMO.USER.ADMIN,
                   custom_fields_values: this.valuesToCf({
                     phone: data.client.phone,
                     email: data.client.email,
