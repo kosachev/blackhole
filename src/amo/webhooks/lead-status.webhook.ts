@@ -458,7 +458,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
                 field_id: AMO.CUSTOM_FIELD.CDEK_INVOICE_URL,
                 values: [
                   {
-                    value: `https://lk.cdek.ru/print/print-order?numberOrd=${res.entity.cdek_number}`,
+                    value: `https://lk.cdek.ru/order-history/${res.entity.cdek_number}/view`,
                   },
                 ],
               },
@@ -469,7 +469,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
               entity_id: lead_id,
               note_type: "common",
               params: {
-                text: `✎ СДЭК: получен трек-код ${res.entity.cdek_number}, накладная: https://lk.cdek.ru/print/print-order?numberOrd=${res.entity.cdek_number}`,
+                text: `✎ СДЭК: получен трек-код ${res.entity.cdek_number}, накладная: https://lk.cdek.ru/order-history/${res.entity.cdek_number}/view`,
               },
             },
           ]),
