@@ -2,7 +2,11 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { exit } from "node:process";
 
-const TARGET_FILES = ["./public/gerda_userscript.js", "./public/shop_userscript.js"];
+const TARGET_FILES = [
+  "./public/gerda_userscript.js",
+  "./public/shop_userscript.js",
+  "./public/gerdacollection_userscript.js",
+];
 
 // const OUTPUT_USERSCRIPT = "./public/gerda_userscript.js";
 
