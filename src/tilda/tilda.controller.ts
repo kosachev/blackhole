@@ -1,6 +1,14 @@
-import { Body, Controller, Post, ForbiddenException, Headers } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Post,
+  ForbiddenException,
+  Headers,
+  UseInterceptors,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { TildaService } from "./tilda.service";
+import { AutoOkResponse } from "src/utils/auto-ok-response.interceptor";
 
 @Controller("tilda")
 export class TildaController {
@@ -9,6 +17,7 @@ export class TildaController {
     private readonly tildaService: TildaService,
   ) {}
 
+  @UseInterceptors(AutoOkResponse)
   @Post("new_order")
   async webhook(@Body() data: any, @Headers() headers: Headers): Promise<string> {
     if (data["test"] === "test") return "OK";
