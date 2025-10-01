@@ -99,7 +99,7 @@ export class TildaService {
         email: data.Email,
       },
       goods: data.payment.products.map((good) => {
-        const size_option = good.options.find((o) => o.option === "Размер");
+        const size_option = good.options?.find((o) => o.option === "Размер");
         const size = size_option?.variant ? ` размер: ${size_option.variant}` : "";
         return {
           name: `${good.name}${size}`,
