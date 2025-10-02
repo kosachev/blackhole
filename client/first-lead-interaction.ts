@@ -6,7 +6,14 @@ type RequestData = {
   userName: string;
   userId: number;
   dateCreate: number;
+  channel: string;
+  source?: string;
+  ym_client_id?: string;
 };
+
+const userSourcePattern =
+  // oxlint-disable-next-line no-useless-escape
+  /Обращение\s+с\s+сайта\s+(?<site>[^,]+?)(?:[,\.\s]*клиент[:\s-]*(?<client>\d+))?\s*$/u;
 
 export class FirstLeadInteraction {
   readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/first_lead_interaction`;
@@ -39,12 +46,21 @@ export class FirstLeadInteraction {
       return;
     }
 
+    const userSourceMessage = Array.from(
+      document.querySelectorAll(".feed-note__message_paragraph").values(),
+    )
+      .find((item) => item.textContent?.match(userSourcePattern) !== null)
+      ?.textContent.match(userSourcePattern);
+
     const data = {
       leadId: this.lead_id,
       userName: card().user.name,
       userId: card().user.id,
       dateCreate,
-    };
+      channel: "whatsapp",
+      source: userSourceMessage?.groups?.site,
+      ym_client_id: userSourceMessage?.groups?.client,
+    } satisfies RequestData;
 
     this.sendRequest(data);
   }
