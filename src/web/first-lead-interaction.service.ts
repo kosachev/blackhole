@@ -101,16 +101,34 @@ export class FirstLeadInteractionService {
 
       const utm = this.utmService.get(data.ym_client_id);
 
+      let device_type: string | undefined;
+
       if (utm) {
         for (const item of utm.split("&")) {
           const [key, value] = item.split("=");
           if (key in FIELD_MAP) {
+            if (key === "utm_device_type") {
+              device_type = value;
+              continue;
+            }
+
+            if (key === "user_agent") {
+              device_type = value.includes("Mobile") ? "mobile" : "desktop";
+            }
+
             customFields.push({
               field_id: FIELD_MAP[key],
               values: [{ value: decodeURIComponent(value) }],
             });
           }
         }
+      }
+
+      if (device_type) {
+        customFields.push({
+          field_id: AMO.CUSTOM_FIELD.AD_DEVICE_TYPE,
+          values: [{ value: device_type }],
+        });
       }
     }
 
