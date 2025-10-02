@@ -3,6 +3,7 @@
 /node_modules
 /public/gerda_userscript.*
 /public/shop_userscript.*
+/public/gerdacollection_userscript.*
 
 # Logs
 logs
