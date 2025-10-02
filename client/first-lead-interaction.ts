@@ -13,7 +13,7 @@ type RequestData = {
 
 const userSourcePattern =
   // oxlint-disable-next-line no-useless-escape
-  /Обращение\s+с\s+сайта\s+(?<site>[^,]+?)(?:[,\.\s]*клиент[:\s-]*(?<client>\d+))?\s*$/u;
+  /Обращение\s+с\s+сайта\s+(?<site>[^,]+?)(?:[,\.\s]*клиент[:\s-]*(?<client>\d+))/u;
 
 export class FirstLeadInteraction {
   readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/first_lead_interaction`;
