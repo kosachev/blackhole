@@ -112,7 +112,7 @@ export class FirstLeadInteractionService {
               continue;
             }
 
-            if (key === "user_agent") {
+            if (key === "user_agent" && device_type === undefined) {
               device_type = value.includes("Mobile") ? "mobile" : "desktop";
             }
 
