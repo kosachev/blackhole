@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { AMO } from "../amo/amo.constants";
 import { AmoService } from "../amo/amo.service";
 import { humanizeDuration, timestampToDateTimeString } from "../utils/timestamp.function";
-import { UtmService } from "src/analytics/utm.service";
+import { UtmService } from "../analytics/utm.service";
 
 export type RequestFirstTimeInteraction = {
   leadId: number;
