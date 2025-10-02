@@ -28,6 +28,7 @@ const FIELD_MAP = {
   utm_content: AMO.CUSTOM_FIELD.AD_UTM_CONTENT,
   utm_campaign: AMO.CUSTOM_FIELD.AD_UTM_CAMPAIGN,
   utm_term: AMO.CUSTOM_FIELD.AD_UTM_TERM,
+  user_agent: AMO.CUSTOM_FIELD.AD_USER_AGENT,
 } as const;
 
 @Injectable()
