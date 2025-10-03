@@ -55,7 +55,7 @@ export class FirstLeadInteractionService {
     const tags_to_add = this.generateTags(data);
     const custom_fields_values = this.generateCustomFields(data);
     let text = `⏳ Первое взаимодействие: пользователь ${data.userName}, время ${now}, реакция ${tti}`;
-    if (data.ym_client_id) text += `\nYM_CLIENT_ID: ${data.ym_client_id}`;
+    if (data.ym_client_id) text += `\nYM ClientID: ${data.ym_client_id}`;
     if (data.source) text += `\nИсточник: ${data.source}`;
 
     await Promise.all([
