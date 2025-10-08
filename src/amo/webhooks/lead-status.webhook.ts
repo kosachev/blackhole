@@ -321,7 +321,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
         type: 1,
         number: lead.data.id.toString(),
         tariff_code: lead.parseTariff(),
-        comment: lead.data.name,
+        comment: `заказ ${lead.data.id}`,
         delivery_recipient_cost: { value: 0 },
         sender: {
           name: this.config.get<string>("OWNER_SELLER_NAME"),
