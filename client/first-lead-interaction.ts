@@ -57,7 +57,7 @@ export class FirstLeadInteraction {
       userName: card().user.name,
       userId: card().user.id,
       dateCreate,
-      channel: "whatsapp",
+      channel: userSourceMessage?.groups?.site ? "whatsapp" : "unknown",
       source: userSourceMessage?.groups?.site,
       ym_client_id: userSourceMessage?.groups?.client,
     } satisfies RequestData;
