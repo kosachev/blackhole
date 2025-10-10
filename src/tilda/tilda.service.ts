@@ -11,9 +11,12 @@ const DELIVERY_TYPE_MAP = {
 } as const;
 
 export type TildaOrderData = {
-  Name: string;
-  Phone: string;
-  Email: string;
+  Name?: string;
+  name?: string;
+  Phone?: string;
+  fastphone?: string;
+  Email?: string;
+  email?: string;
   delivery: string;
   address_city_mkad?: string;
   address_street_mkad?: string;
@@ -82,6 +85,8 @@ export class TildaService {
         .filter(([key]) => key) ?? [],
     );
 
+    const phone = data.Phone ?? data.fastphone;
+
     const order = {
       name: `Тильда ${data.payment.orderid}`,
       number: Number.isNaN(+data.payment.orderid) ? undefined : +data.payment.orderid,
@@ -94,9 +99,9 @@ export class TildaService {
       tag: ["TILDA"],
       location: undefined,
       client: {
-        name: data.Name,
-        phone: data.Phone?.length > 0 ? data.Phone.replace(/\D/g, "") : data.Phone,
-        email: data.Email,
+        name: data.Name ?? data.name,
+        phone: phone?.length > 0 ? phone.replace(/\D/g, "") : phone,
+        email: data.Email ?? data.email,
       },
       goods: data.payment.products.map((good) => {
         const size_option = good.options?.find((o) => o.option === "Размер");
