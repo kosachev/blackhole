@@ -528,10 +528,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
   }
 
   private async statusSuccess(lead: LeadHelper) {
-    // TODO: remove YM_COUNTER after adoption lead_create
-    const counter =
-      lead.custom_fields.get(AMO.CUSTOM_FIELD.AD_COUNTER) ??
-      lead.custom_fields.get(AMO.CUSTOM_FIELD.YM_COUNTER);
+    const counter = lead.custom_fields.get(AMO.CUSTOM_FIELD.AD_COUNTER);
     if (!counter || isNaN(Number(counter))) return;
 
     const data = {
