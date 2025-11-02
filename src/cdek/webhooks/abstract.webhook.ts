@@ -13,8 +13,8 @@ export abstract class AbstractWebhook {
   protected readonly cdek: Cdek;
 
   constructor(
-    private readonly amo_service: AmoService,
-    private readonly cdek_service: CdekService,
+    protected readonly amo_service: AmoService,
+    protected readonly cdek_service: CdekService,
     protected readonly telegram: TelegramService,
     protected readonly yadisk: YandexDiskService,
   ) {
