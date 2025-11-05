@@ -173,12 +173,18 @@ export class LeadCreateService {
       data.ad.device_type = data.ad.user_agent.includes("Mobile") ? "mobile" : "desktop";
     }
 
+    if (!data.ad?.device_type) {
+      data.ad.device_type = "desktop";
+    }
+
+    const responsible_user_id = RESPONSIBLE_USER_MAP[data.responsible_user] ?? AMO.USER.ADMIN;
+
     const lead = await this.amo.client.lead.addComplex([
       {
         name: data.name,
         price: price,
         tags_to_add: this.valuesToTags(data.tag),
-        responsible_user_id: RESPONSIBLE_USER_MAP[data.responsible_user] ?? AMO.USER.ADMIN,
+        responsible_user_id,
         custom_fields_values: [
           ...this.deliveryTypeToCf(data.delivery_type),
           ...this.valuesToCf({
@@ -192,11 +198,13 @@ export class LeadCreateService {
         _embedded: {
           contacts: [
             contact_id
-              ? { id: contact_id }
+              ? {
+                  id: contact_id,
+                  responsible_user_id,
+                }
               : {
                   name: data.client.name,
-                  responsible_user_id:
-                    RESPONSIBLE_USER_MAP[data.responsible_user] ?? AMO.USER.ADMIN,
+                  responsible_user_id,
                   custom_fields_values: this.valuesToCf({
                     phone: data.client.phone,
                     email: data.client.email,

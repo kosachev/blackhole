@@ -385,46 +385,27 @@ export class OrderStatusWebhook extends AbstractWebhook {
 
   private async getPrintForm(cdek_number: string, lead_id: number): Promise<void> {
     try {
-      let pdf: ReadableStream<Uint8Array> | null = null;
       const printRequest = await this.cdek.createOrderReceipt({
         orders: [{ cdek_number: +cdek_number }],
         copy_count: 1,
       });
-      if (!printRequest.entity?.uuid) return null;
 
-      let l = 0;
-      while (l < 10) {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        const res = await this.cdek.getOrderReceipt(printRequest.entity.uuid);
-        if (res.entity?.statuses.at(-1)?.code === "READY") {
-          pdf = await this.cdek.downloadOrderReceipt(printRequest.entity.uuid);
-          break;
-        }
-        l++;
+      if (!printRequest.entity?.uuid) {
+        throw new Error(`cannot create print form, cdek_number: ${cdek_number}`);
       }
 
-      if (!pdf) throw new Error("cannot get pdf from cdek, cdek_number: " + cdek_number);
-      const buffer = Buffer.from(await new Response(pdf).arrayBuffer());
-      const yadisk_url = await this.yadisk.upload(`СДЭК_${cdek_number}.pdf`, buffer);
-      this.logger.log(`CDEK_PRINT_FORM, cdek_number: ${cdek_number}, yadisk: ${yadisk_url}`);
-
-      await this.amo.note.addNotes("leads", [
-        {
-          entity_id: lead_id,
-          note_type: "common",
-          params: {
-            text: `✎ СДЕК: Форма для печати ${yadisk_url}`,
-          },
-        },
-      ]);
+      this.cdek_service.setPrintformToLead(printRequest.entity.uuid, {
+        leadId: lead_id,
+        cdekNumber: cdek_number,
+      });
     } catch (error) {
-      this.logger.error("CDEK_PRINT_FORM_ERROR", error.message);
+      this.logger.error("CDEK_CREATE_PRINT_FORM_ERROR", error.message);
       await this.amo.note.addNotes("leads", [
         {
           entity_id: lead_id,
           note_type: "common",
           params: {
-            text: `❌ СДЕК: Ошибка при получении формы для накладной ${cdek_number}`,
+            text: `❌ СДЕК: Ошибка при создании формы для накладной ${cdek_number}`,
           },
         },
       ]);
