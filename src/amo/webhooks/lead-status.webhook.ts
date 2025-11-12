@@ -486,6 +486,44 @@ export class LeadStatusWebhook extends AbstractWebhook {
       this.logger.error(err);
       lead.note(`❌ Яндекс Метрика: не удалось отправить данные - ${err.message}`);
     }
+
+    const deliveryType = lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE);
+
+    if (
+      deliveryType === "Самовывоз" ||
+      deliveryType === "Курьером (в пределах МКАД)" ||
+      deliveryType === "Курьером (Московская область)" ||
+      deliveryType === "Авито"
+    ) {
+      try {
+        const result = await this.googleSheets.addLead({
+          shippingDate: new Date().toLocaleDateString("ru-RU"),
+          goods: [...lead.goods.values()],
+          discount: lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT),
+          customerDeliveryPrice: +(lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_COST) ?? "0"),
+          deliveryType: lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE),
+          paymentType: lead.custom_fields.get(AMO.CUSTOM_FIELD.PAY_TYPE),
+          leadId: lead.data.id.toString(),
+        });
+
+        const message =
+          result.addedEntries > 0
+            ? `✅ Google Sheets: добавлено строк - ${result.addedEntries}`
+            : `⚠️ Google Sheets: не добавлено новых строк при отправке заказа СДЭКом`;
+        lead.note(message);
+
+        this.googleSheets.logger.log(
+          "GOOGLE_SHEETS_ADD_LEAD",
+          `leadId: ${lead.data.id}, added entries: ${result.addedEntries}`,
+        );
+      } catch (error) {
+        this.googleSheets.logger.error(
+          "GOOGLE_SHEETS_ADD_LEAD_ERROR",
+          `leadId: ${lead.data.id}, error: ${error.message}`,
+        );
+        lead.note(`❌ Google Sheets: Ошибка при добавления заказа\n${error.message}`);
+      }
+    }
   }
 
   private validation({
