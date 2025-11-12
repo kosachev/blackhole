@@ -406,92 +406,11 @@ export class LeadStatusWebhook extends AbstractWebhook {
         );
         lead.custom_fields.set(AMO.CUSTOM_FIELD.CDEK_UUID, res.entity.uuid);
         this.logger.log(`STATUS_CDEK, lead_id: ${lead.data.id}, cdek_uuid: ${res.entity.uuid}`);
-
-        setTimeout(async () => {
-          const lead_new = await this.amo.lead.getLeadById(lead.data.id);
-          if (!lead_new) {
-            throw new Error("Lead not found");
-          }
-          const track_number = lead_new.custom_fields_values.find(
-            (item) => item.field_id === AMO.CUSTOM_FIELD.TRACK_NUMBER,
-          )?.values[0]?.value;
-          if (!track_number || track_number === "") {
-            this.cdekTrackcodeCheck(lead.data.id, res.entity.uuid, 1);
-          }
-        }, 10000);
       }
     } catch (err) {
       this.logger.error(err);
       lead.note("❌ СДЭК: не удалось создать заказ в сдэк");
     }
-  }
-
-  private cdekTrackcodeCheck(lead_id: number, uuid: string, attemps: number) {
-    setTimeout(async () => {
-      const res = await this.cdek.getOrderByUUID(uuid);
-
-      if (
-        res.requests[0].errors?.length > 0 ||
-        res.entity.statuses.find((item) => item.code === "INVALID")
-      ) {
-        this.amo.note.addNotes("leads", [
-          {
-            entity_id: lead_id,
-            note_type: "common",
-            params: {
-              text: `❌ СДЭК: ошибки при создании заказа при получении трэк-кода\n${res.requests[0].errors?.map((err) => err.message).join("\n")}`.trim(),
-            },
-          },
-        ]);
-        return;
-      }
-
-      if (res.entity.statuses.find((item) => item.code === "ACCEPTED")) {
-        await Promise.all([
-          this.amo.lead.updateLeadById(lead_id, {
-            custom_fields_values: [
-              {
-                field_id: AMO.CUSTOM_FIELD.TRACK_NUMBER,
-                values: [{ value: res.entity.cdek_number }],
-              },
-              {
-                field_id: AMO.CUSTOM_FIELD.CDEK_INVOICE_URL,
-                values: [
-                  {
-                    value: `https://lk.cdek.ru/order-history/${res.entity.cdek_number}/view`,
-                  },
-                ],
-              },
-            ],
-          }),
-          this.amo.note.addNotes("leads", [
-            {
-              entity_id: lead_id,
-              note_type: "common",
-              params: {
-                text: `✎ СДЭК: получен трек-код ${res.entity.cdek_number}, накладная: https://lk.cdek.ru/order-history/${res.entity.cdek_number}/view`,
-              },
-            },
-          ]),
-        ]);
-        return;
-      }
-
-      if (attemps <= 5) {
-        attemps++;
-        this.cdekTrackcodeCheck(lead_id, uuid, attemps);
-      } else {
-        this.amo.note.addNotes("leads", [
-          {
-            entity_id: lead_id,
-            note_type: "common",
-            params: {
-              text: `❌ СДЭК: не удалось получить трек-код в течении 5 попыток`,
-            },
-          },
-        ]);
-      }
-    }, 1000 * attemps);
   }
 
   private statusInWork(lead: LeadHelper) {

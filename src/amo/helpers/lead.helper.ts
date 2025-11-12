@@ -234,7 +234,7 @@ export class LeadHelper {
         "is_price_modified_by_robot",
         "loss_reason",
         "contacts",
-        "only_deleted",
+        // "only_deleted",
         "source_id",
       ],
     });
