@@ -405,6 +405,12 @@ export class OrderStatusWebhook extends AbstractWebhook {
       ]),
     ]);
 
+    this.cdekReturnCdekNumberAndDeliveryPrice(
+      lead_by_direct_uuid.toString(),
+      reverse_order.entity.cdek_number,
+      reverse_price,
+    );
+
     return lead_by_direct_uuid;
   }
 

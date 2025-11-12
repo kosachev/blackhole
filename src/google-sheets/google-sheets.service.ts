@@ -91,8 +91,6 @@ export class GoogleSheetsService implements OnModuleInit {
     await this.doc.loadInfo();
     this.sheet = this.doc.sheetsByTitle[this.config.get<string>("GOOGLE_SHEET_NAME")];
     await this.fetchCdekSheetData();
-
-    console.debug("Service loaded");
   }
 
   async fetchCdekSheetData(): Promise<void> {
@@ -105,13 +103,6 @@ export class GoogleSheetsService implements OnModuleInit {
       startColumnIndex: 0,
       endColumnIndex: this.columnCount,
     });
-
-    console.debug(
-      "CDEK sheet loaded, startRowIndex",
-      this.startRowIndex,
-      "endRowIndex",
-      this.endRowIndex,
-    );
   }
 
   async addLead(lead: {
