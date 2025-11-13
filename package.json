@@ -12,6 +12,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "pnpm build:client && nest start",
+    "start:ts": "bun run ./src/main.ts",
     "lint": "oxlint \"{src,apps,libs,test,tools}/**/*.ts\" --fix",
     "test": "vitest run --config ./test/vitest.config.ts",
     "test:cov": "vitest run --coverage --config ./test/vitest.config.ts",
