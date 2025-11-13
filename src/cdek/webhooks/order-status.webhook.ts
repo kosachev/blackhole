@@ -136,7 +136,11 @@ export class OrderStatusWebhook extends AbstractWebhook {
         parsed.status = data.attributes.is_return ? AMO.STATUS.RETURN : AMO.STATUS.SENT;
 
         if (!data.attributes.is_return) {
-          this.addLeadToGoogleSheets(data.attributes.number, data.attributes.cdek_number);
+          this.addLeadToGoogleSheets(
+            data.attributes.number,
+            data.attributes.cdek_number,
+            data.uuid,
+          );
         }
 
         break;
@@ -443,10 +447,14 @@ export class OrderStatusWebhook extends AbstractWebhook {
     }
   }
 
-  private async addLeadToGoogleSheets(leadId: string, cdekNumber: string): Promise<void> {
+  private async addLeadToGoogleSheets(
+    leadId: string,
+    cdekNumber: string,
+    uuid: string,
+  ): Promise<void> {
     try {
       const [order, lead] = await Promise.all([
-        this.cdek.getOrderByCdekNumber(+cdekNumber),
+        this.cdek.getOrderByUUID(uuid),
         LeadHelper.createFromId(this.amo, +leadId, { load_goods: true }),
       ]);
       const deliverySum = order.entity?.delivery_detail?.delivery_sum ?? 0;
