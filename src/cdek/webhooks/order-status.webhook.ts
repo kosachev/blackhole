@@ -472,25 +472,26 @@ export class OrderStatusWebhook extends AbstractWebhook {
         cdekNumber: cdekNumber,
       });
 
-      const message =
+      lead.custom_fields.set(AMO.CUSTOM_FIELD.CDEK_PRICE, deliverySum.toString());
+      lead.note(
         result.addedEntries > 0
           ? `✅ Google Sheets: добавлено строк - ${result.addedEntries}`
-          : `⚠️ Google Sheets: не добавлено новых строк при отправке заказа СДЭКом`;
-
-      await this.amo.note.addNotes("leads", [
-        {
-          entity_id: +leadId,
-          note_type: "common",
-          params: {
-            text: message,
-          },
-        },
-      ]);
-
-      this.googleSheets.logger.log(
-        "GOOGLE_SHEETS_ADD_LEAD",
-        `leadId: ${leadId}, added entries: ${result.addedEntries}`,
+          : `⚠️ Google Sheets: не добавлено новых строк при отправке заказа СДЭКом`,
       );
+
+      await lead.saveToAmo();
+
+      if (result.addedEntries > 0) {
+        this.googleSheets.logger.log(
+          "GOOGLE_SHEETS_ADD_LEAD",
+          `leadId: ${leadId}, added entries: ${result.addedEntries}`,
+        );
+      } else {
+        this.googleSheets.logger.warn(
+          "GOOGLE_SHEETS_ADD_LEAD",
+          `leadId: ${leadId}, added entries: ${result.addedEntries}`,
+        );
+      }
     } catch (error) {
       this.googleSheets.logger.error(
         "GOOGLE_SHEETS_ADD_LEAD_ERROR",

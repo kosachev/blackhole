@@ -506,16 +506,23 @@ export class LeadStatusWebhook extends AbstractWebhook {
           leadId: lead.data.id.toString(),
         });
 
-        const message =
+        lead.note(
           result.addedEntries > 0
             ? `✅ Google Sheets: добавлено строк - ${result.addedEntries}`
-            : `⚠️ Google Sheets: не добавлено новых строк при отправке заказа СДЭКом`;
-        lead.note(message);
-
-        this.googleSheets.logger.log(
-          "GOOGLE_SHEETS_ADD_LEAD",
-          `leadId: ${lead.data.id}, added entries: ${result.addedEntries}`,
+            : `⚠️ Google Sheets: не добавлено новых строк при отправке заказа СДЭКом`,
         );
+
+        if (result.addedEntries > 0) {
+          this.googleSheets.logger.log(
+            "GOOGLE_SHEETS_ADD_LEAD",
+            `leadId: ${lead.data.id}, added entries: ${result.addedEntries}`,
+          );
+        } else {
+          this.googleSheets.logger.warn(
+            "GOOGLE_SHEETS_ADD_LEAD",
+            `leadId: ${lead.data.id}, added entries: ${result.addedEntries}`,
+          );
+        }
       } catch (error) {
         this.googleSheets.logger.error(
           "GOOGLE_SHEETS_ADD_LEAD_ERROR",
