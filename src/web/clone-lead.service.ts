@@ -26,11 +26,12 @@ export class CloneLeadService {
   async handler(data: RequestCloneLead): Promise<{ id: number }> {
     this.logger.log(JSON.stringify(data));
 
+    const custom_fields_values = [];
+
     const request: RequestAddComplex = {
       name: `Клон сделки ${data.lead_id}`,
       responsible_user_id:
         data.responsible_id && data.responsible_id !== "" ? +data.responsible_id : AMO.USER.ADMIN,
-      custom_fields_values: [],
       tags_to_add: data.tags.map((id) => ({ id })),
       _embedded: {},
     };
@@ -40,52 +41,56 @@ export class CloneLeadService {
     }
 
     if (data.delivery_type && data.delivery_type !== "") {
-      request.custom_fields_values.push({
+      custom_fields_values.push({
         field_id: AMO.CUSTOM_FIELD.DELIVERY_TYPE,
         values: [{ value: data.delivery_type }],
       });
     }
 
     if (data.index && data.index !== "") {
-      request.custom_fields_values.push({
+      custom_fields_values.push({
         field_id: AMO.CUSTOM_FIELD.INDEX,
         values: [{ value: data.index }],
       });
     }
 
     if (data.city && data.city !== "") {
-      request.custom_fields_values.push({
+      custom_fields_values.push({
         field_id: AMO.CUSTOM_FIELD.CITY,
         values: [{ value: data.city }],
       });
     }
 
     if (data.street && data.street !== "") {
-      request.custom_fields_values.push({
+      custom_fields_values.push({
         field_id: AMO.CUSTOM_FIELD.STREET,
         values: [{ value: data.street }],
       });
     }
 
     if (data.building && data.building !== "") {
-      request.custom_fields_values.push({
+      custom_fields_values.push({
         field_id: AMO.CUSTOM_FIELD.BUILDING,
         values: [{ value: data.building }],
       });
     }
 
     if (data.flat && data.flat !== "") {
-      request.custom_fields_values.push({
+      custom_fields_values.push({
         field_id: AMO.CUSTOM_FIELD.FLAT,
         values: [{ value: data.flat }],
       });
     }
 
     if (data.pvz && data.pvz !== "") {
-      request.custom_fields_values.push({
+      custom_fields_values.push({
         field_id: AMO.CUSTOM_FIELD.PVZ,
         values: [{ value: data.pvz }],
       });
+    }
+
+    if (custom_fields_values.length > 0) {
+      request.custom_fields_values = custom_fields_values;
     }
 
     const res = await this.amo.client.lead.addComplex([request]);
