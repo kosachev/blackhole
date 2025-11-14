@@ -8,7 +8,7 @@ export type UtmEntry = {
 
 @Injectable()
 export class UtmService {
-  private readonly logger = new Logger(UtmService.name);
+  private readonly logger = new Logger("UtmService");
   private cache: LRUCache<string, string>;
 
   constructor() {
