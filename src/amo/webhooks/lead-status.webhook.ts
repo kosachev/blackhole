@@ -190,6 +190,8 @@ export class LeadStatusWebhook extends AbstractWebhook {
         Buffer.from(pdf),
       );
 
+      if (!yadisk_url) throw new Error("Yadisk: can't upload file");
+
       lead.note(`✎ Сформирован товарный чек: ${yadisk_url}`);
       this.logger.log(`STATUS_DELIVERY, lead_id: ${lead.data.id}, pdf: ${yadisk_url}`);
     } catch (err) {

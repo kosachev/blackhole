@@ -24,8 +24,10 @@ export class YandexDiskService {
     }
     const dest = this.config.get("YANDEX_DISK_TARGET_PATH") + path.basename(file);
     const upload_url = await this.client.getUploadUrl(dest);
+    if (!upload_url) throw new Error("Yadisk: failed to get upload url");
     await this.client.uploadFile(upload_url, data);
     const publish_url = await this.client.publishFile(dest);
+    if (!publish_url) throw new Error("Yadisk: failed to publish file");
     return publish_url;
   }
 
