@@ -5,6 +5,8 @@ import { EntityLink, Task } from "@shevernitskiy/amo";
 import { AbstractWebhook } from "./abstract.webhook";
 import { AMO } from "../../amo/amo.constants";
 import { timestamp } from "../../utils/timestamp.function";
+import { LeadHelper } from "../../amo/helpers/lead.helper";
+import { type UpdateResult } from "../../google-sheets/google-sheets.service";
 
 const status_reason_code = {
   "1": " по причине неверного адреса (1)",
@@ -132,6 +134,15 @@ export class OrderStatusWebhook extends AbstractWebhook {
       case "3":
         parsed.note = `ℹ СДЭК${prefix}: посылка принята на склад отправителя (3)`;
         parsed.status = data.attributes.is_return ? AMO.STATUS.RETURN : AMO.STATUS.SENT;
+
+        if (!data.attributes.is_return) {
+          this.addLeadToGoogleSheets(
+            data.attributes.number,
+            data.attributes.cdek_number,
+            data.uuid,
+          );
+        }
+
         break;
       case "4":
         if (data.attributes.is_return) {
@@ -150,11 +161,13 @@ export class OrderStatusWebhook extends AbstractWebhook {
             +data.attributes.number,
             "Возврат выдан на доставку курьеру. Принять возврат",
           );
+          this.cdekReturnRecieved(data.attributes.number);
           break;
         }
         if (!data.attributes.status_reason_code) {
           parsed.note = `✔ СДЭК${prefix}: посылка успешно вручена адресату (4)`;
           parsed.status = AMO.STATUS.SUCCESS;
+          this.cdekFullSuccess(data.attributes.number);
           break;
         }
         if (data.attributes.status_reason_code !== "20") break;
@@ -167,6 +180,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
         parsed.tag.push(AMO.TAG.RETURN);
         parsed.status = AMO.STATUS.RETURN;
         parsed.pipeline = AMO.PIPELINE.RETURN;
+        this.cdekFullReturn(data.attributes.number);
         break;
       case "6":
         parsed.status = data.attributes.is_return ? AMO.STATUS.RETURN : AMO.STATUS.SENT;
@@ -242,13 +256,21 @@ export class OrderStatusWebhook extends AbstractWebhook {
       ),
     );
 
+    const successSku: string[] = [];
+    const returnSku: string[] = [];
+
     let return_total = 0;
     const return_goods: Partial<EntityLink>[] = [];
 
     // count return goods
     for (const item of order.entity?.packages?.[0]?.items) {
       const diff_amount = Math.abs(item.amount - (item.delivery_amount ?? item.amount));
-      if (diff_amount === 0) continue; // all items sold
+
+      if (diff_amount === 0) {
+        successSku.push(item.ware_key);
+        continue; // all items sold
+      }
+      returnSku.push(item.ware_key);
 
       return_total += item.cost * diff_amount;
 
@@ -313,6 +335,13 @@ export class OrderStatusWebhook extends AbstractWebhook {
         },
       ]),
     ]);
+
+    this.cdekPartialReturn(
+      data.attributes.number,
+      return_lead._embedded.leads[0].id.toString(),
+      successSku,
+      returnSku,
+    );
 
     this.logger.log(
       `CDEK_PARTIAL_RETURN, direct_id: ${direct_lead.id}, return_id: ${return_lead._embedded.leads[0].id}`,
@@ -380,6 +409,12 @@ export class OrderStatusWebhook extends AbstractWebhook {
       ]),
     ]);
 
+    this.cdekReturnCdekNumberAndDeliveryPrice(
+      lead_by_direct_uuid.toString(),
+      reverse_order.entity.cdek_number,
+      reverse_price,
+    );
+
     return lead_by_direct_uuid;
   }
 
@@ -410,5 +445,149 @@ export class OrderStatusWebhook extends AbstractWebhook {
         },
       ]);
     }
+  }
+
+  private async addLeadToGoogleSheets(
+    leadId: string,
+    cdekNumber: string,
+    uuid: string,
+  ): Promise<void> {
+    try {
+      const [order, lead] = await Promise.all([
+        this.cdek.getOrderByUUID(uuid),
+        LeadHelper.createFromId(this.amo, +leadId, { load_goods: true }),
+      ]);
+      const deliverySum = order.entity?.delivery_detail?.delivery_sum ?? 0;
+
+      const result = await this.googleSheets.addLead({
+        shippingDate: new Date().toLocaleDateString("ru-RU"),
+        status: "Отправлено",
+        goods: [...lead.goods.values()],
+        discount: lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT),
+        customerDeliveryPrice: +(lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_COST) ?? "0"),
+        ownerDeliveryPrice: deliverySum,
+        deliveryType: `СДЭК ${lead.custom_fields.get(AMO.CUSTOM_FIELD.CITY) ?? ""}`.trim(),
+        paymentType: lead.custom_fields.get(AMO.CUSTOM_FIELD.PAY_TYPE),
+        leadId: leadId,
+        cdekNumber: cdekNumber,
+      });
+
+      lead.custom_fields.set(AMO.CUSTOM_FIELD.CDEK_PRICE, deliverySum.toString());
+      lead.note(
+        result.addedEntries > 0
+          ? `✅ Google Sheets: добавлено строк - ${result.addedEntries}`
+          : `⚠️ Google Sheets: не добавлено новых строк при отправке заказа СДЭКом`,
+      );
+
+      await lead.saveToAmo();
+
+      if (result.addedEntries > 0) {
+        this.googleSheets.logger.log(
+          "GOOGLE_SHEETS_ADD_LEAD",
+          `leadId: ${leadId}, added entries: ${result.addedEntries}`,
+        );
+      } else {
+        this.googleSheets.logger.warn(
+          "GOOGLE_SHEETS_ADD_LEAD",
+          `leadId: ${leadId}, added entries: ${result.addedEntries}`,
+        );
+      }
+    } catch (error) {
+      this.googleSheets.logger.error(
+        "GOOGLE_SHEETS_ADD_LEAD_ERROR",
+        `leadId: ${leadId}, error: ${error.message}`,
+      );
+      await this.amo.note.addNotes("leads", [
+        {
+          entity_id: +leadId,
+          note_type: "common",
+          params: {
+            text: `❌ Google Sheets: Ошибка при добавления заказа\n${error.message}`,
+          },
+        },
+      ]);
+    }
+  }
+
+  private async cdekGoogleSheetsUpdate(
+    leadId: string,
+    operation: () => Promise<UpdateResult>,
+  ): Promise<void> {
+    try {
+      const result = await operation();
+
+      const message =
+        result.updatedEntries > 0
+          ? `✅ Google Sheets: обновлено строк - ${result.updatedEntries}`
+          : `⚠️ Google Sheets: 0 строк обновлено`;
+
+      await this.amo.note.addNotes("leads", [
+        {
+          entity_id: +leadId,
+          note_type: "common",
+          params: {
+            text: message,
+          },
+        },
+      ]);
+
+      this.googleSheets.logger.log(
+        "GOOGLE_SHEETS_UPDATE_LEAD",
+        `laedId: ${leadId}, found entries: ${result.foundEntries}, updated entries: ${result.updatedEntries}`,
+      );
+    } catch (error) {
+      this.googleSheets.logger.error(
+        "GOOGLE_SHEETS_UPDATE_LEAD_ERROR",
+        `leadId: ${leadId}, error: ${error.message}`,
+      );
+      await this.amo.note.addNotes("leads", [
+        {
+          entity_id: +leadId,
+          note_type: "common",
+          params: {
+            text: `❌ Google Sheets: Ошибка при добавления заказа\n${error.message}`,
+          },
+        },
+      ]);
+    }
+  }
+
+  private async cdekFullSuccess(leadId: string): Promise<void> {
+    await this.cdekGoogleSheetsUpdate(leadId, () => this.googleSheets.cdekFullSuccess(leadId));
+  }
+
+  private async cdekFullReturn(leadId: string): Promise<void> {
+    await this.cdekGoogleSheetsUpdate(leadId, () => this.googleSheets.cdekFullReturn(leadId));
+  }
+
+  private async cdekPartialReturn(
+    leadId: string,
+    returnLeadId: string,
+    goodSkuSuccess: string[],
+    goodSkuReturn: string[],
+  ): Promise<void> {
+    await this.cdekGoogleSheetsUpdate(leadId, () =>
+      this.googleSheets.cdekPartialReturn(leadId, returnLeadId, goodSkuSuccess, goodSkuReturn),
+    );
+  }
+
+  private async cdekReturnCdekNumberAndDeliveryPrice(
+    returnLeadId: string,
+    returnCdekNumber: string,
+    ownerReturnDeliveryPrice: number,
+  ): Promise<void> {
+    await this.cdekGoogleSheetsUpdate(returnLeadId, () =>
+      this.googleSheets.cdekReturnCdekNumberAndDeliveryPrice(
+        returnLeadId,
+        returnCdekNumber,
+        ownerReturnDeliveryPrice,
+      ),
+    );
+  }
+
+  private async cdekReturnRecieved(returnLeadId: string): Promise<void> {
+    await this.cdekGoogleSheetsUpdate(returnLeadId, () =>
+      this.googleSheets.cdekReturnRecieved(returnLeadId),
+    );
   }
 }

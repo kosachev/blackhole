@@ -1,19 +1,19 @@
 import type { Response } from "express";
 import { Readable } from "stream";
 import { Body, Controller, Post, Get, Query, Res, UseFilters } from "@nestjs/common";
-import { RequestPartialReturn, PartialReturnService } from "./partial-return.service";
-import { CdekPickupService, RequestCdekPickup } from "./cdek-pickup.service";
+import { type RequestPartialReturn, PartialReturnService } from "./partial-return.service";
+import { CdekPickupService, type RequestCdekPickup } from "./cdek-pickup.service";
 import { PrintPdfService } from "./print-pdf.service";
-import { DeliveryPriceService, RequestDeliveryPrice } from "./delivery-price.service";
+import { DeliveryPriceService, type RequestDeliveryPrice } from "./delivery-price.service";
 import { GlobalExceptionFilter } from "../utils/global-exception.filter";
-import { PVZPickerService, RequestPVZPicker } from "./pvz-picker.service";
+import { PVZPickerService, type RequestPVZPicker } from "./pvz-picker.service";
 import {
   PermitService,
   type RequestPermitAuto,
   type RequestPermitCustomer,
 } from "./permit.service";
-import { AddressSanitizerService, RequestAddressSanitizer } from "./address-sanitizer.service";
-import { CloneLeadService, RequestCloneLead } from "./clone-lead.service";
+import { AddressSanitizerService, type RequestAddressSanitizer } from "./address-sanitizer.service";
+import { CloneLeadService, type RequestCloneLead } from "./clone-lead.service";
 import {
   FirstLeadInteractionService,
   type RequestFirstTimeInteraction,

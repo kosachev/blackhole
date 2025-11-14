@@ -406,92 +406,11 @@ export class LeadStatusWebhook extends AbstractWebhook {
         );
         lead.custom_fields.set(AMO.CUSTOM_FIELD.CDEK_UUID, res.entity.uuid);
         this.logger.log(`STATUS_CDEK, lead_id: ${lead.data.id}, cdek_uuid: ${res.entity.uuid}`);
-
-        setTimeout(async () => {
-          const lead_new = await this.amo.lead.getLeadById(lead.data.id);
-          if (!lead_new) {
-            throw new Error("Lead not found");
-          }
-          const track_number = lead_new.custom_fields_values.find(
-            (item) => item.field_id === AMO.CUSTOM_FIELD.TRACK_NUMBER,
-          )?.values[0]?.value;
-          if (!track_number || track_number === "") {
-            this.cdekTrackcodeCheck(lead.data.id, res.entity.uuid, 1);
-          }
-        }, 10000);
       }
     } catch (err) {
       this.logger.error(err);
       lead.note("❌ СДЭК: не удалось создать заказ в сдэк");
     }
-  }
-
-  private cdekTrackcodeCheck(lead_id: number, uuid: string, attemps: number) {
-    setTimeout(async () => {
-      const res = await this.cdek.getOrderByUUID(uuid);
-
-      if (
-        res.requests[0].errors?.length > 0 ||
-        res.entity.statuses.find((item) => item.code === "INVALID")
-      ) {
-        this.amo.note.addNotes("leads", [
-          {
-            entity_id: lead_id,
-            note_type: "common",
-            params: {
-              text: `❌ СДЭК: ошибки при создании заказа при получении трэк-кода\n${res.requests[0].errors?.map((err) => err.message).join("\n")}`.trim(),
-            },
-          },
-        ]);
-        return;
-      }
-
-      if (res.entity.statuses.find((item) => item.code === "ACCEPTED")) {
-        await Promise.all([
-          this.amo.lead.updateLeadById(lead_id, {
-            custom_fields_values: [
-              {
-                field_id: AMO.CUSTOM_FIELD.TRACK_NUMBER,
-                values: [{ value: res.entity.cdek_number }],
-              },
-              {
-                field_id: AMO.CUSTOM_FIELD.CDEK_INVOICE_URL,
-                values: [
-                  {
-                    value: `https://lk.cdek.ru/order-history/${res.entity.cdek_number}/view`,
-                  },
-                ],
-              },
-            ],
-          }),
-          this.amo.note.addNotes("leads", [
-            {
-              entity_id: lead_id,
-              note_type: "common",
-              params: {
-                text: `✎ СДЭК: получен трек-код ${res.entity.cdek_number}, накладная: https://lk.cdek.ru/order-history/${res.entity.cdek_number}/view`,
-              },
-            },
-          ]),
-        ]);
-        return;
-      }
-
-      if (attemps <= 5) {
-        attemps++;
-        this.cdekTrackcodeCheck(lead_id, uuid, attemps);
-      } else {
-        this.amo.note.addNotes("leads", [
-          {
-            entity_id: lead_id,
-            note_type: "common",
-            params: {
-              text: `❌ СДЭК: не удалось получить трек-код в течении 5 попыток`,
-            },
-          },
-        ]);
-      }
-    }, 1000 * attemps);
   }
 
   private statusInWork(lead: LeadHelper) {
@@ -566,6 +485,51 @@ export class LeadStatusWebhook extends AbstractWebhook {
     } catch (err) {
       this.logger.error(err);
       lead.note(`❌ Яндекс Метрика: не удалось отправить данные - ${err.message}`);
+    }
+
+    const deliveryType = lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE);
+
+    if (
+      deliveryType === "Самовывоз" ||
+      deliveryType === "Курьером (в пределах МКАД)" ||
+      deliveryType === "Курьером (Московская область)" ||
+      deliveryType === "Авито"
+    ) {
+      try {
+        const result = await this.googleSheets.addLead({
+          shippingDate: new Date().toLocaleDateString("ru-RU"),
+          goods: [...lead.goods.values()],
+          discount: lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT),
+          customerDeliveryPrice: +(lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_COST) ?? "0"),
+          deliveryType: lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE),
+          paymentType: lead.custom_fields.get(AMO.CUSTOM_FIELD.PAY_TYPE),
+          leadId: lead.data.id.toString(),
+        });
+
+        lead.note(
+          result.addedEntries > 0
+            ? `✅ Google Sheets: добавлено строк - ${result.addedEntries}`
+            : `⚠️ Google Sheets: не добавлено новых строк при отправке заказа СДЭКом`,
+        );
+
+        if (result.addedEntries > 0) {
+          this.googleSheets.logger.log(
+            "GOOGLE_SHEETS_ADD_LEAD",
+            `leadId: ${lead.data.id}, added entries: ${result.addedEntries}`,
+          );
+        } else {
+          this.googleSheets.logger.warn(
+            "GOOGLE_SHEETS_ADD_LEAD",
+            `leadId: ${lead.data.id}, added entries: ${result.addedEntries}`,
+          );
+        }
+      } catch (error) {
+        this.googleSheets.logger.error(
+          "GOOGLE_SHEETS_ADD_LEAD_ERROR",
+          `leadId: ${lead.data.id}, error: ${error.message}`,
+        );
+        lead.note(`❌ Google Sheets: Ошибка при добавления заказа\n${error.message}`);
+      }
     }
   }
 

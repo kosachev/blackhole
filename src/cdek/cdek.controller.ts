@@ -3,7 +3,6 @@ import { OrderStatusWebhook } from "./webhooks/order-status.webhook";
 import { PrealertCloseWebhook } from "./webhooks/prealert-close.webhook";
 import { DownloadPhotoWebhook } from "./webhooks/download-photo.webhook";
 import { PrintFormWebhook } from "./webhooks/print-form.webhook";
-import { ExecutionTime } from "../utils/execution-time.interceptor";
 import { AutoOkResponse } from "../utils/auto-ok-response.interceptor";
 
 @Controller("cdek")
@@ -17,13 +16,14 @@ export class CdekController {
     private readonly download_photo: DownloadPhotoWebhook,
     private readonly prealert_close: PrealertCloseWebhook,
   ) {
-    CdekController.prototype.execution_time = Date.now();
+    this.execution_time = Date.now();
   }
 
-  @UseInterceptors(ExecutionTime)
   @UseInterceptors(AutoOkResponse)
   @Post("webhook")
   async handle(@Body() data: any): Promise<string> {
+    this.execution_time = Date.now();
+
     switch (data.type) {
       case "ORDER_STATUS":
         await this.order_status.handle(data);
