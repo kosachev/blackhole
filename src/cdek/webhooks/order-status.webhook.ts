@@ -483,19 +483,16 @@ export class OrderStatusWebhook extends AbstractWebhook {
 
       if (result.addedEntries > 0) {
         this.googleSheets.logger.log(
-          "GOOGLE_SHEETS_ADD_LEAD",
-          `leadId: ${leadId}, added entries: ${result.addedEntries}`,
+          `GOOGLE_SHEETS_ADD_LEAD, leadId: ${leadId}, added entries: ${result.addedEntries}`,
         );
       } else {
         this.googleSheets.logger.warn(
-          "GOOGLE_SHEETS_ADD_LEAD",
-          `leadId: ${leadId}, added entries: ${result.addedEntries}`,
+          `GOOGLE_SHEETS_ADD_LEAD, leadId: ${leadId}, added entries: ${result.addedEntries}`,
         );
       }
     } catch (error) {
       this.googleSheets.logger.error(
-        "GOOGLE_SHEETS_ADD_LEAD_ERROR",
-        `leadId: ${leadId}, error: ${error.message}`,
+        `GOOGLE_SHEETS_ADD_LEAD_ERROR, leadId: ${leadId}, error: ${error.message}`,
       );
       await this.amo.note.addNotes("leads", [
         {
@@ -532,13 +529,11 @@ export class OrderStatusWebhook extends AbstractWebhook {
       ]);
 
       this.googleSheets.logger.log(
-        "GOOGLE_SHEETS_UPDATE_LEAD",
-        `leadId: ${leadId}, found entries: ${result.foundEntries}, updated entries: ${result.updatedEntries}`,
+        `GOOGLE_SHEETS_UPDATE_LEAD, leadId: ${leadId}, found entries: ${result.foundEntries}, updated entries: ${result.updatedEntries}`,
       );
     } catch (error) {
       this.googleSheets.logger.error(
-        "GOOGLE_SHEETS_UPDATE_LEAD_ERROR",
-        `leadId: ${leadId}, error: ${error.message}`,
+        `GOOGLE_SHEETS_UPDATE_LEAD_ERROR, leadId: ${leadId}, error: ${error.message}`,
       );
       await this.amo.note.addNotes("leads", [
         {

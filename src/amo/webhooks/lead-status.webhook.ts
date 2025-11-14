@@ -516,19 +516,16 @@ export class LeadStatusWebhook extends AbstractWebhook {
 
         if (result.addedEntries > 0) {
           this.googleSheets.logger.log(
-            "GOOGLE_SHEETS_ADD_LEAD",
-            `leadId: ${lead.data.id}, added entries: ${result.addedEntries}`,
+            `GOOGLE_SHEETS_ADD_LEAD, leadId: ${lead.data.id}, added entries: ${result.addedEntries}`,
           );
         } else {
           this.googleSheets.logger.warn(
-            "GOOGLE_SHEETS_ADD_LEAD",
-            `leadId: ${lead.data.id}, added entries: ${result.addedEntries}`,
+            `GOOGLE_SHEETS_ADD_LEAD, leadId: ${lead.data.id}, added entries: ${result.addedEntries}`,
           );
         }
       } catch (error) {
         this.googleSheets.logger.error(
-          "GOOGLE_SHEETS_ADD_LEAD_ERROR",
-          `leadId: ${lead.data.id}, error: ${error.message}`,
+          `GOOGLE_SHEETS_ADD_LEAD_ERROR, leadId: ${lead.data.id}, error: ${error.message}`,
         );
         lead.note(`❌ Google Sheets: Ошибка при добавления заказа\n${error.message}`);
       }
