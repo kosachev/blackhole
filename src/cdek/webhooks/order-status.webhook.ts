@@ -533,7 +533,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
 
       this.googleSheets.logger.log(
         "GOOGLE_SHEETS_UPDATE_LEAD",
-        `laedId: ${leadId}, found entries: ${result.foundEntries}, updated entries: ${result.updatedEntries}`,
+        `leadId: ${leadId}, found entries: ${result.foundEntries}, updated entries: ${result.updatedEntries}`,
       );
     } catch (error) {
       this.googleSheets.logger.error(
