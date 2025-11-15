@@ -515,17 +515,20 @@ export class LeadStatusWebhook extends AbstractWebhook {
         );
 
         if (result.addedEntries > 0) {
-          this.googleSheets.logger.log(
-            `GOOGLE_SHEETS_ADD_LEAD, leadId: ${lead.data.id}, added entries: ${result.addedEntries}`,
+          this.logger.log(
+            `ADD_LEAD, leadId: ${lead.data.id}, added entries: ${result.addedEntries}`,
+            "GoogleSheets",
           );
         } else {
-          this.googleSheets.logger.warn(
-            `GOOGLE_SHEETS_ADD_LEAD, leadId: ${lead.data.id}, added entries: ${result.addedEntries}`,
+          this.logger.warn(
+            `ADD_LEAD, leadId: ${lead.data.id}, added entries: ${result.addedEntries}`,
+            "GoogleSheets",
           );
         }
       } catch (error) {
-        this.googleSheets.logger.error(
-          `GOOGLE_SHEETS_ADD_LEAD_ERROR, leadId: ${lead.data.id}, error: ${error.message}`,
+        this.logger.error(
+          `ADD_LEAD_ERROR, leadId: ${lead.data.id}, error: ${error.message}`,
+          "GoogleSheets",
         );
         lead.note(`❌ Google Sheets: Ошибка при добавления заказа\n${error.message}`);
       }
