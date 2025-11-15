@@ -580,9 +580,62 @@ export class OrderStatusWebhook extends AbstractWebhook {
     goodSkuSuccess: string[],
     goodSkuReturn: string[],
   ): Promise<void> {
-    await this.cdekGoogleSheetsUpdate(leadId, () =>
-      this.googleSheets.cdekPartialReturn(leadId, returnLeadId, goodSkuSuccess, goodSkuReturn),
-    );
+    try {
+      const result = await this.googleSheets.cdekPartialReturn(
+        leadId,
+        returnLeadId,
+        goodSkuSuccess,
+        goodSkuReturn,
+      );
+
+      const message =
+        result.updatedEntries > 0
+          ? `✅ Google Sheets: обновлено строк - ${result.updatedEntries}`
+          : `⚠️ Google Sheets: 0 строк обновлено`;
+
+      await this.amo.note.addNotes("leads", [
+        {
+          entity_id: +leadId,
+          note_type: "common",
+          params: {
+            text: message,
+          },
+        },
+        {
+          entity_id: +returnLeadId,
+          note_type: "common",
+          params: {
+            text: message,
+          },
+        },
+      ]);
+
+      this.logger.log(
+        `UPDATE_LEAD, leadId: ${leadId}, returnLeadId: ${returnLeadId}, found entries: ${result.foundEntries}, updated entries: ${result.updatedEntries}`,
+        "GoogleSheets",
+      );
+    } catch (error) {
+      this.logger.error(
+        `UPDATE_LEAD_ERROR, leadId: ${leadId}, returnLeadId: ${returnLeadId}, error: ${error.message}`,
+        "GoogleSheets",
+      );
+      await this.amo.note.addNotes("leads", [
+        {
+          entity_id: +leadId,
+          note_type: "common",
+          params: {
+            text: `❌ Google Sheets: Ошибка при добавления заказа\n${error.message}`,
+          },
+        },
+        {
+          entity_id: +returnLeadId,
+          note_type: "common",
+          params: {
+            text: `❌ Google Sheets: Ошибка при добавления заказа\n${error.message}`,
+          },
+        },
+      ]);
+    }
   }
 
   private async cdekReturnCdekNumberAndDeliveryPrice(
