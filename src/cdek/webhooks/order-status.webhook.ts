@@ -472,14 +472,28 @@ export class OrderStatusWebhook extends AbstractWebhook {
         cdekNumber: cdekNumber,
       });
 
-      lead.custom_fields.set(AMO.CUSTOM_FIELD.CDEK_PRICE, deliverySum.toString());
-      lead.note(
-        result.addedEntries > 0
-          ? `✅ Google Sheets: добавлено строк - ${result.addedEntries}`
-          : `⚠️ Google Sheets: не добавлено новых строк при отправке заказа СДЭКом`,
-      );
-
-      await lead.saveToAmo();
+      await Promise.all([
+        this.amo.lead.updateLeadById(+leadId, {
+          custom_fields_values: [
+            {
+              field_id: AMO.CUSTOM_FIELD.CDEK_PRICE,
+              values: [{ value: deliverySum }],
+            },
+          ],
+        }),
+        this.amo.note.addNotes("leads", [
+          {
+            entity_id: +leadId,
+            note_type: "common",
+            params: {
+              text:
+                result.addedEntries > 0
+                  ? `✅ Google Sheets: добавлено строк - ${result.addedEntries}`
+                  : `⚠️ Google Sheets: не добавлено новых строк при отправке заказа СДЭКом`,
+            },
+          },
+        ]),
+      ]);
 
       if (result.addedEntries > 0) {
         this.googleSheets.logger.log(
