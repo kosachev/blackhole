@@ -477,7 +477,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
           custom_fields_values: [
             {
               field_id: AMO.CUSTOM_FIELD.CDEK_PRICE,
-              values: [{ value: deliverySum }],
+              values: [{ value: deliverySum.toString() }],
             },
           ],
         }),
