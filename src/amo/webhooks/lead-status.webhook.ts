@@ -62,7 +62,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
       }
     }
 
-    // await lead.saveToAmo();
+    await lead.saveToAmo();
   }
 
   private async statusRequisite(lead: LeadHelper) {
