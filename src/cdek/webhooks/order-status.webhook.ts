@@ -4,7 +4,7 @@ import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { EntityLink, Task } from "@shevernitskiy/amo";
 import { AbstractWebhook } from "./abstract.webhook";
 import { AMO } from "../../amo/amo.constants";
-import { timestamp } from "../../utils/timestamp.function";
+import { stringDate, timestamp } from "../../utils/timestamp.function";
 import { LeadHelper } from "../../amo/helpers/lead.helper";
 import { type UpdateResult } from "../../google-sheets/google-sheets.service";
 
@@ -460,7 +460,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
       const deliverySum = order.entity?.delivery_detail?.delivery_sum ?? 0;
 
       const result = await this.googleSheets.addLead({
-        shippingDate: new Date().toLocaleDateString("ru-RU"),
+        shippingDate: stringDate(),
         status: "Отправлено",
         goods: [...lead.goods.values()],
         discount: lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT),

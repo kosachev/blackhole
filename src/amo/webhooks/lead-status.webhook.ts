@@ -3,6 +3,7 @@ import { AbstractWebhook } from "./abstract.webhook";
 import { LeadHelper } from "../helpers/lead.helper";
 import { generateSku } from "../helpers/sku.helper";
 import { AMO } from "../amo.constants";
+import { stringDate } from "../../utils/timestamp.function";
 
 @Injectable()
 export class LeadStatusWebhook extends AbstractWebhook {
@@ -61,7 +62,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
       }
     }
 
-    await lead.saveToAmo();
+    // await lead.saveToAmo();
   }
 
   private async statusRequisite(lead: LeadHelper) {
@@ -450,43 +451,44 @@ export class LeadStatusWebhook extends AbstractWebhook {
 
   private async statusSuccess(lead: LeadHelper) {
     const counter = lead.custom_fields.get(AMO.CUSTOM_FIELD.AD_COUNTER);
-    if (!counter || isNaN(Number(counter))) return;
 
-    const data = {
-      DateTime: Math.round(Date.now() / 1000) - 10,
-      Price: lead.data.price,
-      Currency: "RUB",
-    };
+    if (counter && !isNaN(Number(counter))) {
+      const data = {
+        DateTime: Math.round(Date.now() / 1000) - 10,
+        Price: lead.data.price,
+        Currency: "RUB",
+      };
 
-    const yclid = lead.custom_fields.get(AMO.CUSTOM_FIELD.AD_YD_YCLID);
-    const client_id = lead.custom_fields.get(AMO.CUSTOM_FIELD.AD_YM_CLIENT_ID);
+      const yclid = lead.custom_fields.get(AMO.CUSTOM_FIELD.AD_YD_YCLID);
+      const client_id = lead.custom_fields.get(AMO.CUSTOM_FIELD.AD_YM_CLIENT_ID);
 
-    let ymtype: string;
+      let ymtype: string;
 
-    try {
-      if (yclid) {
-        await this.yametrika.upload(
-          Number(counter),
-          { Yclid: yclid, Target: "implemented", ...data },
-          `AmoCRM ID:${lead.data.id} YD`,
-        );
-        ymtype = `Yclid: ${yclid}`;
-      } else if (client_id) {
-        await this.yametrika.upload(
-          Number(counter),
-          { ClientId: client_id, Target: "purchase", ...data },
-          `AmoCRM ID:${lead.data.id} YM`,
-        );
-        ymtype = `ClientId: ${client_id}`;
+      try {
+        if (yclid) {
+          await this.yametrika.upload(
+            Number(counter),
+            { Yclid: yclid, Target: "implemented", ...data },
+            `AmoCRM ID:${lead.data.id} YD`,
+          );
+          ymtype = `Yclid: ${yclid}`;
+        } else if (client_id) {
+          await this.yametrika.upload(
+            Number(counter),
+            { ClientId: client_id, Target: "purchase", ...data },
+            `AmoCRM ID:${lead.data.id} YM`,
+          );
+          ymtype = `ClientId: ${client_id}`;
+        }
+
+        if (ymtype) {
+          this.logger.log(`YANDEX_METRIKA, counter ${counter}, ${ymtype}`);
+          lead.note(`✅ Яндекс Метрика: данные загружены, счётчик ${counter} (${ymtype})`);
+        }
+      } catch (err) {
+        this.logger.error(err);
+        lead.note(`❌ Яндекс Метрика: не удалось отправить данные - ${err.message}`);
       }
-
-      if (ymtype) {
-        this.logger.log(`YANDEX_METRIKA, counter ${counter}, ${ymtype}`);
-        lead.note(`✅ Яндекс Метрика: данные загружены, счётчик ${counter} (${ymtype})`);
-      }
-    } catch (err) {
-      this.logger.error(err);
-      lead.note(`❌ Яндекс Метрика: не удалось отправить данные - ${err.message}`);
     }
 
     const deliveryType = lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE);
@@ -499,7 +501,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
     ) {
       try {
         const result = await this.googleSheets.addLead({
-          shippingDate: new Date().toLocaleDateString("ru-RU"),
+          shippingDate: stringDate(),
           goods: [...lead.goods.values()],
           discount: lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT),
           customerDeliveryPrice: +(lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_COST) ?? "0"),

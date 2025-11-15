@@ -142,6 +142,7 @@ export class LeadHelper {
     if (!lead) {
       throw new Error("LeadHelper can't parse webhook data");
     }
+
     const custom_fields = new Map<number, string>(
       lead.custom_fields?.map((item: CustomFieldsValue) => {
         if (
@@ -156,6 +157,7 @@ export class LeadHelper {
         return [+(item.field_id ?? item.id), item.values?.at(0)?.value ?? item.values];
       }),
     );
+
     const tags = new Set<number>(lead.tags?.map((item: Tag) => +item.id));
 
     const goods =
