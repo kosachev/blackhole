@@ -516,7 +516,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
           entity_id: +leadId,
           note_type: "common",
           params: {
-            text: `❌ Google Sheets: Ошибка при добавления заказа\n${error.message}`,
+            text: `❌ Google Sheets: Ошибка при добавлении сделки\n${error.message}`,
           },
         },
       ]);
@@ -559,7 +559,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
           entity_id: +leadId,
           note_type: "common",
           params: {
-            text: `❌ Google Sheets: Ошибка при добавления заказа\n${error.message}`,
+            text: `❌ Google Sheets: Ошибка при обновлении сделки\n${error.message}`,
           },
         },
       ]);
@@ -624,14 +624,14 @@ export class OrderStatusWebhook extends AbstractWebhook {
           entity_id: +leadId,
           note_type: "common",
           params: {
-            text: `❌ Google Sheets: Ошибка при добавления заказа\n${error.message}`,
+            text: `❌ Google Sheets: Ошибка при обновлении сделки\n${error.message}`,
           },
         },
         {
           entity_id: +returnLeadId,
           note_type: "common",
           params: {
-            text: `❌ Google Sheets: Ошибка при добавления заказа\n${error.message}`,
+            text: `❌ Google Sheets: Ошибка при обновлении сделки\n${error.message}`,
           },
         },
       ]);

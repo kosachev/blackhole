@@ -532,7 +532,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
           `ADD_LEAD_ERROR, leadId: ${lead.data.id}, error: ${error.message}`,
           "GoogleSheets",
         );
-        lead.note(`❌ Google Sheets: Ошибка при добавления заказа\n${error.message}`);
+        lead.note(`❌ Google Sheets: Ошибка при добавлении сделки\n${error.message}`);
       }
     }
   }
