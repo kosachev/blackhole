@@ -107,7 +107,7 @@ export class TildaService {
         const size_option = good.options?.find((o) => o.option === "Размер");
         const size = size_option?.variant ? ` размер: ${size_option.variant}` : "";
         return {
-          name: `${good.name}${size}`,
+          name: `${good.name.replaceAll("&quot;", '"')}${size}`,
           quantity: good.quantity,
           price: +good.price,
           sku: good.sku ?? `F${Math.random().toString().slice(2, 13)}`, // generate fake sku if not provided

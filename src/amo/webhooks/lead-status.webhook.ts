@@ -279,6 +279,10 @@ export class LeadStatusWebhook extends AbstractWebhook {
       this.logger.error(err);
       lead.note("❌ email: ошибка при отправке письма с трек-кодом");
     }
+
+    if (lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) === "Авито") {
+      await this.addLeadToGoogleSheets(lead, "Отправлено");
+    }
   }
 
   private async statusCdek(lead: LeadHelper) {
@@ -496,43 +500,39 @@ export class LeadStatusWebhook extends AbstractWebhook {
     if (
       deliveryType === "Самовывоз" ||
       deliveryType === "Курьером (в пределах МКАД)" ||
-      deliveryType === "Курьером (Московская область)" ||
-      deliveryType === "Авито"
+      deliveryType === "Курьером (Московская область)"
     ) {
+      await this.addLeadToGoogleSheets(lead);
+    } else if (deliveryType === "Авито") {
       try {
-        const result = await this.googleSheets.addLead({
-          shippingDate: stringDate(),
-          goods: [...lead.goods.values()],
-          discount: lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT),
-          customerDeliveryPrice: +(lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_COST) ?? "0"),
-          deliveryType: lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE),
-          paymentType: lead.custom_fields.get(AMO.CUSTOM_FIELD.PAY_TYPE),
-          leadId: lead.data.id.toString(),
-        });
-
-        lead.note(
-          result.addedEntries > 0
-            ? `✅ Google Sheets: добавлено строк - ${result.addedEntries}`
-            : `⚠️ Google Sheets: не добавлено новых строк при отправке заказа СДЭКом`,
+        const result = await this.googleSheets.cdekFullSuccess(
+          lead.data.id.toString(),
+          lead.custom_fields.get(AMO.CUSTOM_FIELD.PAY_TYPE),
         );
 
-        if (result.addedEntries > 0) {
+        lead.note(
+          result.updatedEntries > 0
+            ? `✅ Google Sheets: обновлено строк - ${result.updatedEntries}`
+            : `⚠️ Google Sheets: 0 строк обновлено`,
+        );
+
+        if (result.updatedEntries > 0) {
           this.logger.log(
-            `ADD_LEAD, leadId: ${lead.data.id}, added entries: ${result.addedEntries}`,
+            `UPDATE_LEAD, leadId: ${lead.data.id}, found entries: ${result.foundEntries}, updated entries: ${result.updatedEntries}`,
             "GoogleSheets",
           );
         } else {
           this.logger.warn(
-            `ADD_LEAD, leadId: ${lead.data.id}, added entries: ${result.addedEntries}`,
+            `UPDATE_LEAD, leadId: ${lead.data.id}, found entries: ${result.foundEntries}, updated entries: ${result.updatedEntries}`,
             "GoogleSheets",
           );
         }
       } catch (error) {
         this.logger.error(
-          `ADD_LEAD_ERROR, leadId: ${lead.data.id}, error: ${error.message}`,
+          `UPDATE_LEAD_ERROR, leadId: ${lead.data.id}, error: ${error.message}`,
           "GoogleSheets",
         );
-        lead.note(`❌ Google Sheets: Ошибка при добавлении сделки\n${error.message}`);
+        lead.note(`❌ Google Sheets: Ошибка при обновлении сделки\n${error.message}`);
       }
     }
   }
@@ -551,11 +551,11 @@ export class LeadStatusWebhook extends AbstractWebhook {
         lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) ? true : false,
         "Не выбран тип доставки",
       ],
-      delivery_type_cdek_or_post: [
-        ["Экспресс по России", "Почта России"].includes(
+      delivery_type_cdek_or_post_or_avito: [
+        ["Экспресс по России", "Почта России", "Авито"].includes(
           lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) as string,
         ),
-        `Неверный тип доставки ${lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) ?? ""}, должен быть "Экспресс по России" или "Почта России"`,
+        `Неверный тип доставки ${lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) ?? ""}, должен быть "Экспресс по России" или "Почта России" или "Авито"`,
       ],
       delivery_type_post: [
         lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) === "Почта России",
@@ -665,6 +665,46 @@ export class LeadStatusWebhook extends AbstractWebhook {
       if (warnings?.includes(check_name) && !check_data[0]) {
         lead.warning(`⚠️ ${check_data[1]}`);
       }
+    }
+  }
+
+  private async addLeadToGoogleSheets(lead: LeadHelper, status?: string): Promise<void> {
+    try {
+      const result = await this.googleSheets.addLead({
+        shippingDate: stringDate(),
+        status,
+        goods: [...lead.goods.values()],
+        discount: lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT),
+        customerDeliveryPrice: +(lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_COST) ?? "0"),
+        deliveryType: lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE),
+        paymentType: lead.custom_fields.get(AMO.CUSTOM_FIELD.PAY_TYPE),
+        leadId: lead.data.id.toString(),
+        ads: lead.custom_fields.get(AMO.CUSTOM_FIELD.AD_UTM_SOURCE),
+      });
+
+      lead.note(
+        result.addedEntries > 0
+          ? `✅ Google Sheets: добавлено строк - ${result.addedEntries}`
+          : `⚠️ Google Sheets: не добавлено новых строк`,
+      );
+
+      if (result.addedEntries > 0) {
+        this.logger.log(
+          `ADD_LEAD, leadId: ${lead.data.id}, added entries: ${result.addedEntries}`,
+          "GoogleSheets",
+        );
+      } else {
+        this.logger.warn(
+          `ADD_LEAD, leadId: ${lead.data.id}, added entries: ${result.addedEntries}`,
+          "GoogleSheets",
+        );
+      }
+    } catch (error) {
+      this.logger.error(
+        `ADD_LEAD_ERROR, leadId: ${lead.data.id}, error: ${error.message}`,
+        "GoogleSheets",
+      );
+      lead.note(`❌ Google Sheets: Ошибка при добавлении сделки\n${error.message}`);
     }
   }
 }

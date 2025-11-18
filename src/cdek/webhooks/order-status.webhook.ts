@@ -7,6 +7,7 @@ import { AMO } from "../../amo/amo.constants";
 import { stringDate, timestamp } from "../../utils/timestamp.function";
 import { LeadHelper } from "../../amo/helpers/lead.helper";
 import { type UpdateResult } from "../../google-sheets/google-sheets.service";
+import { type RequestUpdateLead } from "@shevernitskiy/amo/src/api/lead/types";
 
 const status_reason_code = {
   "1": " по причине неверного адреса (1)",
@@ -167,7 +168,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
         if (!data.attributes.status_reason_code) {
           parsed.note = `✔ СДЭК${prefix}: посылка успешно вручена адресату (4)`;
           parsed.status = AMO.STATUS.SUCCESS;
-          this.cdekFullSuccess(data.attributes.number);
+          this.cdekFullSuccess(data.attributes.number, data.uuid);
           break;
         }
         if (data.attributes.status_reason_code !== "20") break;
@@ -310,14 +311,28 @@ export class OrderStatusWebhook extends AbstractWebhook {
       throw new InternalServerErrorException("Unable to create return lead");
     }
 
+    const paymentType = order.entity?.delivery_detail?.payment_info?.at(0)?.type;
+    const paymentTitle =
+      paymentType === "CARD" ? "Оплата картой" : paymentType === "CASH" ? "Наличные" : undefined;
+
+    const directLeadUpdate: RequestUpdateLead = {
+      status_id: AMO.STATUS.SUCCESS,
+      price: direct_lead.price - return_total,
+    };
+
+    if (paymentTitle) {
+      directLeadUpdate.custom_fields_values = [
+        {
+          field_id: AMO.CUSTOM_FIELD.PAY_TYPE,
+          values: [{ value: paymentTitle }],
+        },
+      ];
+    }
     // delete return goods from direct, add it to return lead
     await Promise.all([
       this.amo.link.deleteLinksByEntityId(direct_lead.id, "leads", return_goods),
       this.amo.link.addLinksByEntityId(return_lead._embedded.leads[0].id, "leads", return_goods),
-      this.amo.lead.updateLeadById(direct_lead.id, {
-        status_id: AMO.STATUS.SUCCESS,
-        price: direct_lead.price - return_total,
-      }),
+      this.amo.lead.updateLeadById(direct_lead.id, directLeadUpdate),
       this.amo.note.addNotes("leads", [
         {
           entity_id: direct_lead.id,
@@ -330,7 +345,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
           entity_id: return_lead._embedded.leads[0].id,
           note_type: "common",
           params: {
-            text: `⇌ СДЕК ВОЗВРАТ: Частичный возврат по сделке ${direct_lead.id}`,
+            text: `⇌ СДЕК ВОЗВРАТ: Частичный возврат по сделке https://gerda.amocrm.ru/leads/detail/${direct_lead.id}`,
           },
         },
       ]),
@@ -341,6 +356,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
       return_lead._embedded.leads[0].id.toString(),
       successSku,
       returnSku,
+      paymentTitle,
     );
 
     this.logger.log(
@@ -470,6 +486,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
         paymentType: lead.custom_fields.get(AMO.CUSTOM_FIELD.PAY_TYPE),
         leadId: leadId,
         cdekNumber: cdekNumber,
+        ads: lead.custom_fields.get(AMO.CUSTOM_FIELD.AD_UTM_SOURCE),
       });
 
       await Promise.all([
@@ -566,8 +583,26 @@ export class OrderStatusWebhook extends AbstractWebhook {
     }
   }
 
-  private async cdekFullSuccess(leadId: string): Promise<void> {
-    await this.cdekGoogleSheetsUpdate(leadId, () => this.googleSheets.cdekFullSuccess(leadId));
+  private async cdekFullSuccess(leadId: string, uuid: string): Promise<void> {
+    const order = await this.cdek.getOrderByUUID(uuid);
+    const paymentType = order.entity?.delivery_detail?.payment_info?.at(0)?.type;
+    const paymentTitle =
+      paymentType === "CARD" ? "Оплата картой" : paymentType === "CASH" ? "Наличные" : undefined;
+
+    await this.cdekGoogleSheetsUpdate(leadId, () =>
+      this.googleSheets.cdekFullSuccess(leadId, paymentTitle),
+    );
+
+    if (paymentTitle) {
+      await this.amo.lead.updateLeadById(+leadId, {
+        custom_fields_values: [
+          {
+            field_id: AMO.CUSTOM_FIELD.PAY_TYPE,
+            values: [{ value: paymentTitle }],
+          },
+        ],
+      });
+    }
   }
 
   private async cdekFullReturn(leadId: string): Promise<void> {
@@ -579,6 +614,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
     returnLeadId: string,
     goodSkuSuccess: string[],
     goodSkuReturn: string[],
+    paymentType?: string,
   ): Promise<void> {
     try {
       const result = await this.googleSheets.cdekPartialReturn(
@@ -586,6 +622,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
         returnLeadId,
         goodSkuSuccess,
         goodSkuReturn,
+        paymentType,
       );
 
       const message =

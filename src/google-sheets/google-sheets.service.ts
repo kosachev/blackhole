@@ -23,7 +23,9 @@ export type Entry = Partial<{
   returnLeadId: string;
   returnCdekNumber: string;
   closedByRegister: string;
+  returnClosedByRegister: string;
   checkout: string;
+  ads: string;
 }>;
 
 export type UpdateResult = {
@@ -71,7 +73,9 @@ export class GoogleSheetsService implements OnModuleInit {
     returnLeadId: 15,
     returnCdekNumber: 16,
     closedByRegister: 17,
-    checkout: 18,
+    returnClosedByRegister: 18,
+    checkout: 19,
+    ads: 20,
   } as const;
 
   private readonly columnCount = Object.keys(GoogleSheetsService.columns).length;
@@ -125,7 +129,9 @@ export class GoogleSheetsService implements OnModuleInit {
     returnLeadId?: string;
     returnCdekNumber?: string;
     closedByRegister?: string;
+    returnClosedByRegister?: string;
     checkout?: string;
+    ads?: string;
     color?: (typeof GoogleSheetsService.colors)[keyof typeof GoogleSheetsService.colors];
   }): Promise<AddResult> {
     const request = [];
@@ -152,7 +158,9 @@ export class GoogleSheetsService implements OnModuleInit {
             lead.returnLeadId,
             lead.returnCdekNumber,
             lead.closedByRegister,
+            lead.returnClosedByRegister,
             lead.checkout,
+            lead.ads,
           ].map((value) => (value === undefined ? "" : value)),
         );
     }
@@ -179,9 +187,11 @@ export class GoogleSheetsService implements OnModuleInit {
 
   async updateEntry(
     search: {
-      leadId?: string;
-      returnLeadId?: string;
-      goodSku?: string[];
+      leadId?: string[];
+      returnLeadId?: string[];
+      cdekNumber?: string[];
+      returnCdekNumber?: string[];
+      goodSku?: string[]; // narrowing
     },
     update: {
       shippingDate?: string;
@@ -202,7 +212,9 @@ export class GoogleSheetsService implements OnModuleInit {
       returnLeadId?: string;
       returnCdekNumber?: string;
       closedByRegister?: string;
+      returnClosedByRegister?: string;
       checkout?: string;
+      ads?: string;
       color?: (typeof GoogleSheetsService.colors)[keyof typeof GoogleSheetsService.colors];
     },
   ): Promise<UpdateResult> {
@@ -212,6 +224,8 @@ export class GoogleSheetsService implements OnModuleInit {
     if (
       search.leadId === undefined &&
       search.returnLeadId === undefined &&
+      search.cdekNumber === undefined &&
+      search.returnCdekNumber === undefined &&
       search.goodSku === undefined
     ) {
       return { foundEntries: 0, updatedEntries: 0 };
@@ -223,10 +237,25 @@ export class GoogleSheetsService implements OnModuleInit {
         rowIndex,
         GoogleSheetsService.columns.returnLeadId,
       );
+      const cdekNumberCell = this.sheet.getCell(rowIndex, GoogleSheetsService.columns.cdekNumber);
+      const returnCdekNumberCell = this.sheet.getCell(
+        rowIndex,
+        GoogleSheetsService.columns.returnCdekNumber,
+      );
 
       if (
-        (search.leadId && leadIdCell.value == search.leadId) ||
-        (search.returnLeadId && returnLeadIdCell.value == search.returnLeadId)
+        (search.leadId &&
+          leadIdCell.value &&
+          search.leadId.includes(leadIdCell.value.toString())) ||
+        (search.returnLeadId &&
+          returnLeadIdCell.value &&
+          search.returnLeadId.includes(returnLeadIdCell.value.toString())) ||
+        (search.cdekNumber &&
+          cdekNumberCell.value &&
+          search.cdekNumber.includes(cdekNumberCell.value.toString())) ||
+        (search.returnCdekNumber &&
+          returnCdekNumberCell.value &&
+          search.returnCdekNumber.includes(returnCdekNumberCell.value.toString()))
       ) {
         if (search.goodSku !== undefined) {
           if (
@@ -346,9 +375,20 @@ export class GoogleSheetsService implements OnModuleInit {
           updated = true;
         }
 
+        if (update.returnClosedByRegister) {
+          this.sheet.getCell(rowIndex, GoogleSheetsService.columns.returnClosedByRegister).value =
+            update.returnClosedByRegister;
+          updated = true;
+        }
+
         if (update.checkout) {
           this.sheet.getCell(rowIndex, GoogleSheetsService.columns.checkout).value =
             update.checkout;
+          updated = true;
+        }
+
+        if (update.ads) {
+          this.sheet.getCell(rowIndex, GoogleSheetsService.columns.ads).value = update.ads;
           updated = true;
         }
 
@@ -373,11 +413,12 @@ export class GoogleSheetsService implements OnModuleInit {
     return { foundEntries, updatedEntries };
   }
 
-  cdekFullSuccess(leadId: string): Promise<UpdateResult> {
+  cdekFullSuccess(leadId: string, paymentType?: string): Promise<UpdateResult> {
     return this.updateEntry(
-      { leadId },
+      { leadId: [leadId] },
       {
         status: "Доставлено",
+        paymentType,
         color: GoogleSheetsService.colors.lightGreen,
       },
     );
@@ -385,7 +426,7 @@ export class GoogleSheetsService implements OnModuleInit {
 
   cdekFullReturn(leadId: string): Promise<UpdateResult> {
     return this.updateEntry(
-      { leadId },
+      { leadId: [leadId] },
       {
         status: "Ждем возврат",
         returnLeadId: leadId,
@@ -399,14 +440,15 @@ export class GoogleSheetsService implements OnModuleInit {
     returnLeadId: string,
     goodSkuSuccess: string[],
     goodSkuReturn: string[],
+    paymentType?: string,
   ): Promise<UpdateResult> {
     const [successResult, returnResult] = await Promise.all([
       this.updateEntry(
-        { leadId, goodSku: goodSkuSuccess },
-        { status: "Доставлено", color: GoogleSheetsService.colors.lightGreen },
+        { leadId: [leadId], goodSku: goodSkuSuccess },
+        { status: "Доставлено", paymentType, color: GoogleSheetsService.colors.lightGreen },
       ),
       this.updateEntry(
-        { leadId, goodSku: goodSkuReturn },
+        { leadId: [leadId], goodSku: goodSkuReturn },
         { status: "Ждем возврат", returnLeadId, color: GoogleSheetsService.colors.ligthRed },
       ),
     ]);
@@ -422,10 +464,13 @@ export class GoogleSheetsService implements OnModuleInit {
     returnCdekNumber: string,
     ownerReturnDeliveryPrice: number,
   ): Promise<UpdateResult> {
-    return this.updateEntry({ returnLeadId }, { returnCdekNumber, ownerReturnDeliveryPrice });
+    return this.updateEntry(
+      { returnLeadId: [returnLeadId] },
+      { returnCdekNumber, ownerReturnDeliveryPrice },
+    );
   }
 
   cdekReturnRecieved(returnLeadId: string): Promise<UpdateResult> {
-    return this.updateEntry({ returnLeadId }, { status: "Возврат получен" });
+    return this.updateEntry({ returnLeadId: [returnLeadId] }, { status: "Возврат получен" });
   }
 }
