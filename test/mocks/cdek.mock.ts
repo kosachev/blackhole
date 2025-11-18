@@ -6,7 +6,9 @@ export const mockCdekService = () => {
     return {
       CdekService: vi.fn().mockImplementation(() => {
         return {
-          client: {},
+          client: {
+            getOrderByUUID: vi.fn((uuid: string) => [uuid]),
+          },
         };
       }),
     };
