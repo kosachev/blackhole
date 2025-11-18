@@ -4,6 +4,7 @@ import { LeadHelper } from "../helpers/lead.helper";
 import { generateSku } from "../helpers/sku.helper";
 import { AMO } from "../amo.constants";
 import { stringDate } from "../../utils/timestamp.function";
+import { GoogleSheetsService, type EntryColor } from "../../google-sheets/google-sheets.service";
 
 @Injectable()
 export class LeadStatusWebhook extends AbstractWebhook {
@@ -502,7 +503,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
       deliveryType === "Курьером (в пределах МКАД)" ||
       deliveryType === "Курьером (Московская область)"
     ) {
-      await this.addLeadToGoogleSheets(lead);
+      await this.addLeadToGoogleSheets(lead, undefined, GoogleSheetsService.colors.lightGreen);
     } else if (deliveryType === "Авито") {
       try {
         const result = await this.googleSheets.cdekFullSuccess(
@@ -668,7 +669,11 @@ export class LeadStatusWebhook extends AbstractWebhook {
     }
   }
 
-  private async addLeadToGoogleSheets(lead: LeadHelper, status?: string): Promise<void> {
+  private async addLeadToGoogleSheets(
+    lead: LeadHelper,
+    status?: string,
+    color?: EntryColor,
+  ): Promise<void> {
     try {
       const result = await this.googleSheets.addLead({
         shippingDate: stringDate(),
@@ -680,6 +685,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
         paymentType: lead.custom_fields.get(AMO.CUSTOM_FIELD.PAY_TYPE),
         leadId: lead.data.id.toString(),
         ads: lead.custom_fields.get(AMO.CUSTOM_FIELD.AD_UTM_SOURCE),
+        color,
       });
 
       lead.note(

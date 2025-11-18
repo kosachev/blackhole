@@ -37,6 +37,9 @@ export type AddResult = {
   addedEntries: number;
 };
 
+export type EntryColor =
+  (typeof GoogleSheetsService.colors)[keyof typeof GoogleSheetsService.colors];
+
 @Injectable()
 export class GoogleSheetsService implements OnModuleInit {
   readonly logger = new Logger(GoogleSheetsService.name);
@@ -132,7 +135,7 @@ export class GoogleSheetsService implements OnModuleInit {
     returnClosedByRegister?: string;
     checkout?: string;
     ads?: string;
-    color?: (typeof GoogleSheetsService.colors)[keyof typeof GoogleSheetsService.colors];
+    color?: EntryColor;
   }): Promise<AddResult> {
     const request = [];
 
@@ -215,7 +218,7 @@ export class GoogleSheetsService implements OnModuleInit {
       returnClosedByRegister?: string;
       checkout?: string;
       ads?: string;
-      color?: (typeof GoogleSheetsService.colors)[keyof typeof GoogleSheetsService.colors];
+      color?: EntryColor;
     },
   ): Promise<UpdateResult> {
     let foundEntries = 0;
