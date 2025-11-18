@@ -49,6 +49,7 @@ type ParsedWebhook = {
   pipeline?: number;
   loss_reason?: number;
   custom_fields: [number, string][];
+  salesbot?: number;
 };
 
 @Injectable()
@@ -95,6 +96,18 @@ export class OrderStatusWebhook extends AbstractWebhook {
 
     if (parsed.task) {
       promises.push(this.amo.task.addTasks([parsed.task]));
+    }
+
+    if (parsed.salesbot) {
+      promises.push(
+        this.amo.salesbot.runTask([
+          {
+            bot_id: parsed.salesbot,
+            entity_id: +data.attributes.number,
+            entity_type: 2,
+          },
+        ]),
+      );
     }
 
     await Promise.all(promises);
@@ -208,13 +221,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
       case "12":
         parsed.note = `ℹ СДЭК${prefix}: посылка прибыла на склад до востребования города-получателя ${data.attributes.city_name ?? ""}, ожидает забора клиентом (12)`;
         if (!data.attributes.is_return) {
-          this.amo.salesbot.runTask([
-            {
-              bot_id: AMO.SALESBOT.ORDER_AT_PVZ,
-              entity_type: 2, // lead
-              entity_id: +data.attributes.number,
-            },
-          ]);
+          parsed.salesbot = AMO.SALESBOT.ORDER_AT_PVZ;
         }
         break;
       case "19":
