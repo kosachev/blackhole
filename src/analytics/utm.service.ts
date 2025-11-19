@@ -8,7 +8,7 @@ export type UtmEntry = {
 
 @Injectable()
 export class UtmService {
-  private readonly logger = new Logger("UtmService");
+  private readonly logger = new Logger(UtmService.name);
   private cache: LRUCache<string, string>;
 
   constructor() {
@@ -19,7 +19,7 @@ export class UtmService {
     if (!entry?.ym_client_id || !entry?.utm) throw new BadRequestException("Bad post body");
     const utm = decodeURIComponent(entry.utm).replaceAll("|||", "&");
     this.cache.set(entry.ym_client_id, utm);
-    this.logger.log(`UTM added: ${entry.ym_client_id}: ${utm}`);
+    this.logger.log(`UTM added: ${entry.ym_client_id}: ${utm}`, UtmService.name);
   }
 
   has(ym_client_id: string): boolean {
@@ -35,7 +35,7 @@ export class UtmService {
   delete(ym_client_id: string): void {
     if (!ym_client_id) return;
     this.cache.delete(ym_client_id);
-    this.logger.log(`UTM deleted: ${ym_client_id}`);
+    this.logger.log(`UTM deleted: ${ym_client_id}`, UtmService.name);
   }
 
   clear(): void {
