@@ -1,9 +1,9 @@
 # compiled output
 /dist
 /node_modules
-/public/gerda_userscript.*
-/public/shop_userscript.*
-/public/gerdacollection_userscript.*
+/public/*.js
+# /public/shop_userscript.*
+# /public/gerdacollection_userscript.*
 
 # Logs
 logs
