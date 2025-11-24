@@ -10,6 +10,7 @@ export class CdekService {
   private instance: Cdek;
 
   private printformToLeadMap: LRUCache<string, { leadId: number; cdekNumber: string }>;
+  private orderValidationMap: LRUCache<string, NodeJS.Timeout>;
 
   constructor(private readonly config: ConfigService) {
     this.instance = new Cdek({
@@ -24,17 +25,35 @@ export class CdekService {
     this.printformToLeadMap = new LRUCache<string, { leadId: number; cdekNumber: string }>({
       max: 100,
     });
+
+    this.orderValidationMap = new LRUCache<string, NodeJS.Timeout>({
+      max: 100,
+    });
   }
 
   get client(): Cdek {
     return this.instance;
   }
 
+  getPrintformToLead(printformId: string): { leadId: number; cdekNumber: string } | undefined {
+    return this.printformToLeadMap.get(printformId);
+  }
+
   setPrintformToLead(printformId: string, leadData: { leadId: number; cdekNumber: string }) {
     this.printformToLeadMap.set(printformId, leadData);
   }
 
-  getPrintformToLead(printformId: string): { leadId: number; cdekNumber: string } | undefined {
-    return this.printformToLeadMap.get(printformId);
+  setOrderValidationToTimer(orderId: string, timer: NodeJS.Timeout) {
+    this.orderValidationMap.set(orderId, timer);
+  }
+
+  getOrderValidationToTimer(orderId: string): NodeJS.Timeout | undefined {
+    return this.orderValidationMap.get(orderId);
+  }
+
+  deleteOrderValidationToTimer(orderId: string) {
+    const timer = this.orderValidationMap.get(orderId);
+    if (timer) clearTimeout(timer);
+    this.orderValidationMap.delete(orderId);
   }
 }

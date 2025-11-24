@@ -4,7 +4,8 @@ import { LeadHelper } from "../helpers/lead.helper";
 import { generateSku } from "../helpers/sku.helper";
 import { AMO } from "../amo.constants";
 import { stringDate } from "../../utils/timestamp.function";
-import { GoogleSheetsService, type EntryColor } from "../../google-sheets/google-sheets.service";
+import { type SalesEntryColor, SalesSheet } from "../../google-sheets/sales.sheet";
+import { type EntityOperation } from "cdek/src/types/api/base";
 
 @Injectable()
 export class LeadStatusWebhook extends AbstractWebhook {
@@ -414,6 +415,8 @@ export class LeadStatusWebhook extends AbstractWebhook {
         );
         lead.custom_fields.set(AMO.CUSTOM_FIELD.CDEK_UUID, res.entity.uuid);
         this.logger.log(`STATUS_CDEK, lead_id: ${lead.data.id}, cdek_uuid: ${res.entity.uuid}`);
+
+        await this.checkOrderValidation(lead, res);
       }
     } catch (err) {
       this.logger.error(err);
@@ -431,6 +434,34 @@ export class LeadStatusWebhook extends AbstractWebhook {
 
   private statusWaiting(lead: LeadHelper) {
     this.setOrderFromLeadId(lead);
+  }
+
+  private async checkOrderValidation(lead: LeadHelper, order: EntityOperation) {
+    const timer = setTimeout(async () => {
+      const res = await this.cdek.getOrderByUUID(order.entity.uuid);
+
+      if (res.requests.at(0)?.state === "INVALID") {
+        await this.amo.note.addNotes("leads", [
+          {
+            entity_id: lead.data.id,
+            note_type: "common",
+            params: {
+              text: `❌ СДЭК: заказ не прошел валидацию\n${res.requests
+                .at(0)
+                ?.errors?.map((err) => err.message)
+                .join("\n")}`,
+            },
+          },
+        ]);
+
+        this.logger.error(
+          `CDEK_ORDER_VALIDATION, lead_id: ${lead.data.id}, uuid: ${order.entity.uuid}, error: ${res.requests[0].errors?.map((err) => err.message)}`,
+          "CdekService",
+        );
+      }
+    }, 15 * 1000); // 15 seconds
+
+    this.cdek_service.setOrderValidationToTimer(lead.data.id.toString(), timer);
   }
 
   private async setOrderFromLeadId(lead: LeadHelper) {
@@ -503,10 +534,10 @@ export class LeadStatusWebhook extends AbstractWebhook {
       deliveryType === "Курьером (в пределах МКАД)" ||
       deliveryType === "Курьером (Московская область)"
     ) {
-      await this.addLeadToGoogleSheets(lead, undefined, GoogleSheetsService.colors.lightGreen);
+      await this.addLeadToGoogleSheets(lead, undefined, SalesSheet.colors.lightGreen);
     } else if (deliveryType === "Авито") {
       try {
-        const result = await this.googleSheets.cdekFullSuccess(
+        const result = await this.googleSheets.sales.cdekFullSuccess(
           lead.data.id.toString(),
           lead.custom_fields.get(AMO.CUSTOM_FIELD.PAY_TYPE),
         );
@@ -672,10 +703,10 @@ export class LeadStatusWebhook extends AbstractWebhook {
   private async addLeadToGoogleSheets(
     lead: LeadHelper,
     status?: string,
-    color?: EntryColor,
+    color?: SalesEntryColor,
   ): Promise<void> {
     try {
-      const result = await this.googleSheets.addLead({
+      const result = await this.googleSheets.sales.addLead({
         shippingDate: stringDate(),
         status,
         goods: [...lead.goods.values()],

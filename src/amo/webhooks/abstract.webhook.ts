@@ -20,7 +20,7 @@ export abstract class AbstractWebhook {
   constructor(
     protected readonly config: ConfigService,
     private readonly amo_service: AmoService,
-    private readonly cdek_service: CdekService,
+    protected readonly cdek_service: CdekService,
     protected readonly telegram: TelegramService,
     protected readonly mail: MailService,
     protected readonly pdf: PDFService,

@@ -2,8 +2,6 @@
 /dist
 /node_modules
 /public/*.js
-# /public/shop_userscript.*
-# /public/gerdacollection_userscript.*
 
 # Logs
 logs

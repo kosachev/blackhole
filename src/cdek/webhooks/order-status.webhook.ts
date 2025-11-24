@@ -6,8 +6,8 @@ import { AbstractWebhook } from "./abstract.webhook";
 import { AMO } from "../../amo/amo.constants";
 import { stringDate, timestamp } from "../../utils/timestamp.function";
 import { LeadHelper } from "../../amo/helpers/lead.helper";
-import { type UpdateResult } from "../../google-sheets/google-sheets.service";
 import { type RequestUpdateLead } from "@shevernitskiy/amo/src/api/lead/types";
+import { type SalesUpdateResult } from "../../google-sheets/sales.sheet";
 
 const status_reason_code = {
   "1": " по причине неверного адреса (1)",
@@ -133,6 +133,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
         );
         parsed.note = `✎ СДЭК${prefix}: получен трек-код ${data.attributes.cdek_number}, накладная ${orderUrl(data.attributes.cdek_number)} (1)`;
         this.getPrintForm(data.attributes.cdek_number, +data.attributes.number);
+        this.cdek_service.deleteOrderValidationToTimer(data.uuid);
         break;
       case "2":
         parsed.custom_fields.push(
@@ -482,7 +483,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
       ]);
       const deliverySum = order.entity?.delivery_detail?.delivery_sum ?? 0;
 
-      const result = await this.googleSheets.addLead({
+      const result = await this.googleSheets.sales.addLead({
         shippingDate: stringDate(),
         status: "Отправлено",
         goods: [...lead.goods.values()],
@@ -549,7 +550,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
 
   private async cdekGoogleSheetsUpdate(
     leadId: string,
-    operation: () => Promise<UpdateResult>,
+    operation: () => Promise<SalesUpdateResult>,
   ): Promise<void> {
     try {
       const result = await operation();
@@ -597,7 +598,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
       paymentType === "CARD" ? "Оплата картой" : paymentType === "CASH" ? "Наличные" : undefined;
 
     await this.cdekGoogleSheetsUpdate(leadId, () =>
-      this.googleSheets.cdekFullSuccess(leadId, paymentTitle),
+      this.googleSheets.sales.cdekFullSuccess(leadId, paymentTitle),
     );
 
     if (paymentTitle) {
@@ -613,7 +614,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
   }
 
   private async cdekFullReturn(leadId: string): Promise<void> {
-    await this.cdekGoogleSheetsUpdate(leadId, () => this.googleSheets.cdekFullReturn(leadId));
+    await this.cdekGoogleSheetsUpdate(leadId, () => this.googleSheets.sales.cdekFullReturn(leadId));
   }
 
   private async cdekPartialReturn(
@@ -624,7 +625,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
     paymentType?: string,
   ): Promise<void> {
     try {
-      const result = await this.googleSheets.cdekPartialReturn(
+      const result = await this.googleSheets.sales.cdekPartialReturn(
         leadId,
         returnLeadId,
         goodSkuSuccess,
@@ -688,7 +689,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
     ownerReturnDeliveryPrice: number,
   ): Promise<void> {
     await this.cdekGoogleSheetsUpdate(returnLeadId, () =>
-      this.googleSheets.cdekReturnCdekNumberAndDeliveryPrice(
+      this.googleSheets.sales.cdekReturnCdekNumberAndDeliveryPrice(
         returnLeadId,
         returnCdekNumber,
         ownerReturnDeliveryPrice,
@@ -698,7 +699,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
 
   private async cdekReturnRecieved(returnLeadId: string): Promise<void> {
     await this.cdekGoogleSheetsUpdate(returnLeadId, () =>
-      this.googleSheets.cdekReturnRecieved(returnLeadId),
+      this.googleSheets.sales.cdekReturnRecieved(returnLeadId),
     );
   }
 }
