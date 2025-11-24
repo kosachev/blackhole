@@ -9,6 +9,7 @@ export const mockCdekService = () => {
           client: {
             getOrderByUUID: vi.fn((uuid: string) => [uuid]),
           },
+          deleteOrderValidationToTimer: vi.fn((uuid: string) => [uuid]),
         };
       }),
     };
