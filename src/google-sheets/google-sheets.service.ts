@@ -3,6 +3,7 @@ import { GoogleSpreadsheet } from "google-spreadsheet";
 import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { SalesSheet } from "./sales.sheet";
+import { SpendingsSheet } from "./spendings.sheet";
 
 @Injectable()
 export class GoogleSheetsService implements OnModuleInit {
@@ -10,6 +11,7 @@ export class GoogleSheetsService implements OnModuleInit {
 
   private doc: GoogleSpreadsheet;
   sales: SalesSheet;
+  spendings: SpendingsSheet;
 
   constructor(private readonly config: ConfigService) {
     this.doc = new GoogleSpreadsheet(
@@ -25,8 +27,12 @@ export class GoogleSheetsService implements OnModuleInit {
   async onModuleInit() {
     await this.doc.loadInfo();
     this.sales = new SalesSheet(
-      this.doc.sheetsByTitle[this.config.get<string>("GOOGLE_SHEET_NAME")],
+      this.doc.sheetsByTitle[this.config.get<string>("GOOGLE_SALES_SHEET_NAME")],
     );
     await this.sales.onInit();
+
+    this.spendings = new SpendingsSheet(
+      this.doc.sheetsByTitle[this.config.get<string>("GOOGLE_SPENDINGS_SHEET_NAME")],
+    );
   }
 }

@@ -77,7 +77,7 @@ export function humanizeDuration(durationMs: number): string {
   return parts.join(" ");
 }
 
-export function stringDate(): string {
-  const d = new Date();
+export function stringDate(date?: Date): string {
+  const d = date ?? new Date();
   return `${d.getDate().toString().padStart(2, "0")}.${(d.getMonth() + 1).toString().padStart(2, "0")}.${d.getFullYear()}`;
 }

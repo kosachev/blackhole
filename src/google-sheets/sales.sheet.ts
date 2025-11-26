@@ -22,6 +22,7 @@ export type SalesEntry = Partial<{
   returnClosedByRegister: string;
   checkout: string;
   ads: string;
+  site: string;
 }>;
 
 export type SalesUpdateResult = {
@@ -68,6 +69,7 @@ export class SalesSheet {
     returnClosedByRegister: 18,
     checkout: 19,
     ads: 20,
+    site: 21,
   } as const;
 
   private readonly columnCount = Object.keys(SalesSheet.columns).length;
@@ -109,6 +111,7 @@ export class SalesSheet {
     returnClosedByRegister?: string;
     checkout?: string;
     ads?: string;
+    site?: string;
     color?: SalesEntryColor;
   }): Promise<AddResult> {
     const request = [];
@@ -138,6 +141,7 @@ export class SalesSheet {
             lead.returnClosedByRegister,
             lead.checkout,
             lead.ads,
+            lead.site,
           ].map((value) => (value === undefined ? "" : value)),
         );
     }
@@ -426,15 +430,8 @@ export class SalesSheet {
     };
   }
 
-  cdekReturnCdekNumberAndDeliveryPrice(
-    returnLeadId: string,
-    returnCdekNumber: string,
-    ownerReturnDeliveryPrice: number,
-  ): Promise<SalesUpdateResult> {
-    return this.updateEntry(
-      { returnLeadId: [returnLeadId] },
-      { returnCdekNumber, ownerReturnDeliveryPrice },
-    );
+  cdekReturnCdekNumber(returnLeadId: string, returnCdekNumber: string): Promise<SalesUpdateResult> {
+    return this.updateEntry({ returnLeadId: [returnLeadId] }, { returnCdekNumber });
   }
 
   cdekReturnRecieved(returnLeadId: string): Promise<SalesUpdateResult> {
