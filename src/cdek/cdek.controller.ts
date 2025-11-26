@@ -1,9 +1,13 @@
-import { Body, Controller, Logger, Post, Get, UseInterceptors } from "@nestjs/common";
+import { Body, Controller, Logger, Post, Get, UseInterceptors, Query } from "@nestjs/common";
 import { OrderStatusWebhook } from "./webhooks/order-status.webhook";
 import { PrealertCloseWebhook } from "./webhooks/prealert-close.webhook";
 import { DownloadPhotoWebhook } from "./webhooks/download-photo.webhook";
 import { PrintFormWebhook } from "./webhooks/print-form.webhook";
 import { AutoOkResponse } from "../utils/auto-ok-response.interceptor";
+import {
+  type CdekRegistryCheckResult,
+  CdekRegistryCheckService,
+} from "./cdek-registry-check.service";
 
 @Controller("cdek")
 export class CdekController {
@@ -15,6 +19,7 @@ export class CdekController {
     private readonly print_form: PrintFormWebhook,
     private readonly download_photo: DownloadPhotoWebhook,
     private readonly prealert_close: PrealertCloseWebhook,
+    private readonly registry_check: CdekRegistryCheckService,
   ) {
     this.execution_time = Date.now();
   }
@@ -44,5 +49,10 @@ export class CdekController {
   @Get("execution_time")
   executionTime(): number {
     return this.execution_time;
+  }
+
+  @Get("registry_check")
+  registryCheck(@Query("date") date: string | undefined): Promise<CdekRegistryCheckResult> {
+    return this.registry_check.handler(date);
   }
 }

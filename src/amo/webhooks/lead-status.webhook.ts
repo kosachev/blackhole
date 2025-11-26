@@ -705,6 +705,12 @@ export class LeadStatusWebhook extends AbstractWebhook {
     color?: SalesEntryColor,
   ): Promise<void> {
     try {
+      const site = lead.tags.has(AMO.TAG.SITE)
+        ? "Gerda"
+        : lead.tags.has(AMO.TAG.TILDA)
+          ? "gerdacollection"
+          : undefined;
+
       const result = await this.googleSheets.sales.addLead({
         shippingDate: stringDate(),
         status,
@@ -715,6 +721,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
         paymentType: lead.custom_fields.get(AMO.CUSTOM_FIELD.PAY_TYPE),
         leadId: lead.data.id.toString(),
         ads: lead.custom_fields.get(AMO.CUSTOM_FIELD.AD_UTM_SOURCE),
+        site,
         color,
       });
 

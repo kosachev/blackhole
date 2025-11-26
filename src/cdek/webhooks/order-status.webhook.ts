@@ -182,7 +182,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
         if (!data.attributes.status_reason_code) {
           parsed.note = `✔ СДЭК${prefix}: посылка успешно вручена адресату (4)`;
           parsed.status = AMO.STATUS.SUCCESS;
-          this.cdekFullSuccess(data.attributes.number, data.uuid);
+          this.cdekFullSuccess(data.attributes.number);
           break;
         }
         if (data.attributes.status_reason_code !== "20") break;
@@ -433,11 +433,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
       ]),
     ]);
 
-    this.cdekReturnCdekNumberAndDeliveryPrice(
-      lead_by_direct_uuid.toString(),
-      reverse_order.entity.cdek_number,
-      reverse_price,
-    );
+    this.cdekReturnCdekNumber(lead_by_direct_uuid.toString(), reverse_order.entity.cdek_number);
 
     return lead_by_direct_uuid;
   }
@@ -482,6 +478,11 @@ export class OrderStatusWebhook extends AbstractWebhook {
         LeadHelper.createFromId(this.amo, +leadId, { load_goods: true }),
       ]);
       const deliverySum = order.entity?.delivery_detail?.delivery_sum ?? 0;
+      const site = lead.tags.has(AMO.TAG.SITE)
+        ? "Gerda"
+        : lead.tags.has(AMO.TAG.TILDA)
+          ? "gerdacollection"
+          : undefined;
 
       const result = await this.googleSheets.sales.addLead({
         shippingDate: stringDate(),
@@ -495,6 +496,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
         leadId: leadId,
         cdekNumber: cdekNumber,
         ads: lead.custom_fields.get(AMO.CUSTOM_FIELD.AD_UTM_SOURCE),
+        site,
       });
 
       await Promise.all([
@@ -591,26 +593,10 @@ export class OrderStatusWebhook extends AbstractWebhook {
     }
   }
 
-  private async cdekFullSuccess(leadId: string, uuid: string): Promise<void> {
-    const order = await this.cdek.getOrderByUUID(uuid);
-    const paymentType = order.entity?.delivery_detail?.payment_info?.at(0)?.type;
-    const paymentTitle =
-      paymentType === "CARD" ? "Оплата картой" : paymentType === "CASH" ? "Наличные" : undefined;
-
+  private async cdekFullSuccess(leadId: string): Promise<void> {
     await this.cdekGoogleSheetsUpdate(leadId, () =>
-      this.googleSheets.sales.cdekFullSuccess(leadId, paymentTitle),
+      this.googleSheets.sales.cdekFullSuccess(leadId),
     );
-
-    if (paymentTitle) {
-      await this.amo.lead.updateLeadById(+leadId, {
-        custom_fields_values: [
-          {
-            field_id: AMO.CUSTOM_FIELD.PAY_TYPE,
-            values: [{ value: paymentTitle }],
-          },
-        ],
-      });
-    }
   }
 
   private async cdekFullReturn(leadId: string): Promise<void> {
@@ -683,17 +669,12 @@ export class OrderStatusWebhook extends AbstractWebhook {
     }
   }
 
-  private async cdekReturnCdekNumberAndDeliveryPrice(
+  private async cdekReturnCdekNumber(
     returnLeadId: string,
     returnCdekNumber: string,
-    ownerReturnDeliveryPrice: number,
   ): Promise<void> {
     await this.cdekGoogleSheetsUpdate(returnLeadId, () =>
-      this.googleSheets.sales.cdekReturnCdekNumberAndDeliveryPrice(
-        returnLeadId,
-        returnCdekNumber,
-        ownerReturnDeliveryPrice,
-      ),
+      this.googleSheets.sales.cdekReturnCdekNumber(returnLeadId, returnCdekNumber),
     );
   }
 
