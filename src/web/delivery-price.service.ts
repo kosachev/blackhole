@@ -97,7 +97,7 @@ export class DeliveryPriceService {
           entity_id: data.lead_id,
           note_type: "common",
           params: {
-            text: `✖ СДЕК: не удалось рассчитать стоимость доставки, ошибка сдек api`,
+            text: `❌ СДЕК: не удалось рассчитать стоимость доставки, ошибка сдек api`,
           },
         },
       ]);

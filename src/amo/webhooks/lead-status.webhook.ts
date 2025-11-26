@@ -456,7 +456,6 @@ export class LeadStatusWebhook extends AbstractWebhook {
 
         this.logger.error(
           `CDEK_ORDER_VALIDATION, lead_id: ${lead.data.id}, uuid: ${order.entity.uuid}, error: ${res.requests[0].errors?.map((err) => err.message)}`,
-          "CdekService",
         );
       }
     }, 15 * 1000); // 15 seconds
@@ -739,6 +738,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
     } catch (error) {
       this.logger.error(
         `ADD_LEAD_ERROR, leadId: ${lead.data.id}, error: ${error.message}`,
+        error.stack,
         "GoogleSheets",
       );
       lead.note(`❌ Google Sheets: Ошибка при добавлении сделки\n${error.message}`);

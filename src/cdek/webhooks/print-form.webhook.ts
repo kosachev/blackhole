@@ -33,7 +33,7 @@ export class PrintFormWebhook extends AbstractWebhook {
         },
       ]);
     } catch (error) {
-      this.logger.error("CDEK_WEBHOOK_PRINT_FORM_ERROR", error.message);
+      this.logger.error(`CDEK_WEBHOOK_PRINT_FORM_ERROR ${error.message}`);
     }
   }
 }
