@@ -6,7 +6,6 @@ import { AbstractWebhook } from "./abstract.webhook";
 import { AMO } from "../../amo/amo.constants";
 import { stringDate, timestamp } from "../../utils/timestamp.function";
 import { LeadHelper } from "../../amo/helpers/lead.helper";
-import { type RequestUpdateLead } from "@shevernitskiy/amo/src/api/lead/types";
 import { type SalesUpdateResult } from "../../google-sheets/sales.sheet";
 
 const status_reason_code = {
@@ -385,7 +384,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
     }
     const reverse_order = await this.cdek.getOrderByUUID(data.uuid);
 
-    const reverse_price = reverse_order.entity?.delivery_detail?.delivery_sum ?? 0;
+    const reverse_price = reverse_order.entity?.delivery_detail?.total_sum ?? 0;
     await Promise.all([
       this.amo.lead.updateLeadById(lead_by_direct_uuid, {
         custom_fields_values: [

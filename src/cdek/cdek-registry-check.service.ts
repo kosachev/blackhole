@@ -7,8 +7,8 @@ import { GoogleSheetsService } from "../google-sheets/google-sheets.service";
 import type { GetCashOnDeliveryRegistry, GetOrder } from "cdek/src/types/api/response";
 import type { RequestUpdateLead } from "@shevernitskiy/amo/src/api/lead/types";
 import type { RequestAddNote } from "@shevernitskiy/amo/src/api/note/types";
-import { stringDate } from "src/utils/timestamp.function";
-import { SpendingsEntry } from "src/google-sheets/spendings.sheet";
+import { stringDate } from "../utils/timestamp.function";
+import { SpendingsEntry } from "../google-sheets/spendings.sheet";
 
 type FailedOrder = {
   cdek_number: string;
@@ -200,17 +200,24 @@ export class CdekRegistryCheckService {
             },
           });
 
+          const custom_fields_values: { field_id: number; values: { value: string }[] }[] = [
+            {
+              field_id: AMO.CUSTOM_FIELD.DELIVERY_COST,
+              values: [{ value: `${data.total_sum_without_agent + data.agent_commission_sum}` }],
+            },
+          ];
+
           if (paymentTitle) {
-            amoUpdates.push({
-              id: +data.entity.number,
-              custom_fields_values: [
-                {
-                  field_id: AMO.CUSTOM_FIELD.PAY_TYPE,
-                  values: [{ value: paymentTitle }],
-                },
-              ],
+            custom_fields_values.push({
+              field_id: AMO.CUSTOM_FIELD.PAY_TYPE,
+              values: [{ value: paymentTitle }],
             });
           }
+
+          amoUpdates.push({
+            id: +data.entity.number,
+            custom_fields_values,
+          });
         }
 
         updatedEntries += res.updatedEntries;
