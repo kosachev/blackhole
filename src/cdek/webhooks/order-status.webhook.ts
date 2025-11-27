@@ -151,11 +151,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
         parsed.status = data.attributes.is_return ? AMO.STATUS.RETURN : AMO.STATUS.SENT;
 
         if (!data.attributes.is_return) {
-          this.addLeadToGoogleSheets(
-            data.attributes.number,
-            data.attributes.cdek_number,
-            data.uuid,
-          );
+          this.addLeadToGoogleSheets(data.attributes.number, data.attributes.cdek_number);
         }
 
         break;
@@ -319,28 +315,14 @@ export class OrderStatusWebhook extends AbstractWebhook {
       throw new InternalServerErrorException("Unable to create return lead");
     }
 
-    const paymentType = order.entity?.delivery_detail?.payment_info?.at(0)?.type;
-    const paymentTitle =
-      paymentType === "CARD" ? "Оплата картой" : paymentType === "CASH" ? "Наличные" : undefined;
-
-    const directLeadUpdate: RequestUpdateLead = {
-      status_id: AMO.STATUS.SUCCESS,
-      price: direct_lead.price - return_total,
-    };
-
-    if (paymentTitle) {
-      directLeadUpdate.custom_fields_values = [
-        {
-          field_id: AMO.CUSTOM_FIELD.PAY_TYPE,
-          values: [{ value: paymentTitle }],
-        },
-      ];
-    }
     // delete return goods from direct, add it to return lead
     await Promise.all([
       this.amo.link.deleteLinksByEntityId(direct_lead.id, "leads", return_goods),
       this.amo.link.addLinksByEntityId(return_lead._embedded.leads[0].id, "leads", return_goods),
-      this.amo.lead.updateLeadById(direct_lead.id, directLeadUpdate),
+      this.amo.lead.updateLeadById(direct_lead.id, {
+        status_id: AMO.STATUS.SUCCESS,
+        price: direct_lead.price - return_total,
+      }),
       this.amo.note.addNotes("leads", [
         {
           entity_id: direct_lead.id,
@@ -364,7 +346,6 @@ export class OrderStatusWebhook extends AbstractWebhook {
       return_lead._embedded.leads[0].id.toString(),
       successSku,
       returnSku,
-      paymentTitle,
     );
 
     this.logger.log(
@@ -467,17 +448,10 @@ export class OrderStatusWebhook extends AbstractWebhook {
     }
   }
 
-  private async addLeadToGoogleSheets(
-    leadId: string,
-    cdekNumber: string,
-    uuid: string,
-  ): Promise<void> {
+  private async addLeadToGoogleSheets(leadId: string, cdekNumber: string): Promise<void> {
     try {
-      const [order, lead] = await Promise.all([
-        this.cdek.getOrderByUUID(uuid),
-        LeadHelper.createFromId(this.amo, +leadId, { load_goods: true }),
-      ]);
-      const deliverySum = order.entity?.delivery_detail?.delivery_sum ?? 0;
+      const lead = await LeadHelper.createFromId(this.amo, +leadId, { load_goods: true });
+
       const site = lead.tags.has(AMO.TAG.SITE)
         ? "Gerda"
         : lead.tags.has(AMO.TAG.TILDA)
@@ -490,7 +464,6 @@ export class OrderStatusWebhook extends AbstractWebhook {
         goods: [...lead.goods.values()],
         discount: lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT),
         customerDeliveryPrice: +(lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_COST) ?? "0"),
-        ownerDeliveryPrice: deliverySum,
         deliveryType: `СДЭК ${lead.custom_fields.get(AMO.CUSTOM_FIELD.CITY) ?? ""}`.trim(),
         paymentType: lead.custom_fields.get(AMO.CUSTOM_FIELD.PAY_TYPE),
         leadId: leadId,
@@ -499,27 +472,17 @@ export class OrderStatusWebhook extends AbstractWebhook {
         site,
       });
 
-      await Promise.all([
-        this.amo.lead.updateLeadById(+leadId, {
-          custom_fields_values: [
-            {
-              field_id: AMO.CUSTOM_FIELD.CDEK_PRICE,
-              values: [{ value: deliverySum.toString() }],
-            },
-          ],
-        }),
-        this.amo.note.addNotes("leads", [
-          {
-            entity_id: +leadId,
-            note_type: "common",
-            params: {
-              text:
-                result.addedEntries > 0
-                  ? `✅ Google Sheets: добавлено строк - ${result.addedEntries}`
-                  : `⚠️ Google Sheets: не добавлено новых строк при отправке заказа СДЭКом`,
-            },
+      await this.amo.note.addNotes("leads", [
+        {
+          entity_id: +leadId,
+          note_type: "common",
+          params: {
+            text:
+              result.addedEntries > 0
+                ? `✅ Google Sheets: добавлено строк - ${result.addedEntries}`
+                : `⚠️ Google Sheets: не добавлено новых строк при отправке заказа СДЭКом`,
           },
-        ]),
+        },
       ]);
 
       if (result.addedEntries > 0) {
