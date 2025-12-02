@@ -10,6 +10,7 @@ import { PDFService } from "../../pdf/pdf.service";
 import { YandexDiskService } from "../../yandex-disk/yandex-disk.service";
 import { YandexMetrikaService } from "../../yandex-metrika/yandex-metrika.service";
 import { GoogleSheetsService } from "../../google-sheets/google-sheets.service";
+import { TBankService } from "../../tbank/tbank.service";
 
 @Injectable()
 export abstract class AbstractWebhook {
@@ -27,6 +28,7 @@ export abstract class AbstractWebhook {
     protected readonly yadisk: YandexDiskService,
     protected readonly yametrika: YandexMetrikaService,
     protected readonly googleSheets: GoogleSheetsService,
+    protected readonly tbankService: TBankService,
   ) {
     this.amo = this.amo_service.client;
     this.cdek = this.cdek_service.client;
