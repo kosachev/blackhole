@@ -26,7 +26,7 @@ export class TBankService {
     amount: number;
     description: string;
   }): Promise<InitPaymentResponse> {
-    const date = new Date(Date.now() + 3 * 24 * 3600_1000); // дата через 3 дня
+    const date = new Date(Date.now() + 2.7e8); // дата через 3 дня
 
     return this.client.makePayment.initPayment({
       TerminalKey: this.terminalKey,
