@@ -337,7 +337,12 @@ export class LeadHelper {
       return [...this.tags.values()].map((item) => ({ id: item }));
     },
     updateLeadRequest: (): RequestUpdateLead => ({
-      ...this.data,
+      id: this.data.id,
+      name: this.data.name,
+      status_id: this.data.status_id,
+      pipeline_id: this.data.pipeline_id,
+      responsible_user_id: this.data.responsible_user_id,
+      price: this.data.price,
       custom_fields_values: this.toApi.customFields(),
       _embedded: {
         tags: this.toApi.tags(),
@@ -349,6 +354,7 @@ export class LeadHelper {
     const promises: Promise<unknown>[] = [];
     if (this.to_save) {
       promises.push(this.client.lead.updateLeadById(this.data.id, this.toApi.updateLeadRequest()));
+      this.to_save = false;
     }
     if (this.notes.length > 0) {
       promises.push(
@@ -361,6 +367,7 @@ export class LeadHelper {
           })),
         ),
       );
+      this.notes = [];
     }
 
     return await Promise.all(promises);

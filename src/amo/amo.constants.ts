@@ -60,6 +60,12 @@ export const AMO = {
     AD_UTM_CAMPAIGN: 2147443, // utm_campaign
     AD_UTM_TERM: 2147445, // utm_term
     AD_USER_AGENT: 2147447, // User-Agent
+    /* -------------------------------- Банк ---------------------------------- */
+    BANK_STATUS: 2147937, // Status
+    BANK_PAYMENTID: 2147939, // PaymentID
+    BANK_ORDERID: 2147941, // OrderID
+    BANK_PAYMENTURL: 2147943, // PaymentURL
+    BANK_PAN: 2147945, // Pan
   },
   /* ------------------------------ Поля контакта ----------------------------- */
   CONTACT: {
@@ -138,5 +144,6 @@ export const AMO = {
   SALESBOT: {
     ORDER_SENT: 4100, // Ваш заказ успешно отправлен
     ORDER_AT_PVZ: 4331, // Ваш заказ прибыл на ПВЗ
+    PAYMENT_URL: 4451, // Резвизиты для оплаты заказа
   },
 } as const;

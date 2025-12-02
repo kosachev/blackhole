@@ -81,7 +81,8 @@ export class LeadStatusWebhook extends AbstractWebhook {
         "city_exists",
         "street_exists",
         "building_exists",
-        "prepay_exists",
+        "prepay_valid_amount",
+        "payment_status",
       ],
       warnings: ["index_exists"],
     });
@@ -91,34 +92,112 @@ export class LeadStatusWebhook extends AbstractWebhook {
     }
     if (lead.errors.length > 0) return;
 
-    let prepay = lead.custom_fields.get(AMO.CUSTOM_FIELD.PREPAY)
-      ? Number(lead.custom_fields.get(AMO.CUSTOM_FIELD.PREPAY))
-      : 0;
-    if (isNaN(prepay)) prepay = 0;
+    // we check it on validation step
+    const prepay = +lead.custom_fields.get(AMO.CUSTOM_FIELD.PREPAY);
 
-    try {
-      await this.mail.invoice({
-        name: lead.contact.name,
-        address: lead.getFullAddress(true),
-        phone: lead.contact.custom_fields.get(AMO.CONTACT.PHONE),
-        email: lead.contact.custom_fields.get(AMO.CONTACT.EMAIL),
-        delivery_type: lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) as string,
-        order_number: lead.custom_fields.get(AMO.CUSTOM_FIELD.ORDER_ID) as string,
-        goods: [...lead.goods.values()].map((good) => ({
-          name: good.name,
-          quantity: good.quantity,
-          price: good.price,
-        })),
-        total_price: lead.totalPrice(),
-        discount: lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT) as string,
-        prepayment: prepay,
-      });
+    if (lead.data.name.includes("ТЕСТ")) {
+      const payment = await this.tbankService
+        .initPayment({
+          orderId: this.generatePaymentOrderId(lead),
+          amount: prepay,
+          description: `Предоплата заказа ${lead.data.id}`,
+        })
+        .catch(async (err) => {
+          this.logger.error(
+            `PAYMENT_INIT_ERROR, leadId:  ${lead.data.id}, err: ${err.message}`,
+            undefined,
+            "TBankService",
+          );
+          lead.note(`❌ Банк: Не удалось создать платеж\n${err.message}`);
+          return null;
+        });
 
-      lead.note("✅ email: письмо с реквизитами отправлено");
-      this.logger.log(`STATUS_REQUISITE, lead_id: ${lead.data.id}, mail sent`);
-    } catch (err) {
-      this.logger.error(err);
-      lead.note("❌ email: ошибка при отправке письма с реквизитами");
+      if (payment === null || !payment.PaymentURL) return;
+
+      lead.note(`✅ Банк: Платеж создан (${payment.Status})
+PaymentURL: ${payment.PaymentURL}
+PaymentId: ${payment.PaymentId}
+OrderId: ${payment.OrderId}
+Сумма: ${payment.Amount / 100} руб.`);
+
+      lead.custom_fields.set(AMO.CUSTOM_FIELD.BANK_STATUS, payment.Status ?? "unknown");
+      lead.custom_fields.set(AMO.CUSTOM_FIELD.BANK_ORDERID, payment.OrderId ?? "unknown");
+      lead.custom_fields.set(AMO.CUSTOM_FIELD.BANK_PAYMENTID, payment.PaymentId ?? "unknown");
+      lead.custom_fields.set(AMO.CUSTOM_FIELD.BANK_PAYMENTURL, payment.PaymentURL ?? "unknown");
+
+      await lead.saveToAmo();
+
+      try {
+        await Promise.all([
+          this.mail.invoiceV2({
+            name: lead.contact.name,
+            address: lead.getFullAddress(true),
+            phone: lead.contact.custom_fields.get(AMO.CONTACT.PHONE),
+            email: lead.contact.custom_fields.get(AMO.CONTACT.EMAIL),
+            delivery_type: lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) as string,
+            order_number: lead.data.id.toString(),
+            goods: [...lead.goods.values()].map((good) => ({
+              name: good.name,
+              quantity: good.quantity,
+              price: good.price,
+            })),
+            total_price: lead.totalPrice(),
+            discount: lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT) as string,
+            prepayment: prepay,
+            PaymentURL: payment.PaymentURL,
+            is_gerdacollection: lead.tags.has(AMO.TAG.TILDA),
+          }),
+          this.amo.salesbot.runTask([
+            {
+              bot_id: AMO.SALESBOT.PAYMENT_URL,
+              entity_id: lead.data.id,
+              entity_type: 2,
+            },
+          ]),
+        ]);
+
+        lead.note("✅ email: письмо с платежной ссылкой отправлено");
+        this.logger.log(`STATUS_REQUISITE, lead_id: ${lead.data.id}, mail sent`);
+      } catch (err) {
+        this.logger.error(err);
+        lead.note("❌ email: ошибка при отправке письма с платежной ссылкой");
+      }
+    } else {
+      try {
+        await this.mail.invoice({
+          name: lead.contact.name,
+          address: lead.getFullAddress(true),
+          phone: lead.contact.custom_fields.get(AMO.CONTACT.PHONE),
+          email: lead.contact.custom_fields.get(AMO.CONTACT.EMAIL),
+          delivery_type: lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) as string,
+          order_number: lead.data.id.toString(),
+          goods: [...lead.goods.values()].map((good) => ({
+            name: good.name,
+            quantity: good.quantity,
+            price: good.price,
+          })),
+          total_price: lead.totalPrice(),
+          discount: lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT) as string,
+          prepayment: prepay,
+        });
+
+        lead.note("✅ email: письмо с реквизитами отправлено");
+        this.logger.log(`STATUS_REQUISITE, lead_id: ${lead.data.id}, mail sent`);
+      } catch (err) {
+        this.logger.error(err);
+        lead.note("❌ email: ошибка при отправке письма с реквизитами");
+      }
+    }
+  }
+
+  private generatePaymentOrderId(lead: LeadHelper): string {
+    const orderId = lead.custom_fields.get(AMO.CUSTOM_FIELD.BANK_ORDERID);
+    if (!orderId) return lead.data.id.toString();
+    const parts = orderId.split("-");
+    if (parts.length > 1) {
+      return `${lead.data.id}-${+parts[1] + 1}`;
+    } else {
+      return `${lead.data.id}-1`;
     }
   }
 
@@ -133,7 +212,8 @@ export class LeadStatusWebhook extends AbstractWebhook {
     try {
       await this.mail.prepaymentConfirm({
         email: lead.contact.custom_fields.get(AMO.CONTACT.EMAIL),
-        order_number: lead.custom_fields.get(AMO.CUSTOM_FIELD.ORDER_ID) as string,
+        order_number: lead.data.id.toString(),
+        is_gerdacollection: lead.tags.has(AMO.TAG.TILDA),
       });
 
       lead.note("✅ email: письмо с подтверждением оплаты отправлено");
@@ -267,12 +347,24 @@ export class LeadStatusWebhook extends AbstractWebhook {
     }
     if (lead.errors.length > 0) return;
 
+    const deliveryType = lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE);
+
+    if (deliveryType === "Авито") {
+      await this.addLeadToGoogleSheets(lead, "Отправлено");
+      return;
+    }
+
+    if (deliveryType === "Почта России") {
+      await this.addLeadToGoogleSheets(lead, "Отправлено");
+    }
+
     try {
       await this.mail.orderSend({
         delivery_type: lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) as string,
         email: lead.contact.custom_fields.get(AMO.CONTACT.EMAIL) as string,
-        order_number: lead.custom_fields.get(AMO.CUSTOM_FIELD.ORDER_ID) as string,
+        order_number: lead.data.id.toString(),
         track_code: lead.custom_fields.get(AMO.CUSTOM_FIELD.TRACK_NUMBER) as string,
+        is_gerdacollection: lead.tags.has(AMO.TAG.TILDA),
       });
 
       lead.note("✅ email: письмо с трек-кодом отправлено");
@@ -280,10 +372,6 @@ export class LeadStatusWebhook extends AbstractWebhook {
     } catch (err) {
       this.logger.error(err);
       lead.note("❌ email: ошибка при отправке письма с трек-кодом");
-    }
-
-    if (lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) === "Авито") {
-      await this.addLeadToGoogleSheets(lead, "Отправлено");
     }
   }
 
@@ -466,7 +554,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
   private async setOrderFromLeadId(lead: LeadHelper) {
     if (!lead.custom_fields.has(AMO.CUSTOM_FIELD.ORDER_ID)) {
       lead.custom_fields.set(AMO.CUSTOM_FIELD.ORDER_ID, lead.data.id.toString());
-      lead.note(`✅ Номер заказа -> id сделки ${lead.data.id.toString()}`);
+      lead.note(`✅ Номер заказа → ID сделки ${lead.data.id.toString()}`);
     }
   }
 
@@ -534,7 +622,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
       deliveryType === "Курьером (Московская область)"
     ) {
       await this.addLeadToGoogleSheets(lead, undefined, SalesSheet.colors.lightGreen);
-    } else if (deliveryType === "Авито") {
+    } else if (deliveryType === "Авито" || deliveryType === "Почта России") {
       try {
         const result = await this.googleSheets.sales.cdekFullSuccess(
           lead.data.id.toString(),
@@ -577,6 +665,9 @@ export class LeadStatusWebhook extends AbstractWebhook {
     errors?: string[];
     warnings?: string[];
   }) {
+    const prepay = +lead.custom_fields.get(AMO.CUSTOM_FIELD.PREPAY);
+    const paymentStatus = lead.custom_fields.get(AMO.CUSTOM_FIELD.BANK_STATUS);
+
     const checks: Record<string, [boolean, string]> = {
       delivery_type_exists: [
         lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) ? true : false,
@@ -650,9 +741,13 @@ export class LeadStatusWebhook extends AbstractWebhook {
         lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_COST) ? true : false,
         "Не указана стоимость доставки",
       ],
-      prepay_exists: [
-        lead.custom_fields.get(AMO.CUSTOM_FIELD.PREPAY) ? true : false,
-        "Не указана предоплата",
+      prepay_valid_amount: [
+        !isNaN(prepay) && prepay > 1 && prepay < 100000,
+        "Неверная сумма предоплаты",
+      ],
+      payment_status: [
+        paymentStatus !== "NEW" && paymentStatus !== "CONFIRMED",
+        `Для сделки уже есть ${paymentStatus === "NEW" ? "новый" : "подтвержденный"} платеж`,
       ],
       delivery_time_exists: [
         lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TIME) ? true : false,
@@ -680,7 +775,10 @@ export class LeadStatusWebhook extends AbstractWebhook {
         "Не выбран пункт выдачи",
       ],
       track_number_exists: [
-        lead.custom_fields.get(AMO.CUSTOM_FIELD.TRACK_NUMBER) ? true : false,
+        lead.custom_fields.get(AMO.CUSTOM_FIELD.TRACK_NUMBER) ||
+        lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) === "Авито"
+          ? true
+          : false,
         "Не указан трэк-код",
       ],
       price_greater_than_zero: [
@@ -717,6 +815,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
         goods: [...lead.goods.values()],
         discount: lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT),
         customerDeliveryPrice: +(lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_COST) ?? "0"),
+        cdekNumber: lead.custom_fields.get(AMO.CUSTOM_FIELD.TRACK_NUMBER),
         deliveryType: lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE),
         paymentType: lead.custom_fields.get(AMO.CUSTOM_FIELD.PAY_TYPE),
         leadId: lead.data.id.toString(),

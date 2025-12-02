@@ -6,6 +6,26 @@ import { join } from "node:path";
 import * as Handlebars from "handlebars";
 import Imap = require("imap");
 
+type InvoiceParamsV2 = {
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  delivery_type: string;
+  order_number: string;
+  goods: {
+    name: string;
+    quantity: number;
+    price: number;
+  }[];
+  total_price: number;
+  discount?: string;
+  prepayment: number;
+  PaymentURL: string;
+  is_gerdacollection?: boolean;
+};
+
+// TODO: remove aftert bank adoption
 type InvoiceParams = {
   name: string;
   address: string;
@@ -26,6 +46,7 @@ type InvoiceParams = {
 type PaymentConfirmParams = {
   email: string;
   order_number: string;
+  is_gerdacollection?: boolean;
 };
 
 type OrderSendParams = {
@@ -33,6 +54,7 @@ type OrderSendParams = {
   order_number: string;
   delivery_type: string;
   track_code: string;
+  is_gerdacollection?: boolean;
 };
 
 @Injectable()
@@ -81,6 +103,7 @@ export class MailService {
     imap.connect();
   }
 
+  // TODO: remove aftet bank adoption
   async invoice(params: InvoiceParams) {
     if (params.delivery_type !== "Экспресс по России" && params.delivery_type !== "Почта России") {
       throw new Error("Неизвестный тип доставки");
@@ -138,13 +161,75 @@ export class MailService {
     await Promise.all([this.mailer.sendMail(mail), this.imap(mail)]);
   }
 
+  async invoiceV2(params: InvoiceParamsV2) {
+    if (params.delivery_type !== "Экспресс по России" && params.delivery_type !== "Почта России") {
+      throw new Error("Неизвестный тип доставки");
+    }
+    if (params.goods.length === 0) {
+      throw new Error("Нет товаров в заказе");
+    }
+
+    let discount_type: "percent" | "fixed" = "fixed";
+    let discount_value = 0;
+    if (params.discount?.includes("%")) {
+      discount_type = "percent";
+      discount_value = Number(params.discount.replaceAll("%", ""));
+    } else {
+      discount_type = "fixed";
+      discount_value = params.discount && params.discount !== "" ? Number(params.discount) : 0;
+    }
+
+    if (isNaN(discount_value)) {
+      throw new Error("Неверный формат скидки");
+    }
+
+    const goods = params.goods.map((item) => ({
+      name: item.name,
+      quantity: item.quantity,
+      price: item.price,
+      sum: item.price * item.quantity,
+    }));
+
+    const discounted_price =
+      discount_type === "percent"
+        ? params.total_price * (1 - discount_value / 100)
+        : params.total_price - discount_value;
+
+    const mail = {
+      to: params.email,
+      subject: "Реквизиты для оплаты заказа №" + params.order_number,
+      template:
+        params.delivery_type === "Экспресс по России"
+          ? "./invoice-cdek-v2.hbs"
+          : "./invoice-post-v2.hbs",
+      context: {
+        name: params.name,
+        address: params.address,
+        phone: params.phone,
+        email: params.email,
+        delivery_type: params.delivery_type,
+        order_number: params.order_number,
+        goods: goods,
+        total_price: params.total_price,
+        discount: params.discount,
+        discounted_price: discounted_price,
+        prepayment: params.prepayment,
+        PaymentURL: params.PaymentURL,
+        is_gerdacollection: params.is_gerdacollection || false,
+      },
+    };
+
+    await Promise.all([this.mailer.sendMail(mail), this.imap(mail)]);
+  }
+
   async prepaymentConfirm(params: PaymentConfirmParams) {
     const mail = {
       to: params.email,
       subject: "Оплата заказа №" + params.order_number,
-      template: "./prepayment-confirm.hbs",
+      template: "./prepayment-confirm-v2.hbs",
       context: {
         order_number: params.order_number,
+        is_gerdacollection: params.is_gerdacollection || false,
       },
     };
 
@@ -157,11 +242,13 @@ export class MailService {
       subject: "Заказ №" + params.order_number + " отправлен",
       template:
         params.delivery_type === "Экспресс по России"
-          ? "./order-cdek-send.hbs"
-          : "./order-post-send.hbs",
+          ? "./order-cdek-send-v2.hbs"
+          : "./order-post-send-v2.hbs",
       context: {
         order_number: params.order_number,
         track_code: params.track_code,
+        delivery_type: params.delivery_type,
+        is_gerdacollection: params.is_gerdacollection || false,
       },
     };
 

@@ -16,8 +16,9 @@ import { LoggerMiddleware } from "./utils/logger.middleware";
 import { PostModule } from "./post/post.module";
 import { ServeStaticModule } from "@nestjs/serve-static";
 import { TildaModule } from "./tilda/tilda.module";
-import { resolve } from "path";
 import { AnalyticsModule } from "./analytics/analytics.module";
+import { TBankModule } from "./tbank/tbank.module";
+import { resolve } from "path";
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { AnalyticsModule } from "./analytics/analytics.module";
       isGlobal: true,
     }),
     TildaModule,
+    TBankModule,
     AnalyticsModule,
     TelegramModule,
     CronModule,
