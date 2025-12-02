@@ -26,11 +26,14 @@ export class TBankService {
     amount: number;
     description: string;
   }): Promise<InitPaymentResponse> {
+    const date = new Date(Date.now() + 3 * 24 * 3600_1000); // дата через 3 дня
+
     return this.client.makePayment.initPayment({
       TerminalKey: this.terminalKey,
       OrderId: data.orderId,
       Amount: data.amount * 100,
       Description: data.description,
+      RedirectDueDate: `${date.toISOString().slice(0, 19)}+03:00`,
     });
   }
 }
