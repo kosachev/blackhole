@@ -31,10 +31,10 @@ export class NotificationPaymentWebhook {
     this.logger.log(
       `NOTIFICATION_PAYMENT, status: ${data.Status}, orderId: ${data.OrderId}, paymentId: ${data.PaymentId} `,
     );
-    // if (!data.Token || !this.tbankService.checkToken(data)) {
-    //   this.logger.warn("NOTIFICATION_PYAMENT, webhooktoken invalid");
-    //   throw new ForbiddenException("Unouthorized, token invalid");
-    // }
+    if (!data.Token || !this.tbankService.checkToken(data)) {
+      this.logger.warn("NOTIFICATION_PYAMENT, webhooktoken invalid");
+      throw new ForbiddenException("Unouthorized, token invalid");
+    }
 
     const leadId = +data.OrderId?.split("-")[0];
 
