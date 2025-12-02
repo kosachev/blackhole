@@ -73,10 +73,18 @@ export class NotificationPaymentWebhook {
       case "REFUNDED":
       case "PARTIAL_REFUNDED":
       case "REVERSED":
-      case "PARTIAL_REVERSED":
+      case "PARTIAL_REVERSED": {
+        await this.proccessPaymentNotification({ leadId, data, level: "⚠️" });
+        break;
+      }
       case "REJECTED":
       case "AUTH_FAIL": {
-        await this.proccessPaymentNotification({ leadId, data, level: "⚠️" });
+        await this.proccessPaymentNotification({
+          leadId,
+          data,
+          level: "⚠️",
+          task: "Проблемы с оплатой. Связаться с клиентом. Перевыставить счет",
+        });
         break;
       }
       case "DEADLINE_EXPIRED": {
@@ -84,7 +92,7 @@ export class NotificationPaymentWebhook {
           leadId,
           data,
           level: "⚠️",
-          task: "Оплата просрочена",
+          task: "Оплата просрочена. Связаться с клиентом. Перевыставить счет",
         });
         break;
       }
