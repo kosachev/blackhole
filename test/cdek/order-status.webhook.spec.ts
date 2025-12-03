@@ -1,8 +1,8 @@
-import { mockAmoService } from "../mocks/amo.mock";
-import { mockCdekService, order_status_factory } from "../mocks/cdek.mock";
-import { mockYandexDiskService } from "../mocks/yadisk.mock";
-import { mockGoogleSheetsService } from "../mocks/google-sheets.mock";
-import { mockMailService } from "../mocks/mail.mock";
+import { createAmoServiceMock } from "../mocks/amo.mock";
+import { createCdekServiceMock, order_status_factory } from "../mocks/cdek.mock";
+import { createYandexDiskServiceMock } from "../mocks/yadisk.mock";
+import { createGoogleSheetsServiceMock } from "../mocks/google-sheets.mock";
+import { createMailServiceMock } from "../mocks/mail.mock";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
 import { type INestApplication } from "@nestjs/common";
@@ -11,25 +11,38 @@ import { AppModule } from "../../src/app.module";
 import { OrderStatusWebhook } from "../../src/cdek/webhooks/order-status.webhook";
 
 import { AMO } from "../../src/amo/amo.constants";
+import { AmoService } from "../../src/amo/amo.service";
+import { CdekService } from "../../src/cdek/cdek.service";
+import { MailService } from "../../src/mail/mail.service";
+import { GoogleSheetsService } from "../../src/google-sheets/google-sheets.service";
+import { YandexDiskService } from "../../src/yandex-disk/yandex-disk.service";
 
 describe("CDEK OrderStatusWebhook", () => {
   let app: INestApplication;
   let service: OrderStatusWebhook;
 
-  mockAmoService();
-  mockMailService();
-  mockCdekService();
-  mockGoogleSheetsService();
-  mockYandexDiskService();
-
   beforeAll(async () => {
-    const module_ref = await Test.createTestingModule({
+    const moduleRefBuilder = await Test.createTestingModule({
       imports: [AppModule],
       providers: [OrderStatusWebhook],
-    }).compile();
+    });
 
-    app = module_ref.createNestApplication();
-    service = module_ref.get<OrderStatusWebhook>(OrderStatusWebhook);
+    moduleRefBuilder
+      .overrideProvider(AmoService)
+      .useValue(createAmoServiceMock())
+      .overrideProvider(CdekService)
+      .useValue(createCdekServiceMock())
+      .overrideProvider(MailService)
+      .useValue(createMailServiceMock())
+      .overrideProvider(GoogleSheetsService)
+      .useValue(createGoogleSheetsServiceMock())
+      .overrideProvider(YandexDiskService)
+      .useValue(createYandexDiskServiceMock());
+
+    const moduleRef = await moduleRefBuilder.compile();
+
+    app = moduleRef.createNestApplication();
+    service = moduleRef.get<OrderStatusWebhook>(OrderStatusWebhook);
 
     await app.init();
   });

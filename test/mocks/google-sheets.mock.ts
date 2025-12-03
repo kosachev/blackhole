@@ -1,24 +1,18 @@
-import { vi } from "bun:test";
+import { mock } from "bun:test";
 
-export const mockGoogleSheetsService = () => {
-  vi.mock("../../src/google-sheets/google-sheets.service", () => {
-    return {
-      GoogleSheetsService: vi.fn().mockImplementation(() => {
-        return {
-          logger: {
-            log: vi.fn((...data: any[]) => [data]),
-            error: vi.fn((...data: any[]) => [data]),
-          },
-          addLead: vi.fn((...data: any[]) => [data]),
-          updateEntry: vi.fn((...data: any[]) => [data]),
-          cdekFullSuccess: vi.fn((...data: any[]) => [data]),
-          cdekFullReturn: vi.fn((...data: any[]) => [data]),
-          cdekPartialReturn: vi.fn((...data: any[]) => [data]),
-          cdekReturnCdekNumberAndDeliveryPrice: vi.fn((...data: any[]) => [data]),
-          cdekGoogleSheetsUpdate: vi.fn((...data: any[]) => [data]),
-          cdekReturnRecieved: vi.fn((...data: any[]) => [data]),
-        };
-      }),
-    };
-  });
-};
+export const createGoogleSheetsServiceMock = () => ({
+  sales: {
+    logger: {
+      log: mock((...data: any[]) => [data]),
+      error: mock((...data: any[]) => [data]),
+    },
+    addLead: mock((...data: any[]) => [data]),
+    updateEntry: mock((...data: any[]) => [data]),
+    cdekFullSuccess: mock((...data: any[]) => [data]),
+    cdekFullReturn: mock((...data: any[]) => [data]),
+    cdekPartialReturn: mock((...data: any[]) => [data]),
+    cdekReturnCdekNumberAndDeliveryPrice: mock((...data: any[]) => [data]),
+    cdekGoogleSheetsUpdate: mock((...data: any[]) => [data]),
+    cdekReturnRecieved: mock((...data: any[]) => [data]),
+  },
+});

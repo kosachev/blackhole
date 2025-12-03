@@ -1,10 +1,14 @@
 import { MailerService } from "@nestjs-modules/mailer";
 import { ConfigService } from "@nestjs/config";
 import { Injectable } from "@nestjs/common";
-import { readFileSync, readdir } from "node:fs";
-import { join } from "node:path";
+import { ImapFlow } from "imapflow";
 import Handlebars from "handlebars";
-import Imap from "imap";
+
+import invoiceCdekV2 from "../../templates/invoice-cdek-v2.hbs" with { type: "text" };
+import invoicePostV2 from "../../templates/invoice-post-v2.hbs" with { type: "text" };
+import orderCdekSendV2 from "../../templates/order-cdek-send-v2.hbs" with { type: "text" };
+import orderPostSendV2 from "../../templates/order-post-send-v2.hbs" with { type: "text" };
+import prepaymentConfirmV2 from "../../templates/prepayment-confirm-v2.hbs" with { type: "text" };
 
 type InvoiceParamsV2 = {
   name: string;
@@ -65,42 +69,52 @@ export class MailService {
     private config: ConfigService,
     private mailer: MailerService,
   ) {
-    readdir("./templates", (err, files) => {
-      this.templates = new Map<string, HandlebarsTemplateDelegate<any>>();
-      for (const file of files) {
-        const template = Handlebars.compile(readFileSync(join("./templates", file)).toString());
-        this.templates.set(`./${file}`, template);
-      }
-    });
+    this.templates = new Map<string, HandlebarsTemplateDelegate<any>>([
+      ["./invoice-cdek-v2.hbs", Handlebars.compile(invoiceCdekV2)],
+      ["./invoice-post-v2.hbs", Handlebars.compile(invoicePostV2)],
+      ["./order-cdek-send-v2.hbs", Handlebars.compile(orderCdekSendV2)],
+      ["./order-post-send-v2.hbs", Handlebars.compile(orderPostSendV2)],
+      ["./prepayment-confirm-v2.hbs", Handlebars.compile(prepaymentConfirmV2)],
+    ]);
   }
 
-  imap(params: { to: string; subject: string; template: string; context: any }) {
-    const imap = new Imap({
-      user: this.config.get("MAIL_USER"),
-      password: this.config.get("MAIL_PASSWORD"),
+  async imap(params: {
+    to: string;
+    subject: string;
+    template: string;
+    context: any;
+  }): Promise<void> {
+    const client = new ImapFlow({
       host: this.config.get("MAIL_IMAP_HOST"),
       port: this.config.get("MAIL_IMAP_PORT"),
-      tls: true,
-      tlsOptions: { rejectUnauthorized: false },
+      secure: true,
+      auth: {
+        user: this.config.get("MAIL_USER"),
+        pass: this.config.get("MAIL_PASSWORD"),
+      },
+      tls: { rejectUnauthorized: false },
+      logger: false,
     });
 
-    imap.once("ready", () => {
-      imap.openBox(this.config.get("MAIL_IMAP_PATH"), false, () => {
-        const html = this.templates.get(params.template)(params.context);
-        const data =
-          "MIME-Version: 1.0\r\n" +
-          "Content-Type: text/html; charset=UTF-8\r\n" +
-          `From: "${this.config.get("OWNER_SELLER_NAME")}" <${this.config.get("MAIL_FROM")}>\r\n` +
-          `To: <${params.to}>\r\n` +
-          `Subject: ${params.subject}\r\n\r\n` +
-          html +
-          "\r\n";
+    try {
+      await client.connect();
 
-        imap.append(data, () => imap.end());
-      });
-    });
+      const html = this.templates.get(params.template)(params.context);
+      const messageSource = [
+        "MIME-Version: 1.0",
+        "Content-Type: text/html; charset=UTF-8",
+        `From: "${this.config.get("OWNER_SELLER_NAME")}" <${this.config.get("MAIL_FROM")}>`,
+        `To: <${params.to}>`,
+        `Subject: ${params.subject}`,
+        "",
+        html,
+      ].join("\r\n");
+      const folderPath = this.config.get("MAIL_IMAP_PATH");
 
-    imap.connect();
+      await client.append(folderPath, messageSource);
+    } finally {
+      await client.logout();
+    }
   }
 
   // TODO: remove aftet bank adoption

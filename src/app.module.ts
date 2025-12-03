@@ -14,11 +14,9 @@ import { YandexMetrikaModule } from "./yandex-metrika/yandex-metrika.module";
 import { LogViewerModule } from "./log-viewer/log-viewer.module";
 import { LoggerMiddleware } from "./utils/logger.middleware";
 import { PostModule } from "./post/post.module";
-import { ServeStaticModule } from "@nestjs/serve-static";
 import { TildaModule } from "./tilda/tilda.module";
 import { AnalyticsModule } from "./analytics/analytics.module";
 import { TBankModule } from "./tbank/tbank.module";
-import { resolve } from "path";
 
 @Module({
   imports: [
@@ -42,10 +40,6 @@ import { resolve } from "path";
     WebModule,
     PostModule,
     LogViewerModule,
-    ServeStaticModule.forRoot({
-      rootPath: resolve("./public"),
-      serveRoot: "/public",
-    }),
   ],
   controllers: [],
   providers: [],

@@ -1,26 +1,19 @@
-import { vi } from "bun:test";
+import { mock } from "bun:test";
 
-export const mockAmoService = () => {
-  vi.mock("../../src/amo/amo.service", () => {
-    return {
-      AmoService: vi.fn().mockImplementation(() => {
-        return {
-          client: {
-            lead: {
-              updateLeadById: vi.fn((id: any, lead: any) => [id, lead]),
-            },
-            note: {
-              addNotes: vi.fn((entity_type: any, notes: any[]) => [entity_type, notes]),
-            },
-            task: {
-              addTasks: vi.fn((tasks: any[]) => [tasks]),
-            },
-          },
-        };
-      }),
-    };
-  });
-};
+export const createAmoServiceMock = () => ({
+  client: {
+    lead: {
+      updateLeadById: mock((id: any, lead: any) => [id, lead]),
+      getLeadById: mock((id: any, options: any) => [id, options]),
+    },
+    note: {
+      addNotes: mock((entity_type: any, notes: any[]) => [entity_type, notes]),
+    },
+    task: {
+      addTasks: mock((tasks: any[]) => [tasks]),
+    },
+  },
+});
 
 export const task = {
   task: {

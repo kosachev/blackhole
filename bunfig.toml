@@ -3,5 +3,4 @@ depth = 10
 
 [test]
 root = "./test"
-coverage = false
 timeout = 30000

@@ -1,5 +1,5 @@
 import type { Response } from "express";
-import { Readable } from "stream";
+import { Readable } from "node:stream";
 import { Body, Controller, Post, Get, Query, Res, UseFilters } from "@nestjs/common";
 import { type RequestPartialReturn, PartialReturnService } from "./partial-return.service";
 import { CdekPickupService, type RequestCdekPickup } from "./cdek-pickup.service";
@@ -47,6 +47,7 @@ export class WebController {
   @Get("print_pdf")
   async printPdf(@Query("url") url: string, @Res() response: Response) {
     const stream = await this.print_pdf.handler(url);
+    // @ts-ignore stream is iterator for sure
     const readable = Readable.from(stream);
     response.set({ "Content-Type": "application/pdf" });
     readable.pipe(response);

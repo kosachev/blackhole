@@ -1,20 +1,13 @@
-import { UpdateOrderStatus } from "cdek/src/types/api/webhook";
-import { vi } from "bun:test";
+import { type UpdateOrderStatus } from "cdek/src/types/api/webhook";
+import { mock } from "bun:test";
 
-export const mockCdekService = () => {
-  vi.mock("../../src/cdek/cdek.service", () => {
-    return {
-      CdekService: vi.fn().mockImplementation(() => {
-        return {
-          client: {
-            getOrderByUUID: vi.fn((uuid: string) => [uuid]),
-          },
-          deleteOrderValidationToTimer: vi.fn((uuid: string) => [uuid]),
-        };
-      }),
-    };
-  });
-};
+export const createCdekServiceMock = () => ({
+  client: {
+    getOrderByUUID: mock((uuid: string) => [uuid]),
+    createOrderReceipt: mock((uuid: string) => [uuid]),
+  },
+  deleteOrderValidationToTimer: mock((uuid: string) => [uuid]),
+});
 
 export const order_status_static: UpdateOrderStatus = {
   type: "ORDER_STATUS",

@@ -1,28 +1,44 @@
 import { spec } from "pactum";
-import { mockAmoService } from "test/mocks/amo.mock";
-import { mockGoogleSheetsService } from "test/mocks/google-sheets.mock";
-import { mockMailService } from "test/mocks/mail.mock";
+
 import { describe, test, beforeAll, afterAll } from "bun:test";
 
-import { INestApplication } from "@nestjs/common";
+import { type INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { AppModule } from "../src/app.module";
-import { mockYandexDiskService } from "test/mocks/yadisk.mock";
+import { createAmoServiceMock } from "./mocks/amo.mock";
+import { createCdekServiceMock } from "./mocks/cdek.mock";
+import { createMailServiceMock } from "./mocks/mail.mock";
+import { createGoogleSheetsServiceMock } from "./mocks/google-sheets.mock";
+import { createYandexDiskServiceMock } from "./mocks/yadisk.mock";
+import { AmoService } from "../src/amo/amo.service";
+import { CdekService } from "../src/cdek/cdek.service";
+import { MailService } from "../src/mail/mail.service";
+import { GoogleSheetsService } from "../src/google-sheets/google-sheets.service";
+import { YandexDiskService } from "../src/yandex-disk/yandex-disk.service";
 
 describe("App e2e", () => {
   let app: INestApplication;
 
-  mockAmoService();
-  mockMailService();
-  mockGoogleSheetsService();
-  mockYandexDiskService();
-
   beforeAll(async () => {
-    const module_ref = await Test.createTestingModule({
+    const moduleRefBuilder = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    });
 
-    app = module_ref.createNestApplication();
+    moduleRefBuilder
+      .overrideProvider(AmoService)
+      .useValue(createAmoServiceMock())
+      .overrideProvider(CdekService)
+      .useValue(createCdekServiceMock())
+      .overrideProvider(MailService)
+      .useValue(createMailServiceMock())
+      .overrideProvider(GoogleSheetsService)
+      .useValue(createGoogleSheetsServiceMock())
+      .overrideProvider(YandexDiskService)
+      .useValue(createYandexDiskServiceMock());
+
+    const moduleRef = await moduleRefBuilder.compile();
+
+    app = moduleRef.createNestApplication();
 
     await app.init();
     await app.listen(process.env.PORT ?? 6969);
@@ -99,8 +115,8 @@ describe("App e2e", () => {
 
   describe("AMO", () => {
     describe("lead-status", () => {
-      test("should return 200, auto ok", () => {
-        spec()
+      test("should return 200, auto ok", async () => {
+        await spec()
           .post(`http://localhost:${process.env.PORT}/amo/lead_status`)
           .expectStatus(200)
           .expectBody("OK");

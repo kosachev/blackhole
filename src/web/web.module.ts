@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { WebController } from "./web.controller";
+import { StaticController } from "./static.controller";
 import { PartialReturnService } from "./partial-return.service";
 import { CdekPickupService } from "./cdek-pickup.service";
 import { PrintPdfService } from "./print-pdf.service";
@@ -24,6 +25,6 @@ import { FirstLeadInteractionService } from "./first-lead-interaction.service";
     CloneLeadService,
     FirstLeadInteractionService,
   ],
-  controllers: [WebController],
+  controllers: [WebController, StaticController],
 })
 export class WebModule {}

@@ -36,47 +36,38 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
 
-      - name: Install Node.js
-        uses: actions/setup-node@v3
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 20
+          bun-version: latest
 
-      - uses: pnpm/action-setup@v2
-        name: Install pnpm
-        with:
-          version: latest
-          run_install: false
-
-      - name: Get pnpm store directory
+      - name: Get Bun cache directory
         shell: bash
         run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+          echo "BUN_CACHE_DIR=$(bun pm cache)" >> $GITHUB_ENV
 
       - uses: actions/cache@v3
-        name: Setup pnpm cache
+        name: Setup bun cache
         with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          path: ${{ env.BUN_CACHE_DIR }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            ${{ runner.os }}-bun-
 
       - name: Install dependencies
-        run: pnpm install
+        run: bun install --frozen-lockfile
 
       - name: Lint
-        run: pnpm run lint
+        run: bun lint
 
       - name: Build
-        run: pnpm run build:client
-
-      - name: Build Backend
-        run: pnpm run build
+        run: bun build:client
 
       - name: Test
-        run: pnpm run test:cov
+        run: bun test:cov
 
-      - name: Report Coverage
-        if: always()
-        uses: davelosert/vitest-coverage-report-action@v2
-        with:
-          vite-config-path: ./test/vitest.config.ts
+      # - name: Report Coverage
+      #   if: always()
+      #   uses: davelosert/vitest-coverage-report-action@v2
+      #   with:
+      #     vite-config-path: ./test/vitest.config.ts

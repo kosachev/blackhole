@@ -608,9 +608,9 @@ OrderId: ${payment.OrderId}
           this.logger.log(`YANDEX_METRIKA, counter ${counter}, ${ymtype}`);
           lead.note(`✅ Яндекс Метрика: данные загружены, счётчик ${counter} (${ymtype})`);
         }
-      } catch (err) {
-        this.logger.error(err);
-        lead.note(`❌ Яндекс Метрика: не удалось отправить данные - ${err.message}`);
+      } catch (error) {
+        this.logger.error(error);
+        lead.note(`❌ Яндекс Метрика: не удалось отправить данные - ${(error as Error).message}`);
       }
     }
 
@@ -648,10 +648,10 @@ OrderId: ${payment.OrderId}
         }
       } catch (error) {
         this.logger.error(
-          `UPDATE_LEAD_ERROR, leadId: ${lead.data.id}, error: ${error.message}`,
+          `UPDATE_LEAD_ERROR, leadId: ${lead.data.id}, error: ${(error as Error).message}`,
           "GoogleSheets",
         );
-        lead.note(`❌ Google Sheets: Ошибка при обновлении сделки\n${error.message}`);
+        lead.note(`❌ Google Sheets: Ошибка при обновлении сделки\n${(error as Error).message}`);
       }
     }
   }
@@ -843,11 +843,11 @@ OrderId: ${payment.OrderId}
       }
     } catch (error) {
       this.logger.error(
-        `ADD_LEAD_ERROR, leadId: ${lead.data.id}, error: ${error.message}`,
-        error.stack,
+        `ADD_LEAD_ERROR, leadId: ${lead.data.id}, error: ${(error as Error).message}`,
+        (error as Error).stack,
         "GoogleSheets",
       );
-      lead.note(`❌ Google Sheets: Ошибка при добавлении сделки\n${error.message}`);
+      lead.note(`❌ Google Sheets: Ошибка при добавлении сделки\n${(error as Error).message}`);
     }
   }
 }
