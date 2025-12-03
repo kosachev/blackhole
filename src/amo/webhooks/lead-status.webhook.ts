@@ -95,76 +95,40 @@ export class LeadStatusWebhook extends AbstractWebhook {
     // we check it on validation step
     const prepay = +lead.custom_fields.get(AMO.CUSTOM_FIELD.PREPAY);
 
-    if (lead.data.name.includes("ТЕСТ")) {
-      const payment = await this.tbankService
-        .initPayment({
-          orderId: this.generatePaymentOrderId(lead),
-          amount: prepay,
-          description: `Предоплата заказа ${lead.data.id}`,
-        })
-        .catch(async (err) => {
-          this.logger.error(
-            `PAYMENT_INIT_ERROR, leadId:  ${lead.data.id}, err: ${err.message}`,
-            undefined,
-            "TBankService",
-          );
-          lead.note(`❌ Банк: Не удалось создать платеж\n${err.message}`);
-          return null;
-        });
+    const payment = await this.tbankService
+      .initPayment({
+        orderId: this.generatePaymentOrderId(lead),
+        amount: prepay,
+        description: `Предоплата заказа ${lead.data.id}`,
+      })
+      .catch(async (err) => {
+        this.logger.error(
+          `PAYMENT_INIT_ERROR, leadId:  ${lead.data.id}, err: ${err.message}`,
+          undefined,
+          "TBankService",
+        );
+        lead.note(`❌ Банк: Не удалось создать платеж\n${err.message}`);
+        return null;
+      });
 
-      if (payment === null || !payment.PaymentURL) return;
+    if (payment === null || !payment.PaymentURL) return;
 
-      lead.note(`✅ Банк: Платеж создан (${payment.Status})
+    lead.note(`✅ Банк: Платеж создан (${payment.Status})
 PaymentURL: ${payment.PaymentURL}
 PaymentId: ${payment.PaymentId}
 OrderId: ${payment.OrderId}
 Сумма: ${payment.Amount / 100} руб.`);
 
-      lead.custom_fields.set(AMO.CUSTOM_FIELD.BANK_STATUS, payment.Status ?? "unknown");
-      lead.custom_fields.set(AMO.CUSTOM_FIELD.BANK_ORDERID, payment.OrderId ?? "unknown");
-      lead.custom_fields.set(AMO.CUSTOM_FIELD.BANK_PAYMENTID, payment.PaymentId ?? "unknown");
-      lead.custom_fields.set(AMO.CUSTOM_FIELD.BANK_PAYMENTURL, payment.PaymentURL ?? "unknown");
+    lead.custom_fields.set(AMO.CUSTOM_FIELD.BANK_STATUS, payment.Status ?? "unknown");
+    lead.custom_fields.set(AMO.CUSTOM_FIELD.BANK_ORDERID, payment.OrderId ?? "unknown");
+    lead.custom_fields.set(AMO.CUSTOM_FIELD.BANK_PAYMENTID, payment.PaymentId ?? "unknown");
+    lead.custom_fields.set(AMO.CUSTOM_FIELD.BANK_PAYMENTURL, payment.PaymentURL ?? "unknown");
 
-      await lead.saveToAmo();
+    await lead.saveToAmo();
 
-      try {
-        await Promise.all([
-          this.mail.invoiceV2({
-            name: lead.contact.name,
-            address: lead.getFullAddress(true),
-            phone: lead.contact.custom_fields.get(AMO.CONTACT.PHONE),
-            email: lead.contact.custom_fields.get(AMO.CONTACT.EMAIL),
-            delivery_type: lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) as string,
-            order_number: lead.data.id.toString(),
-            goods: [...lead.goods.values()].map((good) => ({
-              name: good.name,
-              quantity: good.quantity,
-              price: good.price,
-            })),
-            total_price: lead.totalPrice(),
-            discount: lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT) as string,
-            prepayment: prepay,
-            PaymentURL: payment.PaymentURL,
-            is_gerdacollection: lead.tags.has(AMO.TAG.TILDA),
-          }),
-          this.amo.salesbot.runTask([
-            {
-              bot_id: AMO.SALESBOT.PAYMENT_URL,
-              entity_id: lead.data.id,
-              entity_type: 2,
-            },
-          ]),
-        ]);
-
-        lead.note("✅ email: письмо с платежной ссылкой отправлено");
-        this.logger.log(`STATUS_REQUISITE, lead_id: ${lead.data.id}, mail sent`);
-      } catch (err) {
-        this.logger.error(err);
-        lead.note("❌ email: ошибка при отправке письма с платежной ссылкой");
-      }
-    } else {
-      try {
-        await this.mail.invoice({
+    try {
+      await Promise.all([
+        this.mail.invoice({
           name: lead.contact.name,
           address: lead.getFullAddress(true),
           phone: lead.contact.custom_fields.get(AMO.CONTACT.PHONE),
@@ -179,14 +143,23 @@ OrderId: ${payment.OrderId}
           total_price: lead.totalPrice(),
           discount: lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT) as string,
           prepayment: prepay,
-        });
+          PaymentURL: payment.PaymentURL,
+          is_gerdacollection: lead.tags.has(AMO.TAG.TILDA),
+        }),
+        this.amo.salesbot.runTask([
+          {
+            bot_id: AMO.SALESBOT.PAYMENT_URL,
+            entity_id: lead.data.id,
+            entity_type: 2,
+          },
+        ]),
+      ]);
 
-        lead.note("✅ email: письмо с реквизитами отправлено");
-        this.logger.log(`STATUS_REQUISITE, lead_id: ${lead.data.id}, mail sent`);
-      } catch (err) {
-        this.logger.error(err);
-        lead.note("❌ email: ошибка при отправке письма с реквизитами");
-      }
+      lead.note("✅ email: письмо с платежной ссылкой отправлено");
+      this.logger.log(`STATUS_REQUISITE, lead_id: ${lead.data.id}, mail sent`);
+    } catch (err) {
+      this.logger.error(err);
+      lead.note("❌ email: ошибка при отправке письма с платежной ссылкой");
     }
   }
 
