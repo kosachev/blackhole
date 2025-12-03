@@ -14,6 +14,7 @@
     "test:cov": "bun test --timeout=30000 --coverage ./test/cdek ./test/app.e2e-spec.ts",
     "boilerplate": "bun test --timeout=30000 ./test/boilerplate.spec.ts",
     "build:client": "bun ./scripts/build-client.ts",
+    "build:app": "bun build ./src/main.ts --compile --outfile nest.exe --external @nestjs/microservices --external @nestjs/websockets",
     "tail": "bun ./scripts/tail-logs.ts"
   },
   "dependencies": {

@@ -6,6 +6,9 @@ import { PDFBuilder } from "./lib/pdf-builder.lib";
 
 import { wordWrap } from "../utils/word-wrap.function";
 
+import roboto from "../../assets/roboto.ttf" with { type: "file" };
+import robotoBold from "../../assets/roboto-bold.ttf" with { type: "file" };
+
 type Post7p = {
   sender?: string;
   sender_address?: string;
@@ -59,10 +62,7 @@ type Invoice = {
 
 @Injectable()
 export class PDFService {
-  private readonly builder: PDFBuilder = new PDFBuilder(
-    "./assets/roboto.ttf",
-    "./assets/roboto-bold.ttf",
-  );
+  private readonly builder: PDFBuilder = new PDFBuilder(roboto, robotoBold);
 
   constructor(private readonly config: ConfigService) {}
 

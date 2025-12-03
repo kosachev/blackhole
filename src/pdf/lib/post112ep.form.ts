@@ -2,6 +2,8 @@ import { promises as fs } from "node:fs";
 
 import { type Form } from "./pdf-builder.lib";
 
+import form112ep from "../../../assets/form112ep.pdf" with { type: "file" };
+
 export type Post112ep = Partial<{
   sum: string;
   kop: string;
@@ -18,7 +20,7 @@ export type Post112ep = Partial<{
 }>;
 
 export const post112p: Form<Post112ep> = {
-  data: fs.readFile("./assets/form112ep.pdf"),
+  data: fs.readFile(form112ep),
   fileds_map: {
     sum: { font_size: 23, field_name: "Summ" },
     kop: { font_size: 23, field_name: "kop" },
