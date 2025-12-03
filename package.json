@@ -5,6 +5,7 @@
   "author": "shevernitskiy <mahahuha@ya.ru>",
   "private": true,
   "license": "UNLICENSED",
+  "type": "module",
   "scripts": {
     "start": "bun run ./src/main.ts",
     "start:debug": "bun run --debug --hot ./src/main.ts",

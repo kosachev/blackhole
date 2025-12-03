@@ -1,6 +1,6 @@
 import { convert } from "number-to-words-ru";
 
-import { Injectable } from "@nestjs/common";
+import { Injectable, type OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PDFBuilder } from "./lib/pdf-builder.lib";
 
@@ -61,10 +61,14 @@ type Invoice = {
 };
 
 @Injectable()
-export class PDFService {
-  private readonly builder: PDFBuilder = new PDFBuilder(roboto, robotoBold);
+export class PDFService implements OnModuleInit {
+  private builder: PDFBuilder;
 
   constructor(private readonly config: ConfigService) {}
+
+  async onModuleInit() {
+    this.builder = await PDFBuilder.create(roboto, robotoBold);
+  }
 
   async post7p(params: Post7p): Promise<Uint8Array> {
     const sender_address = wordWrap(

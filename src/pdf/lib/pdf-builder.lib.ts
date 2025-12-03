@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import { PDFDocument, PageSizes } from "pdf-lib";
 
 import fontkit from "@pdf-lib/fontkit";
@@ -8,20 +7,21 @@ import { type Post7p, post7p } from "./post7p.form";
 
 export type FieldsMap<T> = Record<keyof T, { font_size: number; field_name: string }>;
 export type Form<T> = {
-  data: Buffer;
+  data: ArrayBuffer;
   fileds_map: FieldsMap<T>;
 };
 
 export class PDFBuilder {
-  private font_data: Buffer;
-  private font_bold_data: Buffer;
+  private font_data: ArrayBuffer;
+  private font_bold_data: ArrayBuffer;
 
-  constructor(
-    private readonly font_path: string,
-    private readonly font_bold_path: string,
-  ) {
-    this.font_data = fs.readFileSync(font_path);
-    this.font_bold_data = fs.readFileSync(font_bold_path);
+  private constructor() {}
+
+  static async create(font_path: string, font_bold_path: string): Promise<PDFBuilder> {
+    const instance = new PDFBuilder();
+    instance.font_data = await Bun.file(font_path).arrayBuffer();
+    instance.font_bold_data = await Bun.file(font_bold_path).arrayBuffer();
+    return instance;
   }
 
   async fillPdf<T extends Record<string, string>>(
@@ -55,19 +55,19 @@ export class PDFBuilder {
   }
 
   async fillPost7p(params: Post7p): Promise<Uint8Array> {
-    return (await this.fillPdf<Post7p>(params, post7p.fileds_map, await post7p.data)).save();
+    return (await this.fillPdf<Post7p>(params, post7p.fileds_map, post7p.data)).save();
   }
 
   async fillPost112ep(params: Post112ep): Promise<Uint8Array> {
-    return (await this.fillPdf<Post112ep>(params, post112p.fileds_map, await post112p.data)).save();
+    return (await this.fillPdf<Post112ep>(params, post112p.fileds_map, post112p.data)).save();
   }
 
   async fillPost7pDoc(params: Post7p): Promise<PDFDocument> {
-    return this.fillPdf<Post7p>(params, post7p.fileds_map, await post7p.data);
+    return this.fillPdf<Post7p>(params, post7p.fileds_map, post7p.data);
   }
 
   async fillPost112epDoc(params: Post112ep): Promise<PDFDocument> {
-    return this.fillPdf<Post112ep>(params, post112p.fileds_map, await post112p.data);
+    return this.fillPdf<Post112ep>(params, post112p.fileds_map, post112p.data);
   }
 
   async fillInvoice(params: Invoice): Promise<Uint8Array> {
