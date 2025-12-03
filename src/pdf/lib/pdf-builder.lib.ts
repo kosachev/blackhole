@@ -1,4 +1,4 @@
-import { promises as fs } from "node:fs";
+import fs from "node:fs";
 import { PDFDocument, PageSizes } from "pdf-lib";
 
 import fontkit from "@pdf-lib/fontkit";
@@ -8,20 +8,20 @@ import { type Post7p, post7p } from "./post7p.form";
 
 export type FieldsMap<T> = Record<keyof T, { font_size: number; field_name: string }>;
 export type Form<T> = {
-  data: Promise<Buffer>;
+  data: Buffer;
   fileds_map: FieldsMap<T>;
 };
 
 export class PDFBuilder {
-  private font_data: Promise<Buffer>;
-  private font_bold_data: Promise<Buffer>;
+  private font_data: Buffer;
+  private font_bold_data: Buffer;
 
   constructor(
     private readonly font_path: string,
     private readonly font_bold_path: string,
   ) {
-    this.font_data = fs.readFile(font_path);
-    this.font_bold_data = fs.readFile(font_bold_path);
+    this.font_data = fs.readFileSync(font_path);
+    this.font_bold_data = fs.readFileSync(font_bold_path);
   }
 
   async fillPdf<T extends Record<string, string>>(
@@ -31,7 +31,7 @@ export class PDFBuilder {
   ): Promise<PDFDocument> {
     const doc = await PDFDocument.load(pdf);
     doc.registerFontkit(fontkit);
-    const font = await doc.embedFont(await this.font_data, { subset: true });
+    const font = await doc.embedFont(this.font_data, { subset: true });
     const form = doc.getForm();
     for (const [key, value] of Object.entries(params)) {
       if (!value) continue;
@@ -73,8 +73,8 @@ export class PDFBuilder {
   async fillInvoice(params: Invoice): Promise<Uint8Array> {
     const doc = await PDFDocument.create();
     doc.registerFontkit(fontkit);
-    const font = await doc.embedFont(await this.font_data, { subset: true });
-    const font_bold = await doc.embedFont(await this.font_bold_data, { subset: true });
+    const font = await doc.embedFont(this.font_data, { subset: true });
+    const font_bold = await doc.embedFont(this.font_bold_data, { subset: true });
     const page = doc.addPage(PageSizes.A4);
     fillInvoice(page, params, font, font_bold);
     return doc.save();

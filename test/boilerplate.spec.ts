@@ -9,10 +9,6 @@ describe("Boilerplate", () => {
   let app: INestApplication;
   let service: AmoService;
 
-  // mockAmoService();
-  // mockMailService();
-  // mockGoogleSheetsService();
-
   beforeAll(async () => {
     const mobuldeRef = await Test.createTestingModule({
       imports: [AppModule],
