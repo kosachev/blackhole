@@ -6,7 +6,7 @@ import { join } from "node:path";
 import * as Handlebars from "handlebars";
 import Imap = require("imap");
 
-type InvoiceParamsV2 = {
+type InvoiceParams = {
   name: string;
   address: string;
   phone: string;
@@ -23,24 +23,6 @@ type InvoiceParamsV2 = {
   prepayment: number;
   PaymentURL: string;
   is_gerdacollection?: boolean;
-};
-
-// TODO: remove aftert bank adoption
-type InvoiceParams = {
-  name: string;
-  address: string;
-  phone: string;
-  email: string;
-  delivery_type: string;
-  order_number: string;
-  goods: {
-    name: string;
-    quantity: number;
-    price: number;
-  }[];
-  total_price: number;
-  discount?: string;
-  prepayment: number;
 };
 
 type PaymentConfirmParams = {
@@ -103,65 +85,7 @@ export class MailService {
     imap.connect();
   }
 
-  // TODO: remove aftet bank adoption
   async invoice(params: InvoiceParams) {
-    if (params.delivery_type !== "Экспресс по России" && params.delivery_type !== "Почта России") {
-      throw new Error("Неизвестный тип доставки");
-    }
-    if (params.goods.length === 0) {
-      throw new Error("Нет товаров в заказе");
-    }
-
-    let discount_type: "percent" | "fixed" = "fixed";
-    let discount_value = 0;
-    if (params.discount?.includes("%")) {
-      discount_type = "percent";
-      discount_value = Number(params.discount.replaceAll("%", ""));
-    } else {
-      discount_type = "fixed";
-      discount_value = params.discount && params.discount !== "" ? Number(params.discount) : 0;
-    }
-
-    if (isNaN(discount_value)) {
-      throw new Error("Неверный формат скидки");
-    }
-
-    const goods = params.goods.map((item) => ({
-      name: item.name,
-      quantity: item.quantity,
-      price: item.price,
-      sum: item.price * item.quantity,
-    }));
-
-    const discounted_price =
-      discount_type === "percent"
-        ? params.total_price * (1 - discount_value / 100)
-        : params.total_price - discount_value;
-
-    const mail = {
-      to: params.email,
-      subject: "Реквизиты для оплаты заказа №" + params.order_number,
-      template:
-        params.delivery_type === "Экспресс по России" ? "./invoice-cdek.hbs" : "./invoice-post.hbs",
-      context: {
-        name: params.name,
-        address: params.address,
-        phone: params.phone,
-        email: params.email,
-        delivery_type: params.delivery_type,
-        order_number: params.order_number,
-        goods: goods,
-        total_price: params.total_price,
-        discount: params.discount,
-        discounted_price: discounted_price,
-        prepayment: params.prepayment,
-      },
-    };
-
-    await Promise.all([this.mailer.sendMail(mail), this.imap(mail)]);
-  }
-
-  async invoiceV2(params: InvoiceParamsV2) {
     if (params.delivery_type !== "Экспресс по России" && params.delivery_type !== "Почта России") {
       throw new Error("Неизвестный тип доставки");
     }
