@@ -1,5 +1,5 @@
 import { UpdateOrderStatus } from "cdek/src/types/api/webhook";
-import { vi } from "vitest";
+import { vi } from "bun:test";
 
 export const mockCdekService = () => {
   vi.mock("../../src/cdek/cdek.service", () => {

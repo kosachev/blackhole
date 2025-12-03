@@ -2,9 +2,9 @@ import { promises as fs } from "node:fs";
 import { PDFDocument, PageSizes } from "pdf-lib";
 
 import fontkit from "@pdf-lib/fontkit";
-import { Invoice, fillInvoice } from "./invoice.form";
-import { Post112ep, post112p } from "./post112ep.form";
-import { Post7p, post7p } from "./post7p.form";
+import { type Invoice, fillInvoice } from "./invoice.form";
+import { type Post112ep, post112p } from "./post112ep.form";
+import { type Post7p, post7p } from "./post7p.form";
 
 export type FieldsMap<T> = Record<keyof T, { font_size: number; field_name: string }>;
 export type Form<T> = {

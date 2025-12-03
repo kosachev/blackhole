@@ -2,7 +2,7 @@ import { spec } from "pactum";
 import { mockAmoService } from "test/mocks/amo.mock";
 import { mockGoogleSheetsService } from "test/mocks/google-sheets.mock";
 import { mockMailService } from "test/mocks/mail.mock";
-import { describe, test, beforeAll, afterAll } from "vitest";
+import { describe, test, beforeAll, afterAll } from "bun:test";
 
 import { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
@@ -100,7 +100,7 @@ describe("App e2e", () => {
   describe("AMO", () => {
     describe("lead-status", () => {
       test("should return 200, auto ok", () => {
-        return spec()
+        spec()
           .post(`http://localhost:${process.env.PORT}/amo/lead_status`)
           .expectStatus(200)
           .expectBody("OK");

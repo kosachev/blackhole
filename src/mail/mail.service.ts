@@ -3,8 +3,8 @@ import { ConfigService } from "@nestjs/config";
 import { Injectable } from "@nestjs/common";
 import { readFileSync, readdir } from "node:fs";
 import { join } from "node:path";
-import * as Handlebars from "handlebars";
-import Imap = require("imap");
+import Handlebars from "handlebars";
+import Imap from "imap";
 
 type InvoiceParamsV2 = {
   name: string;

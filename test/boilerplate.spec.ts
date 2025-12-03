@@ -1,6 +1,6 @@
-import { describe, test, beforeAll, afterAll } from "vitest";
+import { describe, test, beforeAll, afterAll } from "bun:test";
 
-import { INestApplication } from "@nestjs/common";
+import { type INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { AppModule } from "../src/app.module";
 import { AmoService } from "../src/amo/amo.service";

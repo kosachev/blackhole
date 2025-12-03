@@ -1,4 +1,4 @@
-import { vi } from "vitest";
+import { vi } from "bun:test";
 
 export const mockMailService = () => {
   vi.mock("../../src/mail/mail.service", () => {

@@ -1,4 +1,4 @@
-import { vi } from "vitest";
+import { vi } from "bun:test";
 
 export const mockGoogleSheetsService = () => {
   vi.mock("../../src/google-sheets/google-sheets.service", () => {

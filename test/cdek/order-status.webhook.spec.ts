@@ -3,9 +3,9 @@ import { mockCdekService, order_status_factory } from "../mocks/cdek.mock";
 import { mockYandexDiskService } from "../mocks/yadisk.mock";
 import { mockGoogleSheetsService } from "../mocks/google-sheets.mock";
 import { mockMailService } from "../mocks/mail.mock";
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
-import { INestApplication } from "@nestjs/common";
+import { type INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { AppModule } from "../../src/app.module";
 import { OrderStatusWebhook } from "../../src/cdek/webhooks/order-status.webhook";

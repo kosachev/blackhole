@@ -2,24 +2,19 @@
   "name": "gerda",
   "version": "0.1.100",
   "description": "",
-  "author": "",
+  "author": "shevernitskiy <mahahuha@ya.ru>",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
-    "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
-    "start:prod": "pnpm build:client && nest start",
-    "start:ts": "bun run ./src/main.ts",
-    "lint": "oxlint \"{src,apps,libs,test,tools}/**/*.ts\" --fix",
-    "test": "vitest run --config ./test/vitest.config.ts",
-    "test:cov": "vitest run --coverage --config ./test/vitest.config.ts",
-    "test:e2e": "vitest run --config ./test/vitest.config.ts",
-    "boilerplate": "bun test --timeout 30000 ./test/boilerplate.spec.ts",
-    "build:client": "npx esbuild ./client/main.ts --bundle --outfile=./public/gerda_userscript.js --target=esnext --format=esm && npx esbuild ./client/shop.ts --bundle --outfile=./public/shop_userscript.js --target=esnext --format=esm && npx esbuild ./client/gerdacollection.ts --bundle --outfile=./public/gerdacollection_userscript.js --target=esnext --format=esm && node ./tools/scripts/inline-env-to-client.mjs",
-    "tail": "node ./tools/scripts/tail-logs.mjs"
+    "start": "bun run ./src/main.ts",
+    "start:debug": "bun run --debug --hot ./src/main.ts",
+    "start:prod": "bun build:client && bun start",
+    "lint": "oxlint \"{src,apps,libs,test,scripts}/**/*.ts\" --fix",
+    "test:all": "bun test ./test/cdek ./test/app.e2e-spec.ts",
+    "test:cov": "bun test --coverage ./test/cdek ./test/app.e2e-spec.ts",
+    "boilerplate": "bun test ./test/boilerplate.spec.ts",
+    "build:client": "bun ./scripts/build-client.ts",
+    "tail": "bun ./scripts/tail-logs.ts"
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^2.0.2",
@@ -34,6 +29,8 @@
     "@shevernitskiy/post-calculator": "^0.1.3",
     "@shevernitskiy/post-tracking": "^0.1.2",
     "cdek": "^1.0.13",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.3",
     "google-auth-library": "^10.2.1",
     "google-spreadsheet": "^5.0.2",
     "grammy": "^1.38.1",
@@ -51,36 +48,25 @@
     "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
-    "@nestjs/cli": "^11.0.10",
-    "@nestjs/schematics": "^11.0.7",
     "@nestjs/testing": "^11.1.6",
-    "@swc/cli": "^0.7.8",
-    "@swc/core": "^1.13.4",
+    "@types/bun": "^1.3.3",
     "@types/express": "^5.0.3",
     "@types/imap": "^0.8.42",
     "@types/jquery": "^3.5.32",
     "@types/node": "^24.3.0",
-    "@types/supertest": "^6.0.3",
     "@types/tar-fs": "^2.0.4",
-    "@vitest/coverage-v8": "^2.0.1",
-    "esbuild": "^0.25.9",
     "eventsource": "^4.0.0",
     "msw": "^2.10.5",
     "oxlint": "^1.12.0",
     "pactum": "^3.8.0",
-    "prettier": "^3.6.2",
-    "source-map-support": "^0.5.21",
-    "ts-loader": "^9.5.2",
-    "ts-node": "^10.9.1",
-    "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.9.2",
-    "unplugin-swc": "^1.5.6",
-    "vitest": "^2.0.1"
+    "typescript": "^5.9.2"
   },
-  "pnpm": {
-    "overrides": {
-      "whatwg-url": "14.0.0",
-      "mailparser": "3.7.1"
-    }
-  }
+  "overrides": {
+    "whatwg-url": "14.0.0",
+    "mailparser": "3.7.1"
+  },
+  "trustedDependencies": [
+    "@nestjs/core",
+    "msw"
+  ]
 }

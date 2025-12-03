@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 
-import { Form } from "./pdf-builder.lib";
+import { type Form } from "./pdf-builder.lib";
 
 export type Post112ep = Partial<{
   sum: string;

@@ -1,4 +1,4 @@
-import { vi } from "vitest";
+import { vi } from "bun:test";
 
 export const mockYandexDiskService = () => {
   vi.mock("../../src/yandex-disk/yandex-disk.service", () => {

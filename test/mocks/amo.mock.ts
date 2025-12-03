@@ -1,4 +1,4 @@
-import { vi } from "vitest";
+import { vi } from "bun:test";
 
 export const mockAmoService = () => {
   vi.mock("../../src/amo/amo.service", () => {
