@@ -23,6 +23,7 @@
     "skipLibCheck": true,
     "noFallthroughCasesInSwitch": false,
     "forceConsistentCasingInFileNames": false,
+    "useUnknownInCatchVariables": false,
 
     // Some stricter flags (disabled by default)
     "noUnusedLocals": false,

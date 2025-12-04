@@ -1,5 +1,11 @@
-import { CustomFieldsValue, Lead, Embedded, Tag, Amo } from "@shevernitskiy/amo";
-import { RequestUpdateLead } from "@shevernitskiy/amo/src/api/lead/types";
+import {
+  type CustomFieldsValue,
+  type Lead,
+  type Embedded,
+  type Tag,
+  Amo,
+} from "@shevernitskiy/amo";
+import type { RequestUpdateLead } from "@shevernitskiy/amo/src/api/lead/types";
 import { AMO } from "../amo.constants";
 
 type Options = {

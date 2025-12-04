@@ -28,7 +28,7 @@ export class ArchiveLogsJob extends CronService {
       .pipe(gzip);
 
     await new Promise((resolve, reject) => {
-      archive.on("finish", resolve);
+      archive.on("finish", () => resolve(undefined));
       archive.on("error", reject);
     });
     for (const file of fs.readdirSync("./logs")) {

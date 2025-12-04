@@ -1,5 +1,5 @@
 import { Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
-import { EntityLink } from "@shevernitskiy/amo";
+import type { EntityLink } from "@shevernitskiy/amo";
 import { AMO } from "../amo/amo.constants";
 import { AmoService } from "../amo/amo.service";
 

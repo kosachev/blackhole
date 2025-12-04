@@ -1,4 +1,4 @@
-import { Controller, Query, Sse, MessageEvent, Req } from "@nestjs/common";
+import { Controller, Query, Sse, type MessageEvent, Req } from "@nestjs/common";
 import type { Request } from "express";
 import type { Observable } from "rxjs";
 

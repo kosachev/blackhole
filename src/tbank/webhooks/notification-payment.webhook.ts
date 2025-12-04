@@ -1,9 +1,9 @@
 import { ForbiddenException, Injectable, Logger } from "@nestjs/common";
 
 import { AmoService } from "../../amo/amo.service";
-import { NotificationPayment } from "../lib/core/webhook";
+import type { NotificationPayment } from "../lib/core/webhook";
 import { AMO } from "src/amo/amo.constants";
-import { RequestUpdateLead } from "@shevernitskiy/amo/src/api/lead/types";
+import type { RequestUpdateLead } from "@shevernitskiy/amo/src/api/lead/types";
 import { TBankService } from "../tbank.service";
 import { timestamp } from "../../utils/timestamp.function";
 

@@ -1,4 +1,4 @@
-import { UpdatePrealertClosed } from "cdek/src/types/api/webhook";
+import type { UpdatePrealertClosed } from "cdek/src/types/api/webhook";
 import { Injectable, NotImplementedException } from "@nestjs/common";
 import { AbstractWebhook } from "./abstract.webhook";
 

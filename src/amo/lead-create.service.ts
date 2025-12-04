@@ -6,11 +6,11 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { TelegramService } from "../telegram/telegram.service";
-import {
+import type {
   RequestAddCatalogElement,
   RequestUpdateCatalogElement,
 } from "@shevernitskiy/amo/src/api/catalog/types";
-import { CustomFieldsValue, Tag } from "@shevernitskiy/amo/src/typings/entities";
+import type { CustomFieldsValue, Tag } from "@shevernitskiy/amo/src/typings/entities";
 
 import { AmoService } from "./amo.service";
 import { AMO } from "./amo.constants";
