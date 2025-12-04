@@ -81,6 +81,12 @@
     "overrides": {
       "whatwg-url": "14.0.0",
       "mailparser": "3.7.1"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "@nestjs/core",
+      "@swc/core",
+      "esbuild",
+      "msw"
+    ]
   }
 }
