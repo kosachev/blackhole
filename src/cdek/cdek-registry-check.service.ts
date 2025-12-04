@@ -10,6 +10,9 @@ import type { RequestAddNote } from "@shevernitskiy/amo/src/api/note/types";
 import { stringDate } from "../utils/timestamp.function";
 import { SpendingsEntry } from "../google-sheets/spendings.sheet";
 
+import { existsSync } from "node:fs";
+import { readFile, writeFile } from "node:fs/promises";
+
 type FailedOrder = {
   cdek_number: string;
   registry_number: number;
@@ -31,12 +34,18 @@ type ProccessOrdersResult = {
 };
 
 export type CdekRegistryCheckResult =
-  | { date: string; errors: string[] }
-  | { date: string; registries: number }
-  | ({ date: string; registries: number } & ProccessOrdersResult);
+  | { startDate: string; daysAmount: number; errors: string[] }
+  | { startDate: string; daysAmount: number; registries: number }
+  | ({ startDate: string; daysAmount: number; registries: number } & ProccessOrdersResult);
 
 @Injectable()
 export class CdekRegistryCheckService {
+  private readonly BATCH_SIZE = 5;
+  private readonly LOOKBACK_DAYS = 14;
+  private readonly AMOUNT_DAYS = 10;
+  private readonly PROCESS_REGISTRIES_FILE = "./data/registries.json";
+  private readonly MAX_PROCESS_REGISTRIES_SIZE = 100;
+
   private readonly logger = new Logger(CdekRegistryCheckService.name);
 
   constructor(
@@ -48,49 +57,129 @@ export class CdekRegistryCheckService {
   // executes in 23:55 everyday
   @Cron("0 55 23 * * *")
   async handler(date?: string): Promise<CdekRegistryCheckResult> {
-    if (!date) {
-      const d = new Date();
-      d.setDate(d.getDate() - 1);
-      date = d.toISOString().split("T")[0];
+    let daysAmount = this.AMOUNT_DAYS;
+    let startDate = new Date();
+    startDate.setDate(startDate.getDate() - this.LOOKBACK_DAYS);
+    if (date) {
+      startDate = new Date(date);
+      daysAmount = 1;
     }
 
-    const data = await this.cdek.client.getCashOnDeliveryRegistry({ date });
+    const allRegistries = await this.batchGetRegistries(startDate, daysAmount);
 
-    if (data.errors && data.errors.length > 0) {
-      const errors = data.errors.map((err) => `${err.code}: ${err.message}`);
-      this.logger.error(`date: ${date}, errors: ${errors.join(", ")}`);
-      return { date, errors };
-    }
-    if (!data.registries || data.registries.length === 0) {
-      this.logger.log(`date: ${date}, registries: 0`);
-      return { date, registries: 0 };
+    if (allRegistries.errors && allRegistries.errors.length > 0) {
+      this.logger.error(`errors: ${allRegistries.errors.join(", ")}`);
+      return { startDate: startDate.toISOString(), daysAmount, errors: allRegistries.errors };
     }
 
-    const orders = await this.batchGetOrder(data);
+    const filteredRegistries = await this.filterProcessedRegistries(allRegistries.registries);
+
+    if (!filteredRegistries.registries || filteredRegistries.registries.length === 0) {
+      this.logger.log(
+        `startDate: ${startDate.toISOString()}, daysAmount: ${daysAmount}, registries: 0`,
+      );
+      return { startDate: startDate.toISOString(), daysAmount, registries: 0 };
+    }
+
+    const orders = await this.batchGetOrder(filteredRegistries.registries);
     const result = await this.proccessOrders(orders.ordersMap);
 
+    await this.writeProccessRegistriesFile(filteredRegistries.processedRegistries);
+
     this.logger.log(
-      `date: ${date}, registries: ${data.registries.length}, directOrders: ${result.directOrders}, returnOrders: ${result.returnOrders}, courierPickups: ${result.courierPickups}, googleSheetsSalesUpdates: ${result.googleSheetsSalesUpdates}, googleSheetsSpendingAddings: ${result.googleSheetsSpendingAddings}, amoUpdates: ${result.amoUpdates}, amoNotes: ${result.amoNotes}`,
+      `startDate: ${startDate.toISOString()}, daysAmount: ${daysAmount}, registries: ${filteredRegistries.registries.length}, directOrders: ${result.directOrders}, returnOrders: ${result.returnOrders}, courierPickups: ${result.courierPickups}, googleSheetsSalesUpdates: ${result.googleSheetsSalesUpdates}, googleSheetsSpendingAddings: ${result.googleSheetsSpendingAddings}, amoUpdates: ${result.amoUpdates}, amoNotes: ${result.amoNotes}`,
     );
-    return { date, registries: data.registries.length, ...result };
+    return {
+      startDate: startDate.toISOString(),
+      daysAmount,
+      registries: filteredRegistries.registries.length,
+      ...result,
+    };
+  }
+
+  async filterProcessedRegistries(registries: GetCashOnDeliveryRegistry["registries"]): Promise<{
+    registries: GetCashOnDeliveryRegistry["registries"];
+    processedRegistries: number[];
+  }> {
+    let processedRegistries = await this.readProccessRegistriesFile();
+
+    registries = registries.filter(
+      (registry) => !processedRegistries.includes(registry.registry_number),
+    );
+
+    const newRegistries = registries.map((registry) => registry.registry_number);
+    processedRegistries = [...newRegistries, ...processedRegistries];
+
+    return { registries, processedRegistries };
+  }
+
+  async batchGetRegistries(
+    startDate: Date,
+    days: number,
+  ): Promise<{ registries: GetCashOnDeliveryRegistry["registries"]; errors: string[] }> {
+    const registries: GetCashOnDeliveryRegistry["registries"] = [];
+    const errors: string[] = [];
+
+    const datesToProcess: Date[] = [];
+    for (let i = 0; i < days; i++) {
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + i);
+      datesToProcess.push(date);
+    }
+
+    for (let i = 0; i < datesToProcess.length; i += this.BATCH_SIZE) {
+      const chunk = datesToProcess.slice(i, i + this.BATCH_SIZE);
+
+      const promises = chunk.map((date) => {
+        return this.cdek.client.getCashOnDeliveryRegistry({
+          date: date.toISOString().split("T")[0],
+        });
+      });
+
+      const results = await Promise.allSettled(promises);
+
+      results.forEach((res, index) => {
+        const currentDate = chunk[index];
+
+        if (res.status === "fulfilled") {
+          const data = res.value;
+
+          if (data.errors && data.errors.length > 0) {
+            errors.push(...data.errors.map((err) => `${err.code}: ${err.message}`));
+          }
+          if (data.registries && data.registries.length > 0) {
+            registries.push(...data.registries);
+          }
+        } else {
+          errors.push(
+            `Failed to fetch registries for date: ${currentDate.toISOString()} reason: ${res.reason}`,
+          );
+        }
+      });
+
+      if (i + this.BATCH_SIZE < datesToProcess.length) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+    }
+
+    return { registries, errors };
   }
 
   async batchGetOrder(
-    data: GetCashOnDeliveryRegistry,
+    registries: GetCashOnDeliveryRegistry["registries"],
   ): Promise<{ ordersMap: Map<string, CombinedOrderData>; failedOrders: FailedOrder[] }> {
-    const BATCH_SIZE = 5;
     const ordersMap = new Map<string, CombinedOrderData>();
     const failedOrders: FailedOrder[] = [];
 
-    const flatOrders = data.registries.flatMap((registry) =>
+    const flatOrders = registries.flatMap((registry) =>
       registry.orders.map((order) => ({
         ...order,
         registry_number: registry.registry_number,
       })),
     );
 
-    for (let i = 0; i < flatOrders.length; i += BATCH_SIZE) {
-      const chunk = flatOrders.slice(i, i + BATCH_SIZE);
+    for (let i = 0; i < flatOrders.length; i += this.BATCH_SIZE) {
+      const chunk = flatOrders.slice(i, i + this.BATCH_SIZE);
       const promises = chunk.map((order) =>
         this.cdek.client.getOrderByCdekNumber(+order.cdek_number),
       );
@@ -253,5 +342,18 @@ export class CdekRegistryCheckService {
       amoUpdates: amoUpdates.length,
       amoNotes: amoNotes.length,
     };
+  }
+
+  async readProccessRegistriesFile(): Promise<number[]> {
+    if (!existsSync(this.PROCESS_REGISTRIES_FILE)) return [];
+    const data = JSON.parse(await readFile(this.PROCESS_REGISTRIES_FILE, "utf8"));
+    return data;
+  }
+
+  async writeProccessRegistriesFile(data: number[]): Promise<void> {
+    if (data.length > this.MAX_PROCESS_REGISTRIES_SIZE) {
+      data.length = this.MAX_PROCESS_REGISTRIES_SIZE;
+    }
+    await writeFile(this.PROCESS_REGISTRIES_FILE, JSON.stringify(data, null, 2), "utf8");
   }
 }

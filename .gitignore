@@ -41,6 +41,7 @@ lerna-debug.log*
 
 # Amo
 */amo_token.json
+*/registries.json
 
 .vscode
 run.ts
