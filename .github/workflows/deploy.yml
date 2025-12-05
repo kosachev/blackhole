@@ -27,10 +27,10 @@ jobs:
         with:
           bun-version: latest
 
-      # - name: Bump #Поднимаем версию
-      #   run: |
-      #     bunx npm version  ${{ inputs.bump-type }} --no-git-tag-version
-      #     echo VERSION=$(bunx npm pkg get version | tr -d '"') >> $GITHUB_ENV
+      - name: Bump #Поднимаем версию
+        run: |
+          bunx npm version  ${{ inputs.bump-type }} --no-git-tag-version
+          echo VERSION=$(bunx npm pkg get version | tr -d '"') >> $GITHUB_ENV
 
       # - name: Commit version bump #Коммитим новую версию
       #   run: |
