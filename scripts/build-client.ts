@@ -1,6 +1,3 @@
-import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
-
 const TARGETS = [
   { entry: "./client/main.ts", outfile: "gerda_userscript.js" },
   { entry: "./client/shop.ts", outfile: "shop_userscript.js" },
@@ -9,28 +6,15 @@ const TARGETS = [
 
 const OUT_DIR = "./public";
 
-const getEnvFilePath = () => {
-  if (existsSync(resolve("./.env.dev"))) return "./.env.dev";
-  if (existsSync(resolve("./.env.prod"))) return "./.env.prod";
-  return "./.env.example";
-};
+const backendArg = Bun.argv.find((arg) => arg.startsWith("--backend="));
+const backendBase = backendArg ? backendArg.split("=")[1] : "http://localhost:6969";
 
-const envFile = getEnvFilePath();
-
-if (envFile === "./.env.example") {
-  console.warn("⚠️ No env file found, using .env.example");
-}
-
-const envContent = readFileSync(resolve(envFile), "utf8");
-const match = envContent.match(/BACKEND_BASE=(.*)/);
-const backendBase = match ? match[1].trim() : null;
-
-if (!backendBase || !backendBase.startsWith("http")) {
-  console.error(`❌ Can't find valid BACKEND_BASE in ${envFile}`);
+if (!backendBase.startsWith("http")) {
+  console.error(`❌ Invalid BACKEND_BASE provided: "${backendBase}". It must start with 'http'.`);
   process.exit(1);
 }
 
-console.log(`🚀 Starting build using ${envFile} (BACKEND_BASE: ${backendBase})`);
+console.log(`🚀 Starting build`);
 
 const buildTasks = TARGETS.map(async (target) => {
   const result = await Bun.build({
@@ -58,7 +42,7 @@ const buildTasks = TARGETS.map(async (target) => {
 try {
   const builtFiles = await Promise.all(buildTasks);
   console.log(`✅ Build successful! Created:`);
-  builtFiles.forEach((f) => console.log(`   - ${OUT_DIR}/${f}`));
+  builtFiles.forEach((f) => console.log(`    ${OUT_DIR}/${f}`));
 } catch (e) {
   console.error("❌ Unexpected error during build:", e);
   process.exit(1);
