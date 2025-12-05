@@ -58,21 +58,27 @@ type Data = {
       if (!res.ok) {
         console.error("ERROR");
         alert(
-          `${name}\nАртикул: ${sku}\nРазмер: ${data.size ?? "-"}\nЦена: ${data.price}\n\nРезультат: ❌ ОШИБКА`,
+          `${name}\nАртикул: ${sku}\nРазмер: ${data.size ?? "-"}\nЦена: ${
+            data.price
+          }\n\nРезультат: ❌ ОШИБКА`,
         );
         return;
       }
     } catch (err) {
       console.error("ERROR", err);
       alert(
-        `${name}\nАртикул: ${sku}\nРазмер: ${data.size ?? "-"}\nЦена: ${data.price}\n\nРезультат: ❌ ОШИБКА`,
+        `${name}\nАртикул: ${sku}\nРазмер: ${data.size ?? "-"}\nЦена: ${
+          data.price
+        }\n\nРезультат: ❌ ОШИБКА`,
       );
       return;
     }
 
     await navigator.clipboard.writeText(sku);
     alert(
-      `${name}\nАртикул: ${sku}\nРазмер: ${data.size ?? "-"}\nЦена: ${data.price}\n\nРезультат: ✅ УСПЕШНО\n\nАртикул скопирован в буфер обмена`,
+      `${name}\nАртикул: ${sku}\nРазмер: ${data.size ?? "-"}\nЦена: ${
+        data.price
+      }\n\nРезультат: ✅ УСПЕШНО\n\nАртикул скопирован в буфер обмена`,
     );
   }
 
@@ -81,7 +87,11 @@ type Data = {
     if (!check(data)) return;
 
     $(".productRight .extra_fields").prepend(
-      `<div><span class="extra_fields_name">Артикул</span>: <span class="extra_fields_value" id="sku">${generateSku(data.category_id, data.product_id, data.size)}</span></div>`,
+      `<div><span class="extra_fields_name">Артикул</span>: <span class="extra_fields_value" id="sku">${generateSku(
+        data.category_id,
+        data.product_id,
+        data.size,
+      )}</span></div>`,
     );
 
     $(".productRight .extra_fields").prepend(
@@ -105,4 +115,4 @@ type Data = {
       `<div><span class="extra_fields_name" id="name>Название</span>: <span class="extra_fields_value">${data.name}</span></div>`,
     );
   });
-})(window["jQuery"].noConflict(true));
+})(window["jQuery"] || window["$"]);
