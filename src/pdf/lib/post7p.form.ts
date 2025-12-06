@@ -1,6 +1,6 @@
-import { promises as fs } from "node:fs";
+import { type Form } from "./pdf-builder.lib";
 
-import { Form } from "./pdf-builder.lib";
+import form7p from "../../../assets/form7p.pdf" with { type: "file" };
 
 export type Post7p = Partial<{
   sender: string;
@@ -20,7 +20,7 @@ export type Post7p = Partial<{
 }>;
 
 export const post7p: Form<Post7p> = {
-  data: fs.readFile("./assets/form7p.pdf"),
+  data: await Bun.file(form7p).arrayBuffer(),
   fileds_map: {
     sender: {
       font_size: 11,

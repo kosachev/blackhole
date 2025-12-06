@@ -8,7 +8,7 @@ import type { GetCashOnDeliveryRegistry, GetOrder } from "cdek/src/types/api/res
 import type { RequestUpdateLead } from "@shevernitskiy/amo/src/api/lead/types";
 import type { RequestAddNote } from "@shevernitskiy/amo/src/api/note/types";
 import { stringDate } from "../utils/timestamp.function";
-import { SpendingsEntry } from "../google-sheets/spendings.sheet";
+import type { SpendingsEntry } from "../google-sheets/spendings.sheet";
 
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";

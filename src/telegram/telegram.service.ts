@@ -1,5 +1,5 @@
 import { Bot, Api, GrammyError, HttpError } from "grammy";
-import { Message } from "grammy/types";
+import type { Message } from "grammy/types";
 
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";

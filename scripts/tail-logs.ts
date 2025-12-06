@@ -53,9 +53,7 @@ if (!host || host === "") {
 
 console.log("Connecting to:", `${host}/log_viewer/tail${file ?? ""}`);
 
-const source = new EventSource(`${host}/log_viewer/tail${file ?? ""}`, {
-  https: { rejectUnauthorized: false },
-});
+const source = new EventSource(`${host}/log_viewer/tail${file ?? ""}`);
 
 source.onmessage = (ev) => {
   try {
@@ -86,7 +84,7 @@ source.onerror = (err) => {
   process.exit(1);
 };
 
-function level(level) {
+function level(level: string): [number, string] {
   switch (level) {
     case "debug":
       return [1, COLORS.FgGray];

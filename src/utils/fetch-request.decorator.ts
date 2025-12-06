@@ -1,4 +1,4 @@
-import { ExecutionContext, createParamDecorator } from "@nestjs/common";
+import { type ExecutionContext, createParamDecorator } from "@nestjs/common";
 
 export const FetchRequest = createParamDecorator((_data: never, ctx: ExecutionContext) => {
   const request = ctx.switchToHttp().getRequest();

@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { AMO } from "../amo/amo.constants";
 import { AmoService } from "../amo/amo.service";
-import { RequestAddComplex } from "@shevernitskiy/amo/src/api/lead/types";
+import type { RequestAddComplex } from "@shevernitskiy/amo/src/api/lead/types";
 
 export type RequestCloneLead = {
   lead_id: number;

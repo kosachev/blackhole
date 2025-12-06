@@ -1,5 +1,12 @@
-import { Injectable, MessageEvent } from "@nestjs/common";
-import { watchFile, unwatchFile, PathLike, createReadStream, readFileSync, Stats } from "node:fs";
+import { Injectable, type MessageEvent } from "@nestjs/common";
+import {
+  watchFile,
+  unwatchFile,
+  type PathLike,
+  createReadStream,
+  readFileSync,
+  Stats,
+} from "node:fs";
 import { Observable } from "rxjs";
 import type { Request } from "express";
 

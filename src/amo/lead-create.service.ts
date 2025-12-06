@@ -6,11 +6,11 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { TelegramService } from "../telegram/telegram.service";
-import {
+import type {
   RequestAddCatalogElement,
   RequestUpdateCatalogElement,
 } from "@shevernitskiy/amo/src/api/catalog/types";
-import { CustomFieldsValue, Tag } from "@shevernitskiy/amo/src/typings/entities";
+import type { CustomFieldsValue, Tag } from "@shevernitskiy/amo/src/typings/entities";
 
 import { AmoService } from "./amo.service";
 import { AMO } from "./amo.constants";
@@ -250,8 +250,8 @@ export class LeadCreateService {
     }
 
     this.logger.log(`LEAD_CREATE, success, lead_id: ${lead[0].id}, price: ${price}`);
-    const message = `💰 Новый заказ: <a href="https://${this.config.get<string>("AMO_DOMAIN")}/leads/detail/${lead[0].id}">${data.name}</a> (<b>${price}</b> руб.)\n\n${data.goods.map((item) => `${item.name} - ${item.quantity}шт`).join("\n")}`;
     // TODO: bring it back when lead_add notify will be erased
+    // const message = `💰 Новый заказ: <a href="https://${this.config.get<string>("AMO_DOMAIN")}/leads/detail/${lead[0].id}">${data.name}</a> (<b>${price}</b> руб.)\n\n${data.goods.map((item) => `${item.name} - ${item.quantity}шт`).join("\n")}`;
     // Promise.all([this.telegram.textToAdmin(message), this.telegram.textToManager(message)]);
   }
 

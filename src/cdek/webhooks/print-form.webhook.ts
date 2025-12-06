@@ -1,4 +1,4 @@
-import { UpdatePrintForm } from "cdek/src/types/api/webhook";
+import type { UpdatePrintForm } from "cdek/src/types/api/webhook";
 import { Injectable } from "@nestjs/common";
 import { AbstractWebhook } from "./abstract.webhook";
 
@@ -14,7 +14,7 @@ export class PrintFormWebhook extends AbstractWebhook {
 
       const { leadId, cdekNumber } = leadData;
 
-      const fileStream = await this.cdek.downloadOrderReceipt(data.uuid);
+      const fileStream = await this.cdek.downloadOrderReceiptByUUID(data.uuid);
       if (!fileStream) {
         throw new Error(`can't get file from CDEK, uuid: ${data.uuid}, leadId: ${leadId}`);
       }

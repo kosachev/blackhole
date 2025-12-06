@@ -1,4 +1,4 @@
-import { UpdateDownloadPhoto } from "cdek/src/types/api/webhook";
+import type { UpdateDownloadPhoto } from "cdek/src/types/api/webhook";
 import { Injectable, NotImplementedException } from "@nestjs/common";
 import { AbstractWebhook } from "./abstract.webhook";
 
