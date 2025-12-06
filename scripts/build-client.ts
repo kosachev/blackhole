@@ -1,7 +1,10 @@
 const TARGETS = [
-  { entry: "./client/main.ts", outfile: "gerda_userscript.js" },
-  { entry: "./client/shop.ts", outfile: "shop_userscript.js" },
-  { entry: "./client/gerdacollection.ts", outfile: "gerdacollection_userscript.js" },
+  { entry: "./apps/userscripts/amo/amo.ts", outfile: "gerda_userscript.js" },
+  { entry: "./apps/userscripts/gerda-msk/gerda-msk.ts", outfile: "shop_userscript.js" },
+  {
+    entry: "./apps/userscripts/gerdacollection/gerdacollection.ts",
+    outfile: "gerdacollection_userscript.js",
+  },
 ];
 
 const OUT_DIR = "./public";

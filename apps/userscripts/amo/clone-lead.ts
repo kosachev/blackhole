@@ -1,5 +1,5 @@
-import { BACKEND_BASE_URL, CFV, contactId, deliveryType, responsibleId, tags } from "./common";
-import { AMO } from "../src/amo/amo.constants";
+import { BACKEND_BASE_URL, CFV, contactId, deliveryType, responsibleId, tags } from "../common";
+import { AMO } from "../../../src/amo/amo.constants";
 
 type RequestCloneLead = {
   lead_id: number;

@@ -1,9 +1,9 @@
-import { AMO } from "../src/amo/amo.constants";
+import { AMO } from "../../../src/amo/amo.constants";
 import { CdekPickup } from "./cdek-pickup";
 import { DeliveryPrice } from "./delivery-price";
 import { ParialReturn } from "./partial-return";
 import { PrintPdf } from "./print-pdf";
-import { CFV, deliveryTariff, deliveryType, validateIndexCf, validatePVZCf } from "./common";
+import { CFV, deliveryTariff, deliveryType, validateIndexCf, validatePVZCf } from "../common";
 import { PVZPicker } from "./pvz-picker";
 import { LeadPrice } from "./lead-price";
 import { Permit } from "./permit";
@@ -68,7 +68,10 @@ export class Lead {
       if (Number.isInteger(gmt)) {
         const localtime = new Date(Date.now() - 3 * 3600 * 1000 + gmt * 3600 * 1000);
         el.val(
-          `${gmt > 0 ? "+" + gmt : gmt} ${localtime.getHours()}:${localtime.getMinutes().toString().padStart(2, "0")}`,
+          `${gmt > 0 ? "+" + gmt : gmt} ${localtime.getHours()}:${localtime
+            .getMinutes()
+            .toString()
+            .padStart(2, "0")}`,
         );
       }
     }

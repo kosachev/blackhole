@@ -1,5 +1,5 @@
-import { AMO } from "../src/amo/amo.constants";
-import { CFV, leadDiscount, leadGoods, setLeadPrice } from "./common";
+import { AMO } from "../../../src/amo/amo.constants";
+import { CFV, leadDiscount, leadGoods, setLeadPrice } from "../common";
 
 export class LeadPrice {
   readonly GOODS_LIST_SELECTOR = `div#${AMO.CATALOG.GOODS}.linked-form-holder.js-cf-group-wrapper.catalog_elements-in_card`;

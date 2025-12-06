@@ -1,5 +1,5 @@
-import { AMO } from "../src/amo/amo.constants";
-import { BACKEND_BASE_URL, CFV, deliveryType, validateIndexCf } from "./common";
+import { AMO } from "../../../src/amo/amo.constants";
+import { BACKEND_BASE_URL, CFV, deliveryType, validateIndexCf } from "../common";
 
 export class PVZPicker {
   readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/pvz_picker`;
@@ -53,7 +53,9 @@ export class PVZPicker {
   }
 
   private modal() {
-    let url = `${BACKEND_BASE_URL}/public/pvz.html?backend=${BACKEND_BASE_URL}&origin=${window.location.origin}&index=${CFV(AMO.CUSTOM_FIELD.INDEX).val()}`;
+    let url = `${BACKEND_BASE_URL}/public/pvz.html?backend=${BACKEND_BASE_URL}&origin=${
+      window.location.origin
+    }&index=${CFV(AMO.CUSTOM_FIELD.INDEX).val()}`;
     // const query = `${CFV(AMO.CUSTOM_FIELD.STREET).val()}, ${CFV(AMO.CUSTOM_FIELD.BUILDING).val()}`;
 
     // if (

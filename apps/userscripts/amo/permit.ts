@@ -1,4 +1,4 @@
-import { BACKEND_BASE_URL, CFV } from "./common";
+import { BACKEND_BASE_URL, CFV } from "../common";
 
 export class Permit {
   readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/permit`;

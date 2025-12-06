@@ -1,4 +1,4 @@
-import { AMO } from "../src/amo/amo.constants";
+import { AMO } from "../../../src/amo/amo.constants";
 import {
   BACKEND_BASE_URL,
   CFV,
@@ -6,7 +6,7 @@ import {
   deliveryType,
   leadGoods,
   validateIndexCf,
-} from "./common";
+} from "../common";
 
 export class DeliveryPrice {
   readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/delivery_price`;

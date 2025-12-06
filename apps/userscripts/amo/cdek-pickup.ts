@@ -1,5 +1,5 @@
-import { BACKEND_BASE_URL, CFV } from "./common";
-import { AMO } from "../src/amo/amo.constants";
+import { BACKEND_BASE_URL, CFV } from "../common";
+import { AMO } from "../../../src/amo/amo.constants";
 
 const defaultPickupTime = [
   { min: 9, max: 9, default: 9, can_choose: false },

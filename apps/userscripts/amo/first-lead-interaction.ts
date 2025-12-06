@@ -1,5 +1,5 @@
-import { BACKEND_BASE_URL, card, CFV } from "./common";
-import { AMO } from "../src/amo/amo.constants";
+import { BACKEND_BASE_URL, card, CFV } from "../common";
+import { AMO } from "../../../src/amo/amo.constants";
 
 type RequestData = {
   leadId: number;

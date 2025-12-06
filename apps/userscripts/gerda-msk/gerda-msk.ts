@@ -1,4 +1,4 @@
-import { BACKEND_BASE_URL } from "./common";
+import { BACKEND_BASE_URL } from "../common";
 
 console.warn("TEMPER MONKEY SCRIPT LOADED");
 
