@@ -17,6 +17,7 @@
     "build:client": "bun ./scripts/build-client.ts",
     "build:app:windows": "bun build ./src/main.ts --compile --target=bun-windows-x64 --outfile nest.exe --external @nestjs/microservices --external @nestjs/websockets",
     "build:app:linux": "bun build ./src/main.ts --compile --target=bun-linux-x64 --outfile nest --external @nestjs/microservices --external @nestjs/websockets",
+    "build:app:linux-aarch64": "bun build ./src/main.ts --compile --target=bun-linux-arm64 --outfile nest --external @nestjs/microservices --external @nestjs/websockets",
     "tail": "bun ./scripts/tail-logs.ts"
   },
   "dependencies": {
