@@ -54,7 +54,7 @@ jobs:
       #       ${{ runner.os }}-bun-
 
       - name: Install dependencies
-        run: bun install --cpu=arm64 --os=linux
+        run: bun install --frozen-lockfile --cpu=arm64 --os=linux
 
       - name: Build
         run: |
