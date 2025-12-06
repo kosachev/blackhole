@@ -59,10 +59,11 @@ jobs:
       - name: Build
         run: |
           if [ -n "${{ secrets.BACKEND }}" ]; then
-            bun build:app:linux --backend="${{ secrets.BACKEND }}"
+            bun build:client --backend="${{ secrets.BACKEND }}"
           else
-            bun build:app:linux
+            bun build:client
           fi
+          bun build:app:linux
 
       - name: Release #Делаем релиз
         uses: softprops/action-gh-release@v2

@@ -15,8 +15,8 @@
     "test:cov": "bun test --timeout=30000 --coverage ./test/cdek ./test/app.e2e-spec.ts",
     "boilerplate": "bun test --timeout=30000 ./test/boilerplate.spec.ts",
     "build:client": "bun ./scripts/build-client.ts",
-    "build:app:windows": "bun ./scripts/build-client.ts && bun build ./src/main.ts --compile --target=bun-windows-x64 --outfile nest.exe --external @nestjs/microservices --external @nestjs/websockets",
-    "build:app:linux": "bun ./scripts/build-client.ts && bun build ./src/main.ts --compile --target=bun-linux-x64 --outfile nest --external @nestjs/microservices --external @nestjs/websockets",
+    "build:app:windows": "bun build ./src/main.ts --compile --target=bun-windows-x64 --outfile nest.exe --external @nestjs/microservices --external @nestjs/websockets",
+    "build:app:linux": "bun build ./src/main.ts --compile --target=bun-linux-x64 --outfile nest --external @nestjs/microservices --external @nestjs/websockets",
     "tail": "bun ./scripts/tail-logs.ts"
   },
   "dependencies": {
