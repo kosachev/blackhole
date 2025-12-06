@@ -54,7 +54,7 @@ jobs:
       #       ${{ runner.os }}-bun-
 
       - name: Install dependencies
-        run: bun install
+        run: bun install --cpu=arm64 --os=linux
 
       - name: Build
         run: |
