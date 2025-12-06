@@ -57,14 +57,12 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build
-        env:
-          BACKEND_URL: ${{ secrets.BACKEND }}
         run: |
-          ARGS=""
-          if [ -n "$BACKEND_URL" ]; then
-            ARGS="--backend=$BACKEND_URL"
+          if [ -n "${{ secrets.BACKEND }}" ]; then
+            bun build:app:linux --backend="${{ secrets.BACKEND }}"
+          else
+            bun build:app:linux
           fi
-          bun build:app:linux $ARGS
 
       - name: Release #Делаем релиз
         uses: softprops/action-gh-release@v2
