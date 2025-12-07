@@ -43,7 +43,7 @@ export type CdekRegistryCheckResult =
 export class CdekRegistryCheckService {
   private readonly BATCH_SIZE = 5;
   private readonly LOOKBACK_DAYS = 14;
-  private readonly AMOUNT_DAYS = 10;
+  private readonly AMOUNT_DAYS = 14;
   private readonly PROCESS_REGISTRIES_FILE = resolve(process.cwd(), "./data/registries.json");
   private readonly MAX_PROCESS_REGISTRIES_SIZE = 100;
 
