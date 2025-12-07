@@ -1,33 +1,32 @@
 import "reflect-metadata";
-
-if (!process.env.NODE_ENV) {
-  console.error("❌ [Init] NODE_ENV is not set");
-  process.exit(1);
-} else {
-  console.log(`✅ [Init] Environment: ${process.env.NODE_ENV}`);
-}
-
-import { WinstonModule } from "nest-winston";
 import winston from "winston";
 import "winston-daily-rotate-file";
+import { WinstonModule } from "nest-winston";
 import { readFileSync } from "node:fs";
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { GlobalExceptionFilter } from "./utils/global-exception.filter";
+
+if (!process.env["NODE_ENV"]) {
+  console.error("❌ [Init] NODE_ENV is not set");
+  process.exit(1);
+} else {
+  console.log(`✅ [Init] Environment: ${process.env["NODE_ENV"]}`);
+}
 
 const timestamp_tz = () => new Date().toLocaleString("ru-RU", { timeZone: "Europe/Moscow" });
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     httpsOptions:
-      process.env.NODE_ENV === "production"
+      process.env["NODE_ENV"] === "production"
         ? {
-            key: readFileSync(process.env.SSL_KEY_PATH),
-            cert: readFileSync(process.env.SSL_CERT_PATH),
+            key: readFileSync(process.env["SSL_KEY_PATH"]),
+            cert: readFileSync(process.env["SSL_CERT_PATH"]),
           }
         : undefined,
     logger: WinstonModule.createLogger({
-      level: process.env.LOG_LEVEL ?? "debug",
+      level: process.env["LOG_LEVEL"] ?? "debug",
       transports: [
         new winston.transports.Console({
           format: winston.format.combine(
@@ -59,6 +58,6 @@ async function bootstrap() {
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.enableCors();
 
-  await app.listen(process.env.PORT ?? 6969);
+  await app.listen(process.env["PORT"] ?? 6969);
 }
 bootstrap();
