@@ -6,6 +6,7 @@ import { readFileSync } from "node:fs";
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { GlobalExceptionFilter } from "./utils/global-exception.filter";
+import { resolve } from "node:path";
 
 if (!process.env["NODE_ENV"]) {
   console.error("❌ [Init] NODE_ENV is not set");
@@ -21,8 +22,8 @@ async function bootstrap() {
     httpsOptions:
       process.env["NODE_ENV"] === "production"
         ? {
-            key: readFileSync(process.env["SSL_KEY_PATH"]),
-            cert: readFileSync(process.env["SSL_CERT_PATH"]),
+            key: readFileSync(resolve(process.cwd(), process.env["SSL_KEY_PATH"])),
+            cert: readFileSync(resolve(process.cwd(), process.env["SSL_CERT_PATH"])),
           }
         : undefined,
     logger: WinstonModule.createLogger({
@@ -60,4 +61,8 @@ async function bootstrap() {
 
   await app.listen(process.env["PORT"] ?? 6969);
 }
-bootstrap();
+
+bootstrap().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
