@@ -63,7 +63,7 @@ jobs:
           else
             bun build:client
           fi
-          bun build:app:linux-aarch64
+          bun build:app:linux-arm64
 
       - name: Release #Делаем релиз
         uses: softprops/action-gh-release@v2
