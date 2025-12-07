@@ -12,6 +12,7 @@ import type { SpendingsEntry } from "../google-sheets/spendings.sheet";
 
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
 
 type FailedOrder = {
   cdek_number: string;
@@ -43,7 +44,7 @@ export class CdekRegistryCheckService {
   private readonly BATCH_SIZE = 5;
   private readonly LOOKBACK_DAYS = 14;
   private readonly AMOUNT_DAYS = 10;
-  private readonly PROCESS_REGISTRIES_FILE = "./data/registries.json";
+  private readonly PROCESS_REGISTRIES_FILE = resolve(process.cwd(), "./data/registries.json");
   private readonly MAX_PROCESS_REGISTRIES_SIZE = 100;
 
   private readonly logger = new Logger(CdekRegistryCheckService.name);

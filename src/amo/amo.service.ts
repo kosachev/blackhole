@@ -1,4 +1,5 @@
 import { readFileSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
@@ -10,7 +11,9 @@ export class AmoService {
   private instance: Amo;
 
   constructor(private readonly config: ConfigService) {
-    const token = JSON.parse(readFileSync(this.config.get<string>("AMO_TOKEN_PATH"), "utf-8"));
+    const token = JSON.parse(
+      readFileSync(resolve(process.cwd(), this.config.get<string>("AMO_TOKEN_PATH")), "utf-8"),
+    );
 
     this.instance = new Amo(
       this.config.get<string>("AMO_DOMAIN"),
@@ -23,7 +26,7 @@ export class AmoService {
       {
         on_token: (new_token) => {
           writeFileSync(
-            this.config.get<string>("AMO_TOKEN_PATH"),
+            resolve(process.cwd(), this.config.get<string>("AMO_TOKEN_PATH")),
             JSON.stringify(new_token, null, 2),
             "utf-8",
           );
