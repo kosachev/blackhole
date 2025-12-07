@@ -2,10 +2,12 @@ import { ForbiddenException, Injectable, Logger } from "@nestjs/common";
 
 import { AmoService } from "../../amo/amo.service";
 import { NotificationPayment } from "../lib/core/webhook";
-import { AMO } from "src/amo/amo.constants";
+import { AMO } from "../../amo/amo.constants";
 import { RequestUpdateLead } from "@shevernitskiy/amo/src/api/lead/types";
 import { TBankService } from "../tbank.service";
+import { TelegramService } from "../../telegram/telegram.service";
 import { timestamp } from "../../utils/timestamp.function";
+import { ConfigService } from "@nestjs/config";
 
 const STATUS_DESCRIPTION = {
   CONFIRMED: "Платеж оплачен",
@@ -33,8 +35,10 @@ export class NotificationPaymentWebhook {
   private readonly logger = new Logger(TBankService.name);
 
   constructor(
+    private readonly config: ConfigService,
     private readonly amo: AmoService,
     private readonly tbankService: TBankService,
+    private readonly telegram: TelegramService,
   ) {}
 
   async handler(data: NotificationPayment): Promise<void> {
@@ -67,6 +71,9 @@ export class NotificationPaymentWebhook {
           statusId: AMO.STATUS.PAYMENT,
           tag: AMO.TAG.DELIVERY_PAID,
         });
+        await this.telegram.textToManager(
+          `✅ Банк: <a href="https://${this.config.get<string>("AMO_DOMAIN")}/leads/detail/${leadId}">${leadId}</a>`,
+        );
         break;
       }
       case "CANCELED":
