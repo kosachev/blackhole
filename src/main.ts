@@ -1,4 +1,21 @@
 import "reflect-metadata";
+import { config } from "dotenv";
+
+if (!process.env["NODE_ENV"]) {
+  console.error("❌ [Init] NODE_ENV is not set");
+  process.exit(1);
+} else {
+  console.log(`✅ [Init] Environment: ${process.env["NODE_ENV"]}`);
+}
+
+if (process.env["NODE_ENV"] === "production") {
+  config({ path: resolve(process.cwd(), ".env.production") });
+} else if (process.env["NODE_ENV"] === "development") {
+  config({ path: resolve(process.cwd(), ".env.development") });
+} else {
+  config({ path: resolve(process.cwd(), ".env.example") });
+}
+
 import winston from "winston";
 import "winston-daily-rotate-file";
 import { WinstonModule } from "nest-winston";
@@ -7,13 +24,6 @@ import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { GlobalExceptionFilter } from "./utils/global-exception.filter";
 import { resolve } from "node:path";
-
-if (!process.env["NODE_ENV"]) {
-  console.error("❌ [Init] NODE_ENV is not set");
-  process.exit(1);
-} else {
-  console.log(`✅ [Init] Environment: ${process.env["NODE_ENV"]}`);
-}
 
 const timestamp_tz = () => new Date().toLocaleString("ru-RU", { timeZone: "Europe/Moscow" });
 
