@@ -1,12 +1,18 @@
 import "reflect-metadata";
+
+if (!process.env.NODE_ENV) {
+  console.error("❌ [Init] NODE_ENV is not set");
+  process.exit(1);
+} else {
+  console.log(`✅ [Init] Environment: ${process.env.NODE_ENV}`);
+}
+
 import { WinstonModule } from "nest-winston";
 import winston from "winston";
 import "winston-daily-rotate-file";
 import { readFileSync } from "node:fs";
-
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
-
 import { GlobalExceptionFilter } from "./utils/global-exception.filter";
 
 const timestamp_tz = () => new Date().toLocaleString("ru-RU", { timeZone: "Europe/Moscow" });
@@ -29,7 +35,11 @@ async function bootstrap() {
             winston.format.timestamp({ format: timestamp_tz }),
             winston.format.printf(
               (item) =>
-                `${item.timestamp} ${item.level} ${item.context ? "[" + item.context + "]" : ""}: ${item.message ?? ""}${item.data ? "\n" + JSON.stringify(item.data, null, 2) : ""}${item.stack ? "\n" + JSON.stringify(item.stack, null, 2) : ""}`,
+                `${item.timestamp} ${item.level} ${item.context ? "[" + item.context + "]" : ""}: ${
+                  item.message ?? ""
+                }${item.data ? "\n" + JSON.stringify(item.data, null, 2) : ""}${
+                  item.stack ? "\n" + JSON.stringify(item.stack, null, 2) : ""
+                }`,
             ),
           ),
         }),

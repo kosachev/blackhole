@@ -11,9 +11,9 @@
     "start:debug": "bun run --debug --hot ./src/main.ts",
     "start:prod": "bun build:client && bun start",
     "lint": "oxlint \"{src,apps,libs,test,scripts}/**/*.ts\" --fix",
-    "test:all": "bun test --timeout=30000 ./test/cdek ./test/app.e2e-spec.ts",
-    "test:cov": "bun test --timeout=30000 --coverage ./test/cdek ./test/app.e2e-spec.ts",
-    "boilerplate": "bun test --timeout=30000 ./test/boilerplate.spec.ts",
+    "test:all": "bun test --env-file=.env.example --timeout=30000 ./test/cdek ./test/app.e2e-spec.ts",
+    "test:cov": "bun test --env-file=.env.example --timeout=30000 --coverage ./test/cdek ./test/app.e2e-spec.ts",
+    "boilerplate": "bun test --env-file=.env.development --timeout=30000 ./test/boilerplate.spec.ts",
     "build:client": "bun ./scripts/build-client.ts",
     "build:app:windows": "bun build ./src/main.ts --compile --target=bun-windows-x64 --outfile nest.exe --external @nestjs/microservices --external @nestjs/websockets --external @css-inline/css-inline",
     "build:app:linux": "bun build ./src/main.ts --compile --target=bun-linux-x64 --outfile nest --external @nestjs/microservices --external @nestjs/websockets --external @css-inline/css-inline",
@@ -21,7 +21,6 @@
     "tail": "bun ./scripts/tail-logs.ts"
   },
   "dependencies": {
-    "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/common": "^11.1.9",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.9",
@@ -56,6 +55,7 @@
     "@types/express": "^5.0.6",
     "@types/jquery": "^3.5.33",
     "@types/node": "^24.10.1",
+    "@types/nodemailer": "^7.0.4",
     "@types/tar-fs": "^2.0.4",
     "eventsource": "^4.1.0",
     "msw": "^2.12.4",

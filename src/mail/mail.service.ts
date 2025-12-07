@@ -1,8 +1,8 @@
-import { MailerService } from "@nestjs-modules/mailer";
 import { ConfigService } from "@nestjs/config";
 import { Injectable } from "@nestjs/common";
 import { ImapFlow } from "imapflow";
 import Handlebars from "handlebars";
+import nodemailer from "nodemailer";
 
 import invoiceCdekV2 from "../../templates/invoice-cdek-v2.hbs" with { type: "text" };
 import invoicePostV2 from "../../templates/invoice-post-v2.hbs" with { type: "text" };
@@ -46,11 +46,9 @@ type OrderSendParams = {
 @Injectable()
 export class MailService {
   private templates: Map<string, HandlebarsTemplateDelegate<any>>;
+  private mailer: nodemailer.Transporter;
 
-  constructor(
-    private config: ConfigService,
-    private mailer: MailerService,
-  ) {
+  constructor(private config: ConfigService) {
     this.templates = new Map<string, HandlebarsTemplateDelegate<any>>([
       ["./invoice-cdek-v2.hbs", Handlebars.compile(invoiceCdekV2)],
       ["./invoice-post-v2.hbs", Handlebars.compile(invoicePostV2)],
@@ -58,14 +56,20 @@ export class MailService {
       ["./order-post-send-v2.hbs", Handlebars.compile(orderPostSendV2)],
       ["./prepayment-confirm-v2.hbs", Handlebars.compile(prepaymentConfirmV2)],
     ]);
+
+    this.mailer = nodemailer.createTransport({
+      host: this.config.get<string>("MAIL_HOST"),
+      port: this.config.get<number>("MAIL_PORT"),
+      secure: true,
+      ignoreTLS: false,
+      auth: {
+        user: this.config.get<string>("MAIL_USER"),
+        pass: this.config.get<string>("MAIL_PASSWORD"),
+      },
+    });
   }
 
-  async imap(params: {
-    to: string;
-    subject: string;
-    template: string;
-    context: any;
-  }): Promise<void> {
+  async imap(params: { from: string; to: string; subject: string; html: string }): Promise<void> {
     const client = new ImapFlow({
       host: this.config.get("MAIL_IMAP_HOST"),
       port: this.config.get("MAIL_IMAP_PORT"),
@@ -81,7 +85,6 @@ export class MailService {
     try {
       await client.connect();
 
-      const html = this.templates.get(params.template)(params.context);
       const messageSource = [
         "MIME-Version: 1.0",
         "Content-Type: text/html; charset=UTF-8",
@@ -89,7 +92,7 @@ export class MailService {
         `To: <${params.to}>`,
         `Subject: ${params.subject}`,
         "",
-        html,
+        params.html,
       ].join("\r\n");
       const folderPath = this.config.get("MAIL_IMAP_PATH");
 
@@ -133,14 +136,16 @@ export class MailService {
         ? params.total_price * (1 - discount_value / 100)
         : params.total_price - discount_value;
 
+    const template =
+      params.delivery_type === "Экспресс по России"
+        ? "./invoice-cdek-v2.hbs"
+        : "./invoice-post-v2.hbs";
+
     const mail = {
+      from: `"${this.config.get("OWNER_SELLER_NAME")}" <${this.config.get("MAIL_FROM")}>`,
       to: params.email,
       subject: "Реквизиты для оплаты заказа №" + params.order_number,
-      template:
-        params.delivery_type === "Экспресс по России"
-          ? "./invoice-cdek-v2.hbs"
-          : "./invoice-post-v2.hbs",
-      context: {
+      html: this.templates.get(template)({
         name: params.name,
         address: params.address,
         phone: params.phone,
@@ -154,7 +159,7 @@ export class MailService {
         prepayment: params.prepayment,
         PaymentURL: params.PaymentURL,
         is_gerdacollection: params.is_gerdacollection || false,
-      },
+      }),
     };
 
     await Promise.all([this.mailer.sendMail(mail), this.imap(mail)]);
@@ -162,32 +167,34 @@ export class MailService {
 
   async prepaymentConfirm(params: PaymentConfirmParams) {
     const mail = {
+      from: `"${this.config.get("OWNER_SELLER_NAME")}" <${this.config.get("MAIL_FROM")}>`,
       to: params.email,
       subject: "Оплата заказа №" + params.order_number,
-      template: "./prepayment-confirm-v2.hbs",
-      context: {
+      html: this.templates.get("./prepayment-confirm-v2.hbs")({
         order_number: params.order_number,
         is_gerdacollection: params.is_gerdacollection || false,
-      },
+      }),
     };
 
     await Promise.all([this.mailer.sendMail(mail), this.imap(mail)]);
   }
 
   async orderSend(params: OrderSendParams) {
+    const template =
+      params.delivery_type === "Экспресс по России"
+        ? "./order-cdek-send-v2.hbs"
+        : "./order-post-send-v2.hbs";
+
     const mail = {
+      from: `"${this.config.get("OWNER_SELLER_NAME")}" <${this.config.get("MAIL_FROM")}>`,
       to: params.email,
       subject: "Заказ №" + params.order_number + " отправлен",
-      template:
-        params.delivery_type === "Экспресс по России"
-          ? "./order-cdek-send-v2.hbs"
-          : "./order-post-send-v2.hbs",
-      context: {
+      html: this.templates.get(template)({
         order_number: params.order_number,
         track_code: params.track_code,
         delivery_type: params.delivery_type,
         is_gerdacollection: params.is_gerdacollection || false,
-      },
+      }),
     };
 
     await Promise.all([this.mailer.sendMail(mail), this.imap(mail)]);

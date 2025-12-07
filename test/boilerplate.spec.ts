@@ -10,12 +10,12 @@ describe("Boilerplate", () => {
   let service: AmoService;
 
   beforeAll(async () => {
-    const mobuldeRef = await Test.createTestingModule({
+    const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
 
-    app = mobuldeRef.createNestApplication();
-    service = mobuldeRef.get<AmoService>(AmoService);
+    app = moduleRef.createNestApplication();
+    service = moduleRef.get<AmoService>(AmoService);
 
     await app.init();
   });
