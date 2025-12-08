@@ -12,3 +12,5 @@ declare module "*.pdf" {
   const content: string;
   export default content;
 }
+
+declare const VERSION: string;

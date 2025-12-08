@@ -24,7 +24,7 @@ import { TBankModule } from "./tbank/tbank.module";
     AmoModule,
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({
-      envFilePath: [".env.production", ".env.development", ".env.example"],
+      envFilePath: [".env.prod", ".env.dev", ".env.example"],
       isGlobal: true,
     }),
     TildaModule,

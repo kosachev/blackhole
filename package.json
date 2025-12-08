@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "type": "module",
   "scripts": {
-    "start": "NODE_ENV=development bun run --no-env-file ./src/main.ts",
+    "start": "bun run --no-env-file ./src/main.ts",
     "start:debug": "bun run --no-env-file --debug --hot ./src/main.ts",
     "start:prod": "bun build:client && bun start",
     "lint": "oxlint \"{src,apps,libs,test,scripts}/**/*.ts\" --fix",
