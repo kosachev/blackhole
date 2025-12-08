@@ -33,11 +33,11 @@ export class AmoService {
           if (error instanceof NoContentError) {
             return;
           } else if (error instanceof ApiError || error instanceof AuthError) {
-            this.logger.error(error.message, error.response);
+            this.logger.error(error.message, error.stack, error.response);
           } else if (error instanceof HttpError) {
             this.logger.error(error.message, error.stack);
           } else {
-            this.logger.error("Unknown error", error);
+            this.logger.error("Unknown error", error.stack);
           }
         },
       },
