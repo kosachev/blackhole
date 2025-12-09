@@ -171,7 +171,8 @@ export class OrderStatusWebhook extends AbstractWebhook {
             +data.attributes.number,
             "Возврат выдан на доставку курьеру. Принять возврат",
           );
-          this.cdekReturnRecieved(data.attributes.number);
+          // TODO: move back when CDEK hooks will be fixed
+          //this.cdekReturnRecieved(data.attributes.number);
           break;
         }
         if (!data.attributes.status_reason_code) {
