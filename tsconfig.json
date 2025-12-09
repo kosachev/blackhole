@@ -33,9 +33,6 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-
-    // Path aliases
-    "baseUrl": "./"
+    "esModuleInterop": true
   }
 }
