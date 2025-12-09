@@ -18,6 +18,7 @@ import {
   FirstLeadInteractionService,
   type RequestFirstTimeInteraction,
 } from "./first-lead-interaction.service";
+import { PaymentCancelService, type RequestPaymentCancel } from "./payment-cancel.service";
 
 @Controller("web")
 @UseFilters(GlobalExceptionFilter)
@@ -32,6 +33,7 @@ export class WebController {
     private readonly address_sanitizer: AddressSanitizerService,
     private readonly clone_lead: CloneLeadService,
     private readonly first_lead_interaction: FirstLeadInteractionService,
+    private readonly payment_cancel: PaymentCancelService,
   ) {}
 
   @Post("partial_return")
@@ -90,5 +92,10 @@ export class WebController {
   @Post("first_lead_interaction")
   async firstLeadInteraction(@Body() data: RequestFirstTimeInteraction) {
     return this.first_lead_interaction.handler(data);
+  }
+
+  @Post("payment_cancel")
+  async paymentCancel(@Body() data: RequestPaymentCancel) {
+    return this.payment_cancel.handler(data);
   }
 }

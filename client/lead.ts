@@ -11,6 +11,7 @@ import { AddressSanitizer } from "./address-sanitizer";
 import { Modal } from "./modal";
 import { CloneLead } from "./clone-lead";
 import { FirstLeadInteraction } from "./first-lead-interaction";
+import { PaymentCancel } from "./payment-cancel";
 
 export class Lead {
   private to_destruct: CallableFunction[] = [];
@@ -30,6 +31,7 @@ export class Lead {
     const address_sanitizer = new AddressSanitizer(lead_id);
     const _clone_lead = new CloneLead(lead_id);
     const _first_lead_interaction = new FirstLeadInteraction(lead_id);
+    const payment_cancel = new PaymentCancel(lead_id);
 
     this.timezone();
     this.deleteCompanyField();
@@ -47,6 +49,7 @@ export class Lead {
       lead_price.destructor();
       permit.destructor();
       address_sanitizer.destructor();
+      payment_cancel.destructor();
     });
   }
 

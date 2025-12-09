@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { TBank } from "./lib/tbank";
 import type { InitPaymentResponse } from "./lib/api/make-payment";
+import type { CancelPaymentResponse } from "./lib/api/cancel-payment";
 
 @Injectable()
 export class TBankService {
@@ -34,6 +35,13 @@ export class TBankService {
       Amount: data.amount * 100,
       Description: data.description,
       RedirectDueDate: `${date.toISOString().slice(0, 19)}+03:00`,
+    });
+  }
+
+  cancelPayment(paymentId: string): Promise<CancelPaymentResponse> {
+    return this.client.cancelPayment.cancelPayment({
+      TerminalKey: this.terminalKey,
+      PaymentId: paymentId,
     });
   }
 }
