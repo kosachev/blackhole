@@ -542,6 +542,35 @@ OrderId: ${payment.OrderId}
       if (loss_reason) {
         lead.data.loss_reason_id = loss_reason;
       }
+
+      // TODO: remove when CDEK hooks will be fixed
+      try {
+        const result = await this.googleSheets.sales.cdekReturnRecieved(lead.data.id.toString());
+
+        lead.note(
+          result.updatedEntries > 0
+            ? `✅ Google Sheets: обновлено строк - ${result.updatedEntries}`
+            : `⚠️ Google Sheets: 0 строк обновлено`,
+        );
+
+        if (result.updatedEntries > 0) {
+          this.logger.log(
+            `UPDATE_LEAD, leadId: ${lead.data.id}, found entries: ${result.foundEntries}, updated entries: ${result.updatedEntries}`,
+            "GoogleSheets",
+          );
+        } else {
+          this.logger.warn(
+            `UPDATE_LEAD, leadId: ${lead.data.id}, found entries: ${result.foundEntries}, updated entries: ${result.updatedEntries}`,
+            "GoogleSheets",
+          );
+        }
+      } catch (error) {
+        this.logger.error(
+          `UPDATE_LEAD_ERROR, leadId: ${lead.data.id}, error: ${error.message}`,
+          "GoogleSheets",
+        );
+        lead.note(`❌ Google Sheets: Ошибка при обновлении сделки\n${error.message}`);
+      }
     }
   }
 
