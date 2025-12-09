@@ -3,7 +3,6 @@ import { CdekService } from "./cdek.service";
 import { AmoService } from "../amo/amo.service";
 import { AMO } from "../amo/amo.constants";
 import { Cron } from "@nestjs/schedule";
-import { timestamp } from "../utils/timestamp.function";
 
 @Injectable()
 export class CdekPvzCheckService {
