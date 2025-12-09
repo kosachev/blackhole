@@ -86,4 +86,4 @@ jobs:
         run: ssh-keyscan -p ${{ secrets.DEPLOY_PORT }} -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
 
       - name: Execute SSH command
-        run: ssh -p ${{ secrets.DEPLOY_PORT }} ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "chmod 777 /volume1/web/nest/bunapp; bunrestart "
+        run: ssh -p ${{ secrets.DEPLOY_PORT }} ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "chmod 777 /volume1/web/nest/bunapp; sudo systemctl restart bun"
