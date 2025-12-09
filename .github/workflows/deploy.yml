@@ -27,10 +27,10 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Bump #Поднимаем версию
-        run: |
-          bunx npm version  ${{ inputs.bump-type }} --no-git-tag-version
-          echo VERSION=$(bunx npm pkg get version | tr -d '"') >> $GITHUB_ENV
+      # - name: Bump #Поднимаем версию
+      #   run: |
+      #     bunx npm version  ${{ inputs.bump-type }} --no-git-tag-version
+      #     echo VERSION=$(bunx npm pkg get version | tr -d '"') >> $GITHUB_ENV
 
       # - name: Commit version bump #Коммитим новую версию
       #   run: |
@@ -57,14 +57,14 @@ jobs:
           fi
           bun build:app:linux-arm64 --define VERSION='"${{ env.VERSION }}"'
 
-      - name: Release #Делаем релиз
-        uses: softprops/action-gh-release@v2
-        with:
-          name: ${{ env.VERSION }}
-          tag_name: ${{ env.VERSION }}
-          generate_release_notes: true
-          draft: true # Черновик
-          files: nest
+      # - name: Release #Делаем релиз
+      #   uses: softprops/action-gh-release@v2
+      #   with:
+      #     name: ${{ env.VERSION }}
+      #     tag_name: ${{ env.VERSION }}
+      #     generate_release_notes: true
+      #     draft: true # Черновик
+      #     files: nest
 
       - name: RSYNC #RSYNC 7.0.1 с исключениями
         uses: burnett01/rsync-deployments@7.0.1
