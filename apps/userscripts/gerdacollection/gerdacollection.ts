@@ -1,4 +1,4 @@
-import { BACKEND_BASE_URL } from "./common";
+import { BACKEND_BASE_URL } from "../common";
 
 console.warn("TEMPER MONKEY SCRIPT LOADED");
 
@@ -118,7 +118,13 @@ async function sendData(): Promise<void> {
 }
 
 function tildaProductToString({ name, sku, price }: TildaProduct, result?: boolean): string {
-  return `${name}\nАртикул: ${sku}\nЦена: ${price}${result === false ? "\n\nРезультат: ❌ ОШИБКА" : result === true ? "\n\nРезультат: ✅ УСПЕШНО\n\nАртикул скопирован в буфер обмена" : ""}`;
+  return `${name}\nАртикул: ${sku}\nЦена: ${price}${
+    result === false
+      ? "\n\nРезультат: ❌ ОШИБКА"
+      : result === true
+      ? "\n\nРезультат: ✅ УСПЕШНО\n\nАртикул скопирован в буфер обмена"
+      : ""
+  }`;
 }
 
 let tildaProduct = parseData();

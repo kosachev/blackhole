@@ -1,0 +1,6 @@
+[console]
+depth = 10
+
+[test]
+root = "./test"
+timeout = 30000

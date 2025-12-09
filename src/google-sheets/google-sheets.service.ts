@@ -1,6 +1,6 @@
 import { JWT } from "google-auth-library";
 import { GoogleSpreadsheet } from "google-spreadsheet";
-import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import { Injectable, Logger, type OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { SalesSheet } from "./sales.sheet";
 import { SpendingsSheet } from "./spendings.sheet";

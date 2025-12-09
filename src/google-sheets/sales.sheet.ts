@@ -117,7 +117,7 @@ export class SalesSheet {
     const request = [];
 
     for (const good of lead.goods) {
-      const sizePattern = good.name.match(/размер:\s*([A-Za-zА-Яа-я0-9\/\-]+)/imu);
+      const sizePattern = good.name.match(/:\s*([A-Za-zА-Яа-я0-9\/\-]+)/imu);
 
       for (let i = 0; i < (good.quantity ?? 1); i++)
         request.push(

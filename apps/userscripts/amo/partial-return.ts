@@ -1,5 +1,5 @@
-import { AMO } from "../src/amo/amo.constants";
-import { BACKEND_BASE_URL, CFV, leadGoods } from "./common";
+import { AMO } from "../../../src/amo/amo.constants";
+import { BACKEND_BASE_URL, CFV, leadGoods } from "../common";
 
 type Good = {
   id: number;

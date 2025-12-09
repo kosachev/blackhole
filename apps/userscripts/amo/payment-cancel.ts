@@ -1,5 +1,5 @@
-import { AMO } from "../src/amo/amo.constants";
-import { BACKEND_BASE_URL, CFV } from "./common";
+import { AMO } from "../../../src/amo/amo.constants";
+import { BACKEND_BASE_URL, CFV } from "../common";
 
 export class PaymentCancel {
   readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/payment_cancel`;

@@ -1,12 +1,12 @@
-import { UpdateOrderStatus } from "cdek/src/types/api/webhook";
+import type { UpdateOrderStatus } from "cdek/src/types/api/webhook";
 
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
-import { EntityLink, Task } from "@shevernitskiy/amo";
+import type { EntityLink, Task } from "@shevernitskiy/amo";
 import { AbstractWebhook } from "./abstract.webhook";
 import { AMO } from "../../amo/amo.constants";
 import { stringDate, timestamp } from "../../utils/timestamp.function";
 import { LeadHelper } from "../../amo/helpers/lead.helper";
-import { type SalesUpdateResult } from "../../google-sheets/sales.sheet";
+import type { SalesUpdateResult } from "../../google-sheets/sales.sheet";
 
 const status_reason_code = {
   "1": " по причине неверного адреса (1)",

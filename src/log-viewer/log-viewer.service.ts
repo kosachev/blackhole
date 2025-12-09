@@ -1,5 +1,13 @@
-import { Injectable, MessageEvent } from "@nestjs/common";
-import { watchFile, unwatchFile, PathLike, createReadStream, readFileSync, Stats } from "node:fs";
+import { Injectable, type MessageEvent } from "@nestjs/common";
+import {
+  watchFile,
+  unwatchFile,
+  type PathLike,
+  createReadStream,
+  readFileSync,
+  Stats,
+} from "node:fs";
+import { resolve } from "node:path";
 import { Observable } from "rxjs";
 import type { Request } from "express";
 
@@ -14,7 +22,7 @@ export class LogViewerService {
 
     return new Observable<MessageEvent>((subscriber) => {
       if (preload) {
-        const content = readFileSync(file, { encoding: "utf8" });
+        const content = readFileSync(resolve(process.cwd(), file), { encoding: "utf8" });
         content.split("\n").forEach((line) => subscriber.next({ data: line }));
       }
       const listener = async (curr: Stats, prev: Stats) => {
@@ -23,7 +31,7 @@ export class LogViewerService {
           .split("\n")
           .forEach((line) => subscriber.next({ data: line }));
       };
-      watchFile(file, listener);
+      watchFile(resolve(process.cwd(), file), listener);
       req.on("close", () => unwatchFile(file, listener));
     });
   }

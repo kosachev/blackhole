@@ -1,27 +1,27 @@
-import { promises as fs } from "node:fs";
 import { PDFDocument, PageSizes } from "pdf-lib";
 
 import fontkit from "@pdf-lib/fontkit";
-import { Invoice, fillInvoice } from "./invoice.form";
-import { Post112ep, post112p } from "./post112ep.form";
-import { Post7p, post7p } from "./post7p.form";
+import { type Invoice, fillInvoice } from "./invoice.form";
+import { type Post112ep, post112p } from "./post112ep.form";
+import { type Post7p, post7p } from "./post7p.form";
 
 export type FieldsMap<T> = Record<keyof T, { font_size: number; field_name: string }>;
 export type Form<T> = {
-  data: Promise<Buffer>;
+  data: ArrayBuffer;
   fileds_map: FieldsMap<T>;
 };
 
 export class PDFBuilder {
-  private font_data: Promise<Buffer>;
-  private font_bold_data: Promise<Buffer>;
+  private font_data: ArrayBuffer;
+  private font_bold_data: ArrayBuffer;
 
-  constructor(
-    private readonly font_path: string,
-    private readonly font_bold_path: string,
-  ) {
-    this.font_data = fs.readFile(font_path);
-    this.font_bold_data = fs.readFile(font_bold_path);
+  private constructor() {}
+
+  static async create(font_path: string, font_bold_path: string): Promise<PDFBuilder> {
+    const instance = new PDFBuilder();
+    instance.font_data = await Bun.file(font_path).arrayBuffer();
+    instance.font_bold_data = await Bun.file(font_bold_path).arrayBuffer();
+    return instance;
   }
 
   async fillPdf<T extends Record<string, string>>(
@@ -31,7 +31,7 @@ export class PDFBuilder {
   ): Promise<PDFDocument> {
     const doc = await PDFDocument.load(pdf);
     doc.registerFontkit(fontkit);
-    const font = await doc.embedFont(await this.font_data, { subset: true });
+    const font = await doc.embedFont(this.font_data, { subset: true });
     const form = doc.getForm();
     for (const [key, value] of Object.entries(params)) {
       if (!value) continue;
@@ -55,26 +55,26 @@ export class PDFBuilder {
   }
 
   async fillPost7p(params: Post7p): Promise<Uint8Array> {
-    return (await this.fillPdf<Post7p>(params, post7p.fileds_map, await post7p.data)).save();
+    return (await this.fillPdf<Post7p>(params, post7p.fileds_map, post7p.data)).save();
   }
 
   async fillPost112ep(params: Post112ep): Promise<Uint8Array> {
-    return (await this.fillPdf<Post112ep>(params, post112p.fileds_map, await post112p.data)).save();
+    return (await this.fillPdf<Post112ep>(params, post112p.fileds_map, post112p.data)).save();
   }
 
   async fillPost7pDoc(params: Post7p): Promise<PDFDocument> {
-    return this.fillPdf<Post7p>(params, post7p.fileds_map, await post7p.data);
+    return this.fillPdf<Post7p>(params, post7p.fileds_map, post7p.data);
   }
 
   async fillPost112epDoc(params: Post112ep): Promise<PDFDocument> {
-    return this.fillPdf<Post112ep>(params, post112p.fileds_map, await post112p.data);
+    return this.fillPdf<Post112ep>(params, post112p.fileds_map, post112p.data);
   }
 
   async fillInvoice(params: Invoice): Promise<Uint8Array> {
     const doc = await PDFDocument.create();
     doc.registerFontkit(fontkit);
-    const font = await doc.embedFont(await this.font_data, { subset: true });
-    const font_bold = await doc.embedFont(await this.font_bold_data, { subset: true });
+    const font = await doc.embedFont(this.font_data, { subset: true });
+    const font_bold = await doc.embedFont(this.font_bold_data, { subset: true });
     const page = doc.addPage(PageSizes.A4);
     fillInvoice(page, params, font, font_bold);
     return doc.save();

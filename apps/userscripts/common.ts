@@ -1,4 +1,4 @@
-import { AMO } from "../src/amo/amo.constants";
+import { AMO } from "../../src/amo/amo.constants";
 
 declare global {
   interface Window {

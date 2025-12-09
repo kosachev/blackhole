@@ -1,0 +1,16 @@
+declare module "*.hbs" {
+  const content: string;
+  export default content;
+}
+
+declare module "*.ttf" {
+  const content: string;
+  export default content;
+}
+
+declare module "*.pdf" {
+  const content: string;
+  export default content;
+}
+
+declare const VERSION: string;

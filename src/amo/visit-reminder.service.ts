@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
-import { Task } from "@shevernitskiy/amo";
+import type { Task } from "@shevernitskiy/amo";
 
 import { AmoService } from "./amo.service";
 import { AMO } from "./amo.constants";
