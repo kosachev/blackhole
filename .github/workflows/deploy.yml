@@ -66,7 +66,7 @@ jobs:
       #     draft: true # Черновик
       #     files: nest
 
-      - name: RSYNC #RSYNC 7.0.1 с исключениями
+      - name: RSYNC #RSYNC 7.0.1
         uses: burnett01/rsync-deployments@7.0.1
         with:
           switches: -avzr
@@ -86,4 +86,4 @@ jobs:
         run: ssh-keyscan -p ${{ secrets.DEPLOY_PORT }} -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
 
       - name: Execute SSH command
-        run: ssh -p ${{ secrets.DEPLOY_PORT }} ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "chmod 777 /volume1/web/nest/nest"
+        run: ssh -p ${{ secrets.DEPLOY_PORT }} ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "chmod 777 /volume1/web/nest/bunapp; bunrestart;"
