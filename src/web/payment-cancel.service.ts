@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { AMO } from "../amo/amo.constants";
 import { AmoService } from "../amo/amo.service";
-import { TBankService } from "src/tbank/tbank.service";
+import { TBankService } from "../tbank/tbank.service";
 
 export type RequestPaymentCancel = {
   leadId: number;
