@@ -72,7 +72,7 @@ export class NotificationPaymentWebhook {
           tag: AMO.TAG.DELIVERY_PAID,
         });
         await this.telegram.textToManager(
-          `✅ Банк: <a href="https://${this.config.get<string>("AMO_DOMAIN")}/leads/detail/${leadId}">${leadId}</a>`,
+          `✅ Банк: ${STATUS_DESCRIPTION[data.Status]} - <a href="https://${this.config.get<string>("AMO_DOMAIN")}/leads/detail/${leadId}">${leadId}</a>`,
         );
         break;
       }
@@ -101,6 +101,9 @@ export class NotificationPaymentWebhook {
           level: "⚠️",
           task: "Оплата просрочена. Связаться с клиентом. Перевыставить счет",
         });
+        await this.telegram.textToManager(
+          `⚠️ Банк: ${STATUS_DESCRIPTION[data.Status]} - <a href="https://${this.config.get<string>("AMO_DOMAIN")}/leads/detail/${leadId}">${leadId}</a>`,
+        );
         break;
       }
       default: {

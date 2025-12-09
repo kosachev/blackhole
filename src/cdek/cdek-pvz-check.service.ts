@@ -38,21 +38,18 @@ export class CdekPvzCheckService {
     statuses = statuses.filter((item) => {
       const duration = Date.now() - item.date.getTime();
       return (
-        duration > 1000 * 3600 * 24 * 3 && // duration between 3 days
-        duration < 1000 * 3600 * 24 * 4 && // and 4 days
+        duration > 1000 * 3600 * 24 * 4 && // duration between 4 days
+        duration < 1000 * 3600 * 24 * 5 && // and 5 days
         item.code === "ACCEPTED_AT_PICK_UP_POINT"
       );
     });
     if (statuses.length === 0) return;
 
-    await this.amo.client.task.addTasks(
+    await this.amo.client.salesbot.runTask(
       statuses.map((item) => ({
+        bot_id: AMO.SALESBOT.END_OF_KEEP_AT_PVZ,
+        entity_type: 2,
         entity_id: item.lead_id,
-        entity_type: "leads",
-        complete_till: timestamp("today_ending"),
-        task_type_id: AMO.TASK.PROCESS,
-        responsible_user_id: AMO.USER.ADMIN,
-        text: `Посылка не была получена в течение ${Math.floor((Date.now() - item.date.getTime()) / (1000 * 3600 * 24))}д.`,
       })),
     );
   }

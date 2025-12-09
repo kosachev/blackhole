@@ -11,6 +11,7 @@ import { AddressSanitizerService } from "./address-sanitizer.service";
 import { ConfigModule } from "@nestjs/config";
 import { CloneLeadService } from "./clone-lead.service";
 import { FirstLeadInteractionService } from "./first-lead-interaction.service";
+import { PaymentCancelService } from "./payment-cancel.service";
 
 @Module({
   imports: [ConfigModule],
@@ -24,6 +25,7 @@ import { FirstLeadInteractionService } from "./first-lead-interaction.service";
     AddressSanitizerService,
     CloneLeadService,
     FirstLeadInteractionService,
+    PaymentCancelService,
   ],
   controllers: [WebController, StaticController],
 })
