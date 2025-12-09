@@ -29,24 +29,7 @@ export class PaymentCancelService {
     }
 
     try {
-      const res = await this.tbankService.cancelPayment(data.paymentId);
-
-      await Promise.all([
-        this.amo.client.lead.updateLeadById(data.leadId, {
-          custom_fields_values: [
-            { field_id: AMO.CUSTOM_FIELD.BANK_STATUS, values: [{ value: res.Status }] },
-          ],
-        }),
-        this.amo.client.note.addNotes("leads", [
-          {
-            entity_id: data.leadId,
-            note_type: "common",
-            params: {
-              text: `⚠️ Банк: Платеж отменён (${res.Status})`,
-            },
-          },
-        ]),
-      ]);
+      await this.tbankService.cancelPayment(data.paymentId);
 
       this.logger.log(
         `USERSCRIPT_PAYMENT_CANCEL, leadId: ${data.leadId}, paymentId: ${data.paymentId}`,

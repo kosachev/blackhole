@@ -36,8 +36,6 @@ export class PaymentCancel {
     const paymentStatus = CFV(AMO.CUSTOM_FIELD.BANK_STATUS).val() as string;
     const paymentId = CFV(AMO.CUSTOM_FIELD.BANK_PAYMENTID).val() as string;
 
-    console.debug("PAYMENT CANCEL RENDER", paymentStatus, paymentId);
-
     if (paymentStatus === "NEW" && paymentId && paymentId.length > 0) {
       $("#payment_cancel").css("display", "inherit");
     } else {
@@ -49,9 +47,12 @@ export class PaymentCancel {
     if ($("#payment_cancel").hasClass("payment_cancel_loading")) return;
     $("#payment_cancel").addClass("payment_cancel_loading");
 
+    const paymentId = CFV(AMO.CUSTOM_FIELD.BANK_PAYMENTID).val() as string;
+    if (!paymentId || paymentId.length < 1) return;
+
     const data = {
       leadId: this.leadId,
-      paymentId: CFV(AMO.CUSTOM_FIELD.BANK_PAYMENTID).val() as string,
+      paymentId,
       paymentStatus: CFV(AMO.CUSTOM_FIELD.BANK_STATUS).val() as string,
     };
 
