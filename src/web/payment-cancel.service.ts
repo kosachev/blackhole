@@ -4,7 +4,6 @@ import {
   InternalServerErrorException,
   Logger,
 } from "@nestjs/common";
-import { AMO } from "../amo/amo.constants";
 import { AmoService } from "../amo/amo.service";
 import { TBankService } from "../tbank/tbank.service";
 

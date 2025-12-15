@@ -36,7 +36,10 @@ export class AmoService {
           if (error instanceof NoContentError) {
             return;
           } else if (error instanceof ApiError || error instanceof AuthError) {
-            this.logger.error(error.message, error.stack, error.response);
+            this.logger.error(
+              `${error.message}\n${JSON.stringify(error.response, null, 2)}`,
+              error.stack,
+            );
           } else if (error instanceof HttpError) {
             this.logger.error(error.message, error.stack);
           } else {
