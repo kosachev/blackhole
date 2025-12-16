@@ -40,10 +40,10 @@ jobs:
           git commit -m "Bump version to ${{ env.VERSION }}"
           git push origin ${{ github.ref_name }}
 
-      - name: Get Bun cache directory
-        shell: bash
-        run: |
-          echo "BUN_CACHE_DIR=$(bun pm cache)" >> $GITHUB_ENV
+      # - name: Get Bun cache directory
+      #   shell: bash
+      #   run: |
+      #     echo "BUN_CACHE_DIR=$(bun pm cache)" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: bun install --frozen-lockfile --cpu=arm64 --os=linux
