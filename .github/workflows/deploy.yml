@@ -27,23 +27,23 @@ jobs:
         with:
           bun-version: latest
 
-      # - name: Bump #Поднимаем версию
-      #   run: |
-      #     bunx npm version  ${{ inputs.bump-type }} --no-git-tag-version
-      #     echo VERSION=$(bunx npm pkg get version | tr -d '"') >> $GITHUB_ENV
+      - name: Bump #Поднимаем версию
+        run: |
+          bunx npm version  ${{ inputs.bump-type }} --no-git-tag-version
+          echo VERSION=$(bunx npm pkg get version | tr -d '"') >> $GITHUB_ENV
 
-      # - name: Commit version bump #Коммитим новую версию
-      #   run: |
-      #     git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      #     git config --global user.name "github-actions[bot]"
-      #     git add .
-      #     git commit -m "Bump version to ${{ env.VERSION }}"
-      #     git push origin ${{ github.ref_name }}
+      - name: Commit version bump #Коммитим новую версию
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add .
+          git commit -m "Bump version to ${{ env.VERSION }}"
+          git push origin ${{ github.ref_name }}
 
-      # - name: Get Bun cache directory
-      #   shell: bash
-      #   run: |
-      #     echo "BUN_CACHE_DIR=$(bun pm cache)" >> $GITHUB_ENV
+      - name: Get Bun cache directory
+        shell: bash
+        run: |
+          echo "BUN_CACHE_DIR=$(bun pm cache)" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: bun install --frozen-lockfile --cpu=arm64 --os=linux
@@ -57,21 +57,21 @@ jobs:
           fi
           bun build:app:linux-arm64 --define VERSION='"${{ env.VERSION }}"'
 
-      # - name: Release #Делаем релиз
-      #   uses: softprops/action-gh-release@v2
-      #   with:
-      #     name: ${{ env.VERSION }}
-      #     tag_name: ${{ env.VERSION }}
-      #     generate_release_notes: true
-      #     draft: true # Черновик
-      #     files: nest
+      - name: Release #Делаем релиз
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ env.VERSION }}
+          tag_name: ${{ env.VERSION }}
+          generate_release_notes: true
+          draft: true # Черновик
+          files: nest
 
       - name: RSYNC #RSYNC 7.0.1
         uses: burnett01/rsync-deployments@7.0.1
         with:
           switches: -avzr
           path: nest
-          remote_path: ${{ secrets.DEPLOY_PATH }}/bunapp
+          remote_path: ${{ secrets.DEPLOY_PATH }}/bun
           remote_host: ${{ secrets.DEPLOY_HOST }}
           remote_port: ${{ secrets.DEPLOY_PORT }}
           remote_user: ${{ secrets.DEPLOY_USER }}
@@ -86,4 +86,4 @@ jobs:
         run: ssh-keyscan -p ${{ secrets.DEPLOY_PORT }} -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
 
       - name: Execute SSH command
-        run: ssh -p ${{ secrets.DEPLOY_PORT }} ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "chmod 777 /volume1/web/nest/bunapp; sudo systemctl restart bun"
+        run: ssh -p ${{ secrets.DEPLOY_PORT }} ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "chmod 777 /volume1/web/nest/bun; sudo systemctl restart bun"
