@@ -32,13 +32,13 @@ jobs:
           bunx npm version  ${{ inputs.bump-type }} --no-git-tag-version
           echo VERSION=$(bunx npm pkg get version | tr -d '"') >> $GITHUB_ENV
 
-      # - name: Commit version bump #Коммитим новую версию
-      #   run: |
-      #     git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      #     git config --global user.name "github-actions[bot]"
-      #     git add .
-      #     git commit -m "Bump version to ${{ env.VERSION }}"
-      #     git push origin ${{ github.ref_name }}
+      - name: Commit version bump #Коммитим новую версию
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add .
+          git commit -m "Bump version to ${{ env.VERSION }}"
+          git push origin ${{ github.ref_name }}
 
       # - name: Get Bun cache directory
       #   shell: bash
@@ -66,24 +66,24 @@ jobs:
           draft: true # Черновик
           files: nest
 
-      # - name: RSYNC #RSYNC 7.0.1 с исключениями
-      #   uses: burnett01/rsync-deployments@7.0.1
-      #   with:
-      #     switches: -avzr --delete --exclude='**/.env.prod' --exclude 'logs' --exclude='data/amo_token.json' --exclude='ssl'
-      #     path: /
-      #     remote_path: ${{ secrets.DEPLOY_PATH }}
-      #     remote_host: ${{ secrets.DEPLOY_HOST }}
-      #     remote_port: ${{ secrets.DEPLOY_PORT }}
-      #     remote_user: ${{ secrets.DEPLOY_USER }}
-      #     remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: RSYNC #RSYNC 7.0.1
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avzr
+          path: nest
+          remote_path: ${{ secrets.DEPLOY_PATH }}/bun
+          remote_host: ${{ secrets.DEPLOY_HOST }}
+          remote_port: ${{ secrets.DEPLOY_PORT }}
+          remote_user: ${{ secrets.DEPLOY_USER }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      # - name: Setup SSH
-      #   uses: webfactory/ssh-agent@v0.9.0
-      #   with:
-      #     ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      # - name: Add host key to known hosts
-      #   run: ssh-keyscan -p ${{ secrets.DEPLOY_PORT }} -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+      - name: Add host key to known hosts
+        run: ssh-keyscan -p ${{ secrets.DEPLOY_PORT }} -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
 
-      # - name: Execute SSH command
-      #   run: ssh -p ${{ secrets.DEPLOY_PORT }} ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "cd ${{ secrets.DEPLOY_PATH }}; ${{ secrets.SSH_CODE }}"
+      - name: Execute SSH command
+        run: ssh -p ${{ secrets.DEPLOY_PORT }} ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "chmod 777 /volume1/web/nest/bun; sudo systemctl restart bun"
