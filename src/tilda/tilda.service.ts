@@ -68,6 +68,11 @@ export class TildaService {
   constructor(private readonly leadCreateService: LeadCreateService) {}
 
   async handler(data: TildaOrderData, headers: Headers): Promise<void> {
+    if (!data.payment) {
+      this.logger.error(`TILDA_NEW_ORDER, no payment in data:\n${JSON.stringify(data, null, 2)}`);
+      return;
+    }
+
     this.logger.log(`TILDA_NEW_ORDER, id: ${data.payment.orderid}, amount: ${data.payment.amount}`);
 
     const order = this.tildaOrderDTO(data);
