@@ -3,6 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { TBank } from "./lib/tbank";
 import type { InitPaymentResponse } from "./lib/api/make-payment";
 import type { CancelPaymentResponse } from "./lib/api/cancel-payment";
+import type { GetStateResponse } from "./lib/api/payment-status";
 
 @Injectable()
 export class TBankService {
@@ -40,6 +41,13 @@ export class TBankService {
 
   cancelPayment(paymentId: string): Promise<CancelPaymentResponse> {
     return this.client.cancelPayment.cancelPayment({
+      TerminalKey: this.terminalKey,
+      PaymentId: paymentId,
+    });
+  }
+
+  getPaymentStatus(paymentId: string): Promise<GetStateResponse> {
+    return this.client.paymentStatus.paymentStatus({
       TerminalKey: this.terminalKey,
       PaymentId: paymentId,
     });
