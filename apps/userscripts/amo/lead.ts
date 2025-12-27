@@ -12,6 +12,7 @@ import { Modal } from "./modal";
 import { CloneLead } from "./clone-lead";
 import { FirstLeadInteraction } from "./first-lead-interaction";
 import { PaymentCancel } from "./payment-cancel";
+import { Receipt } from "./receipt";
 
 export class Lead {
   private to_destruct: CallableFunction[] = [];
@@ -32,6 +33,7 @@ export class Lead {
     const _clone_lead = new CloneLead(lead_id);
     const _first_lead_interaction = new FirstLeadInteraction(lead_id);
     const payment_cancel = new PaymentCancel(lead_id);
+    const receipt = new Receipt(lead_id);
 
     this.timezone();
     this.deleteCompanyField();
@@ -50,6 +52,7 @@ export class Lead {
       permit.destructor();
       address_sanitizer.destructor();
       payment_cancel.destructor();
+      receipt.destructor();
     });
   }
 
