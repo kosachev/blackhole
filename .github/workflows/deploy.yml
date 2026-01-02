@@ -50,7 +50,7 @@ jobs:
           else
             bun build:client
           fi
-          bun build:app:linux-arm64 --define VERSION='"${{ env.VERSION }}"'
+          bun build:app:linux-x64 --define VERSION='"${{ env.VERSION }}"'
 
       - name: Release #Делаем релиз
         uses: softprops/action-gh-release@v2
@@ -81,4 +81,4 @@ jobs:
         run: ssh-keyscan -p ${{ secrets.DEPLOY_PORT }} -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
 
       - name: Execute SSH command
-        run: ssh -p ${{ secrets.DEPLOY_PORT }} ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "chmod 777 /volume1/web/nest/bun; sudo systemctl restart bun"
+        run: ssh -p ${{ secrets.DEPLOY_PORT }} ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "chmod 777 /var/www/bun; sudo systemctl restart bun"
