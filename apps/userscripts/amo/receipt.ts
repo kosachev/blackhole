@@ -1,4 +1,5 @@
 import { BACKEND_BASE_URL, leadGoods } from "../common";
+import { Modal } from "./modal";
 
 type Good = {
   id: number;
@@ -11,117 +12,106 @@ type ScanItem = Good & { barcodes: string[] };
 
 export class Receipt {
   private readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/barcode_scan`;
-  private scanBuffer: string = "";
+  private readonly MODAL_TAG = "ScanBarcode";
+  private modal: Modal;
   private scanTimeout: any = null;
 
   constructor(private lead_id: number) {
-    this.initButton();
+    this.modal = new Modal(this.MODAL_TAG, {
+      title: "🧾 Пробить чек",
+      width: 600,
+      menu: { text: "Пробить чек", icon: "🧾" },
+    });
+    this.modal.initMenu(() => this.open());
     this.injectStyles();
   }
 
   destructor() {
+    this.modal.close();
     $("head").find("style.receipt_scanner_styles").remove();
-    $(document).off(".receiptScanner");
   }
-
-  private initButton() {
-    const container = $("div.card-fields__top-name-more").find("ul");
-    if (container.find("#scanBarcode").length === 0) {
-      container.append(
-        '<li class="button-input__context-menu__item element__"><div id="scanBarcode" class="button-input__context-menu__item__inner"><span class="button-input__context-menu__item__icon-container">🧾</span><span class="button-input__context-menu__item__text"> Пробить чек</span></div></li>',
-      );
-    }
-    $("#scanBarcode").on("click", async () => await this.open());
-  }
-
-  // --- LIFECYCLE ---
 
   private async open() {
-    $("body").css("overflow", "hidden").attr("data-body-fixed", 1);
-    this.renderModal();
-    this.bindEvents();
-    await this.loadGoods();
-  }
-
-  private close() {
-    $("body").attr("data-body-fixed", 0).removeAttr("style");
-    $(document).off(".receiptScanner");
-    $("div#modalScanBarcode").remove();
+    try {
+      this.modal.create(this.getModalContentHtml());
+      this.bindEvents();
+      setTimeout(() => this.focusTrap(), 100);
+      await this.loadGoods();
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   private bindEvents() {
-    $("#closeModalScan, #scanButtonCancel").on("click", () => this.close());
-    $("#scanButtonSend").on("click", (e) => this.submit(e));
+    const m = this.modal;
+    const trap = m.inner.find("#scannerInputTrap");
 
-    const list = $("#modalScanBarcode");
-    list.on("click", "li.scan_li", (e) => this.onRowClick(e));
-    list.on("click", ".scan_clear_btn", (e) => this.onClearClick(e));
+    m.on("click", "#scanButtonCancel", () => m.close());
+    m.on("click", "#scanButtonSend", (e) => this.submit(e));
 
-    $(document).on("paste.receiptScanner", (e) => this.onPaste(e));
-    $(document).on("keydown.receiptScanner", (e) => this.onKeydown(e));
-  }
+    m.on("click", "li.scan_li", (e) => {
+      this.onRowClick(e);
+      this.focusTrap();
+    });
 
-  // --- INPUT HANDLERS ---
+    m.on("click", ".scan_clear_btn", (e) => {
+      this.onClearClick(e);
+      this.focusTrap();
+    });
 
-  private onKeydown(e: JQuery.KeyDownEvent) {
-    if ($(e.target).is("input, textarea")) return;
+    m.el.on("click", (e) => {
+      if (!$(e.target).closest("button, input, textarea, a").length) this.focusTrap();
+    });
 
-    if (e.which === 13) {
-      if (this.scanBuffer.length > 0) {
-        this.processBarcode(this.scanBuffer);
-        this.scanBuffer = "";
-      }
-      return;
-    }
-
-    if (e.key && e.key.length === 1) {
+    trap.on("input", () => {
+      const val = trap.val() as string;
       clearTimeout(this.scanTimeout);
-      this.scanTimeout = setTimeout(() => (this.scanBuffer = ""), 200);
-      this.scanBuffer += e.key;
+
+      if (val.includes("\n") || val.includes("\r")) {
+        this.handleInputData(val);
+        trap.val("");
+        return;
+      }
+
+      this.scanTimeout = setTimeout(() => {
+        const finalVal = trap.val() as string;
+        if (finalVal.trim().length > 0) {
+          this.handleInputData(finalVal);
+          trap.val("");
+        }
+      }, 200);
+    });
+
+    trap.on("keydown", (e) => {
+      if (e.which === 13) {
+        e.preventDefault();
+        this.handleInputData(trap.val() as string);
+        trap.val("");
+      }
+    });
+  }
+
+  private focusTrap() {
+    const el = $("#scannerInputTrap");
+    if (el.length) {
+      const { scrollX, scrollY } = window;
+      el.trigger("focus");
+      window.scrollTo(scrollX, scrollY);
     }
   }
 
-  private onPaste(e: any) {
-    const clipboard =
-      e.clipboardData ||
-      (window as any).clipboardData ||
-      (e.originalEvent && e.originalEvent.clipboardData);
-    const data = clipboard?.getData("text");
-    if (data?.trim()) {
-      e.preventDefault();
-      this.processBarcode(data.trim());
-    }
+  private handleInputData(data: string) {
+    const code = data ? data.replace(/[\n\r]+/g, "").trim() : "";
+    if (code.length > 0) this.processBarcode(code);
   }
-
-  private onRowClick(e: JQuery.ClickEvent) {
-    if ($(e.target).hasClass("scan_clear_btn")) return;
-    this.setActiveRow($(e.currentTarget));
-  }
-
-  private onClearClick(e: JQuery.ClickEvent) {
-    e.stopPropagation();
-    const row = $(e.target).closest("li.scan_li");
-    const qty = +row.attr("data-quantity")!;
-
-    row.attr("data-barcodes", "[]");
-    this.updateRowState(row, [], qty);
-    this.setActiveRow(row);
-    this.updateStats();
-  }
-
-  // --- CORE LOGIC ---
 
   private processBarcode(code: string) {
     let target = $("li.scan_li.active");
-
     if (target.length === 0) {
       this.activateNextEmpty();
       target = $("li.scan_li.active");
     }
-
-    if (target.length > 0) {
-      this.addBarcode(target, code);
-    }
+    if (target.length > 0) this.addBarcode(target, code);
   }
 
   private addBarcode(row: JQuery<HTMLElement>, code: string) {
@@ -132,75 +122,54 @@ export class Receipt {
 
     codes.push(code);
     row.attr("data-barcodes", JSON.stringify(codes));
-
     this.updateRowState(row, codes, qty);
 
-    if (codes.length === qty) {
-      this.activateNextEmpty(row);
-    }
+    if (codes.length === qty) this.activateNextEmpty(row);
     this.updateStats();
   }
 
   private activateNextEmpty(current?: JQuery<HTMLElement>) {
     let next = current ? current.nextAll("li.scan_li:not(.scanned)").first() : undefined;
+    if (!next?.length) next = $("li.scan_li:not(.scanned)").first();
 
-    if (!next || next.length === 0) {
-      next = $("li.scan_li:not(.scanned)").first();
-    }
-
-    if (next.length > 0) {
+    if (next.length) {
       this.setActiveRow(next);
     } else {
       $("li.scan_li").removeClass("active");
     }
   }
 
-  // --- UI RENDERING ---
-
-  private renderModal() {
-    $("body").append(
-      `<div id="modalScanBarcode" class="modal modal-list">
-        <div class="modal-scroller custom-scroll">
-            <div class="modal-body" style="display: block; top: 20%; left: calc(50% - 300px); margin-left: 0; margin-bottom: 0; width: 600px;">
-                <div class="modal-body__inner">
-                    <span class="modal-body__close"><span id="closeModalScan" class="icon icon-modal-close"></span></span>
-                    <h2 class="modal-body__caption head_2">🧾 Пробить чек</h2>
-                    <div id="scanListContainer" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px;">
-                        <ul id="goodsListToScan"></ul>
-                    </div>
-                    <div class="scan_footer_stats">
-                        <span id="statTotal">Позиций: 0</span>
-                        <span id="statScanned" style="color: #20c997; font-weight: bold;">Готово: 0</span>
-                    </div>
-                    <hr>
-                    <button id="scanButtonSend" type="button" class="button-input button-cancel">
-                        <span class="button-input-inner"><span class="button-input-inner__text">Отправить</span></span>
-                    </button>
-                    <button id="scanButtonCancel" type="button" class="button-input button-cancel">
-                        <span class="button-input-inner"><span class="button-input-inner__text">Отмена</span></span>
-                    </button>
-                </div>
-            </div>
-        </div>
-      </div>`,
-    );
+  private onRowClick(e: any) {
+    if ($(e.target).hasClass("scan_clear_btn")) return;
+    this.setActiveRow($(e.currentTarget));
   }
 
-  private renderRow(good: Good) {
-    const html = `
-      <li class="scan_li" id="good_${good.id}" data-id="${good.id}" data-price="${good.price}" data-quantity="${good.quantity}" data-barcodes='[]'>
-        <div class="scan_status_icon"></div>
-        <div class="scan_info">
-            <div class="scan_name">${good.name}</div>
-            <div class="scan_meta">${good.quantity} шт. × ${good.price} руб.</div>
-        </div>
-        <div class="scan_barcode_box">
-            <div class="scan_counter">0 / ${good.quantity}</div>
-            <div class="scan_codes_wrapper"><span class="scan_placeholder">Scan...</span></div>
-            <span class="scan_clear_btn">Очистить всё</span>
-        </div>
-      </li>`;
-    $("ul#goodsListToScan").append(html);
+  private onClearClick(e: any) {
+    e.stopPropagation();
+    const row = $(e.target).closest("li.scan_li");
+    const qty = +row.attr("data-quantity")!;
+
+    row.attr("data-barcodes", "[]");
+    this.updateRowState(row, [], qty);
+    this.setActiveRow(row);
+    this.updateStats();
+  }
+
+  private setActiveRow(row: JQuery<HTMLElement>) {
+    $("li.scan_li").removeClass("active");
+    row.addClass("active");
+
+    const container = this.modal.inner.find("#scanListContainer");
+    if (!container.length) return;
+
+    const itemTop = row.position().top;
+    const itemH = row.outerHeight(true) || 60;
+    const contH = container.height() || 400;
+    const currentScroll = container.scrollTop() || 0;
+
+    if (itemTop < 0 || itemTop + itemH > contH) {
+      container.animate({ scrollTop: currentScroll + itemTop - contH / 2 + itemH / 2 }, 200);
+    }
   }
 
   private updateRowState(row: JQuery<HTMLElement>, codes: string[], qty: number) {
@@ -224,108 +193,127 @@ export class Receipt {
     }
   }
 
-  private setActiveRow(row: JQuery<HTMLElement>) {
-    $("li.scan_li").removeClass("active");
-    row.addClass("active");
-
-    const container = $("#scanListContainer");
-    const itemTop = row.position().top;
-    const itemH = row.outerHeight(true) || 60;
-    const contH = container.height() || 400;
-    const currentScroll = container.scrollTop() || 0;
-
-    if (itemTop < 0 || itemTop + itemH > contH) {
-      container.animate({ scrollTop: currentScroll + itemTop - contH / 2 + itemH / 2 }, 200);
-    }
-  }
-
   private updateStats() {
-    const total = $("li.scan_li").length;
-    const ready = $("li.scan_li.scanned").length;
-    let hasData = false;
-
-    $("li.scan_li").each((_, el) => {
-      if (JSON.parse($(el).attr("data-barcodes") || "[]").length > 0) hasData = true;
-    });
+    const items = $("li.scan_li");
+    const total = items.length;
+    const ready = items.filter(".scanned").length;
+    const hasData = items
+      .toArray()
+      .some((el) => JSON.parse($(el).attr("data-barcodes") || "[]").length > 0);
 
     $("#statTotal").text(`Позиций: ${total}`);
     $("#statScanned").text(`Готово: ${ready}`);
-    $("button#scanButtonSend").attr(
+    $("#scanButtonSend").attr(
       "class",
       hasData ? "button-input button-input_blue" : "button-input button-cancel",
     );
   }
 
-  private showResult(msg: string) {
-    $("div#modalScanBarcode").html(
-      `<div class="modal-scroller custom-scroll">
-         <div class="modal-body" style="top: 30%; left: calc(50% - 150px); width: 300px;">
-           <div class="modal-body__inner" style="text-align: center;">
-             <h2 class="head_2" style="font-size: 16pt; margin: 20px 0;">${msg}</h2>
-           </div>
-         </div>
-       </div>`,
-    );
-    setTimeout(() => this.close(), 1500);
-  }
-
-  // --- DATA & NETWORK ---
-
   private async loadGoods() {
     try {
+      this.modal.loading = true;
       const goods = await leadGoods(this.lead_id);
+      this.modal.loading = false;
+
       if (!goods.length) {
-        $("ul#goodsListToScan").append(
-          '<li style="text-align:center; padding: 20px; color: #888;">Товаров нет</li>',
-        );
+        this.modal.inner
+          .find("ul#goodsListToScan")
+          .append('<li style="text-align:center; padding: 20px; color: #888;">Товаров нет</li>');
         return;
       }
+
       goods.forEach((g) => this.renderRow(g));
       this.activateNextEmpty();
       this.updateStats();
     } catch (e) {
       console.error(e);
-      alert("Ошибка получения товаров");
+      this.modal.loading = false;
+      this.modal.error("Ошибка загрузки");
     }
   }
 
-  private async submit(e: JQuery.ClickEvent) {
+  private renderRow(good: Good) {
+    const html = `
+      <li class="scan_li" id="good_${good.id}" data-id="${good.id}" data-price="${good.price}" data-quantity="${good.quantity}" data-barcodes='[]'>
+        <div class="scan_status_icon"></div>
+        <div class="scan_info">
+            <div class="scan_name">${good.name}</div>
+            <div class="scan_meta">${good.quantity} шт. × ${good.price} руб.</div>
+        </div>
+        <div class="scan_barcode_box">
+            <div class="scan_counter">0 / ${good.quantity}</div>
+            <div class="scan_codes_wrapper"><span class="scan_placeholder">Scan...</span></div>
+            <span class="scan_clear_btn">Очистить всё</span>
+        </div>
+      </li>`;
+    this.modal.inner.find("ul#goodsListToScan").append(html);
+  }
+
+  private async submit(e: any) {
     const btn = $(e.currentTarget);
     if (!btn.hasClass("button-input_blue")) return;
 
     btn.attr("class", "button-input button-cancel");
 
-    const items: ScanItem[] = [];
-    $("li.scan_li").each((_, el) => {
-      const $el = $(el);
-      const codes = JSON.parse($el.attr("data-barcodes") || "[]");
-
-      items.push({
-        id: +$el.attr("data-id")!,
-        name: $el.find(".scan_name").text(),
-        quantity: +$el.attr("data-quantity")!,
-        price: +$el.attr("data-price")!,
-        barcodes: codes,
-      });
-    });
+    const items: ScanItem[] = $("li.scan_li")
+      .map((_, el) => {
+        const $el = $(el);
+        return {
+          id: +$el.attr("data-id")!,
+          name: $el.find(".scan_name").text(),
+          quantity: +$el.attr("data-quantity")!,
+          price: +$el.attr("data-price")!,
+          barcodes: JSON.parse($el.attr("data-barcodes") || "[]"),
+        };
+      })
+      .get();
 
     try {
+      this.modal.loading = true;
       const res = await fetch(this.BACKEND_URL, {
         method: "POST",
         headers: { "Content-type": "application/json" },
         body: JSON.stringify({ lead_id: this.lead_id, items }),
       });
-      this.showResult(res.ok ? "✔ ДАННЫЕ ОТПРАВЛЕНЫ" : "✘ ОШИБКА ОТПРАВКИ");
+
+      this.modal.loading = false;
+
+      if (res.ok) {
+        this.modal.operationResult("✔ УСПЕШНО");
+        setTimeout(() => this.modal.close(), 1500);
+      } else {
+        this.modal.error("ОШИБКА");
+        this.updateStats();
+      }
     } catch (err) {
       console.error(err);
-      this.showResult("✘ ОШИБКА СЕТИ");
+      this.modal.loading = false;
+      this.modal.error("ОШИБКА СЕТИ");
+      this.updateStats();
     }
+  }
+
+  private getModalContentHtml(): string {
+    return `
+      <div style="width:0; height:0; overflow:hidden; position:absolute;">
+        <input type="text" id="scannerInputTrap" autocomplete="off" style="opacity: 0; width: 1px; height: 1px; border: 0; padding: 0;" />
+      </div>
+      <div id="scanListContainer" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px;">
+          <ul id="goodsListToScan"></ul>
+      </div>
+      <div class="scan_footer_stats">
+          <span id="statTotal">Позиций: 0</span>
+          <span id="statScanned" style="color: #20c997; font-weight: bold;">Готово: 0</span>
+      </div>
+      <div class="modal-footer">
+          <button id="scanButtonSend" type="button" class="button-input button-cancel"><span class="button-input-inner"><span class="button-input-inner__text">Отправить</span></span></button>
+          <button id="scanButtonCancel" type="button" class="button-input button-cancel"><span class="button-input-inner"><span class="button-input-inner__text">Отмена</span></span></button>
+      </div>`;
   }
 
   private injectStyles() {
     $("head").append(
       `<style class="receipt_scanner_styles" type="text/css">
-        .modal-body__close:hover #closeModalScan { color: #ff5c5c !important; opacity: 1 !important; }
         .scan_li { display: flex; justify-content: space-between; align-items: flex-start; margin: 5px 0; padding: 10px 15px; border: 1px solid #eef2f4; border-radius: 4px; cursor: pointer; transition: background 0.2s, border-color 0.2s; background: #fff; position: relative; box-sizing: border-box; min-height: 60px; }
         .scan_li.scanned { background: #f0fcf6; border-color: #a6eacf; }
         .scan_li.partial { background: #fff9db; border-color: #ffe066; }
@@ -347,7 +335,7 @@ export class Receipt {
         .scan_placeholder { color: #ccc; font-style: italic; font-size: 12px; }
         .scan_clear_btn { margin-top: 6px; color: #d6336c; font-size: 11px; cursor: pointer; border-bottom: 1px dashed #d6336c; display: none; }
         .scan_clear_btn:hover { color: #a61e4d; border-bottom-style: solid; }
-        .scan_footer_stats { display: flex; justify-content: space-between; margin-bottom: 15px; padding: 10px; background: #f9f9f9; border-radius: 4px; font-size: 13px; color: #555; }
+        .scan_footer_stats { display: flex; justify-content: space-between; margin-bottom: 0; padding: 10px; background: #f9f9f9; border-radius: 4px; font-size: 13px; color: #555; }
       </style>`,
     );
   }

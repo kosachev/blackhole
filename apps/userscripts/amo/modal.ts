@@ -1,42 +1,75 @@
+type MenuParams = {
+  text: string;
+  icon: string;
+};
+
 type InitParams = {
   width?: number;
   title?: string;
+  menu?: MenuParams;
 };
 
 export class Modal {
-  private tag: string;
-
   private width: number;
   private title: string | undefined;
+  private menu: MenuParams | undefined;
 
-  constructor(tag: string, params?: InitParams) {
-    this.tag = tag;
+  constructor(private tag: string, params?: InitParams) {
     this.width = params?.width ?? 500;
     this.title = params?.title;
+    this.menu = params?.menu;
   }
 
   get id(): string {
     return `#modal${this.tag}`;
   }
 
+  get el(): JQuery<HTMLElement> {
+    return $(this.id);
+  }
+
+  get inner(): JQuery<HTMLElement> {
+    return $(`#modalInner${this.tag}`);
+  }
+
+  initMenu(onOpen: () => void) {
+    if (!this.menu) return;
+
+    const { text, icon } = this.menu;
+    const btnId = `modalOpenBtn${this.tag}`;
+    const container = $("div.card-fields__top-name-more").find("ul");
+
+    if (container.find(`#${btnId}`).length === 0) {
+      container.append(`
+        <li class="button-input__context-menu__item element__">
+          <div id="${btnId}" class="button-input__context-menu__item__inner">
+            <span class="button-input__context-menu__item__icon-container">${icon}</span>
+            <span class="button-input__context-menu__item__text">${text}</span>
+          </div>
+        </li>`);
+    }
+
+    $(`#${btnId}`)
+      .off("click")
+      .on("click", (e) => {
+        e.preventDefault();
+        onOpen();
+      });
+  }
+
   create(content: string) {
     $("body").css("overflow", "hidden").attr("data-body-fixed", 1);
-    $("body").append(/*html*/ `
+    $("body").append(`
       <div id="modal${this.tag}" class="modal modal-list">
         <div class="modal-scroller custom-scroll">
-          <div
-            class="modal-body"
-            style="display: block; top: 20%; left: calc(50% - ${
-              this.width / 2
-            }px); margin-left: 0; margin-bottom: 0; width: ${this.width}px;"
-          >
-            <div class="overlay">
-              <div class="loader"></div>
-            </div>
+          <div class="modal-body" style="display: block; top: 20%; left: calc(50% - ${
+            this.width / 2
+          }px); width: ${this.width}px;">
+            <div class="overlay"><div class="loader"></div></div>
             <div class="modal-body__inner">
-              <span class="modal-body__close"
-                ><span id="modalClose${this.tag}" class="close-button">✖</span></span
-              >
+              <span class="modal-body__close"><span id="modalClose${
+                this.tag
+              }" class="close-button">✖</span></span>
               ${this.title ? `<h2 class="modal-title">${this.title}</h2>` : ""}
               <div id="modalInner${this.tag}">${content}</div>
             </div>
@@ -47,22 +80,21 @@ export class Modal {
     $(`#modalClose${this.tag}`).on("click", () => this.close());
   }
 
+  on(event: string, selector: string, handler: (e: JQuery.Event) => void) {
+    this.el.on(event, selector, handler);
+  }
+
   onSubmit(text: string, callback: CallableFunction) {
-    $(`#modalInner${this.tag}`).append(/*html*/ `
+    this.inner.append(`
       <div class="modal-footer">
         <button id="modalButtonSubmit${this.tag}" type="button" class="button-input button-cancel">
-          <span class="button-input-inner "
-            ><span class="button-input-inner__text">${text}</span></span
-          >
+          <span class="button-input-inner"><span class="button-input-inner__text">${text}</span></span>
         </button>
-      </div>
-    `);
+      </div>`);
 
-    const close_delay = 1000;
-    const el = $(`#modalButtonSubmit${this.tag}`);
-    el.on("click", async () => {
-      if (el.attr("class") !== "button-input button-input_blue") return;
-
+    const btn = $(`#modalButtonSubmit${this.tag}`);
+    btn.on("click", async () => {
+      if (!btn.hasClass("button-input_blue")) return;
       try {
         this.loading = true;
         await callback();
@@ -73,18 +105,14 @@ export class Modal {
         console.error(err);
         this.operationResult("✘ ОШИБКА");
       }
-
-      setTimeout(() => this.close(), close_delay);
+      setTimeout(() => this.close(), 1000);
     });
   }
 
   operationResult(result: string) {
-    $(`#modal${this.tag}`).html(/*html*/ `
+    this.el.html(`
       <div class="modal-scroller custom-scroll">
-        <div
-          class="modal-body"
-          style="display: block; top: 30%; left: calc(50% - 100px); margin-left: 0; margin-bottom: 0; width: 250px;"
-        >
+        <div class="modal-body" style="display: block; top: 30%; left: calc(50% - 125px); width: 250px;">
           <div class="modal-body__inner" style="text-align: center;">
             <h2 class="head_2" style="font-size: 18pt;">${result}</h2>
           </div>
@@ -109,76 +137,23 @@ export class Modal {
   }
 
   set loading(value: boolean) {
-    if (value) {
-      $(`#modal${this.tag}`).find(".overlay").css("display", "flex");
-    } else {
-      $(`#modal${this.tag}`).find(".overlay").css("display", "none");
-    }
-  }
-
-  isSumbitActive(): boolean {
-    return $(`#modalButtonSubmit${this.tag}`).attr("class") === "button-input button-input_blue";
+    this.el.find(".overlay").css("display", value ? "flex" : "none");
   }
 
   close() {
     $("body").attr("data-body-fixed", 0).attr("style", "");
-    $(`#modal${this.tag}`).remove();
+    this.el.remove();
   }
 
   static get styles(): string {
     return /*css*/ `
-      .modal .modal-title {
-        text-align: center;
-        font-size: 26px;
-        font-weight: 600;
-        font-family: "PT Sans", sans-serif;
-        margin-bottom: 20px;
-      }
-
-      .modal .close-button {
-        color: #333;
-        cursor: pointer;
-      }
-
-      .modal .close-button:hover {
-        color: red;
-      }
-
-      .modal .modal-footer {
-        height: 50px;
-        margin-top: 10px;
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-        flex-direction: row-reverse;
-      }
-
-      .modal .overlay {
-        display: none;
-        align-items: center;
-        justify-content: center;
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.3);
-        z-index: 9999;
-      }
-
-      .modal .overlay .loader {
-        border: 10px solid #f3f3f3;
-        border-top: 10px solid #3498db;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 2s linear infinite;
-      }
-
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
+      .modal .modal-title { text-align: center; font-size: 26px; font-weight: 600; font-family: "PT Sans", sans-serif; margin-bottom: 20px; }
+      .modal .close-button { color: #333; cursor: pointer; }
+      .modal .close-button:hover { color: red; }
+      .modal .modal-footer { height: 50px; margin-top: 10px; display: flex; justify-content: flex-start; align-items: center; flex-direction: row-reverse; }
+      .modal .overlay { display: none; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.3); z-index: 9999; }
+      .modal .overlay .loader { border: 10px solid #f3f3f3; border-top: 10px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; }
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     `;
   }
 }
