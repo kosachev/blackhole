@@ -13,8 +13,8 @@ type ScanItem = Good & { barcodes: string[] };
 import { Plugin } from "./plugin";
 
 export class Receipt extends Plugin {
-  private readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/barcode_scan`;
-  private readonly MODAL_TAG = "ScanBarcode";
+  private readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/receipt`;
+  private readonly MODAL_TAG = "Receipt";
   private modal: Modal;
   private scanTimeout: any = null;
 
