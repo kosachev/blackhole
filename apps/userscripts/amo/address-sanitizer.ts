@@ -15,11 +15,14 @@ type SanitizedAddress = {
   flat: string;
 };
 
-export class AddressSanitizer {
+import { Plugin } from "./plugin";
+
+export class AddressSanitizer extends Plugin {
   readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/address_sanitizer`;
   private modal: Modal;
 
-  constructor(private lead_id: number) {
+  constructor(lead_id: number) {
+    super(lead_id);
     console.debug("ADDRESS SANITIZER LOADED", lead_id);
 
     this.modal = new Modal("address_sanitizer", {
@@ -33,7 +36,21 @@ export class AddressSanitizer {
         `<span id="address_sanitizer_trigger" style="margin-left: 5px; cursor: pointer">⟳</span>`,
       );
 
-    $("head").append(/*html*/ `<style class="address_sanitizer_style" type="text/css">
+    CFV(AMO.CUSTOM_FIELD.CITY).on("input", this.render);
+    CFV(AMO.CUSTOM_FIELD.CITY).on("change", this.render);
+    this.render();
+    $("#address_sanitizer_trigger").on("click", async () => await this.modalCreate());
+  }
+
+  destructor() {
+    console.debug("ADDRESS SANITIZER DESTRUCTOR", this.lead_id);
+
+    CFV(AMO.CUSTOM_FIELD.CITY).off("input");
+    CFV(AMO.CUSTOM_FIELD.CITY).off("change");
+  }
+
+  style() {
+    return /*css*/ `
         ${this.modal.id} .table {
           display: grid;
           grid-template-columns: 80px 1fr 1fr;
@@ -54,20 +71,7 @@ export class AddressSanitizer {
         ${this.modal.id} .cell input {
           text-align: center;
         }
-      </style>`);
-
-    CFV(AMO.CUSTOM_FIELD.CITY).on("input", this.render);
-    CFV(AMO.CUSTOM_FIELD.CITY).on("change", this.render);
-    this.render();
-    $("#address_sanitizer_trigger").on("click", async () => await this.modalCreate());
-  }
-
-  destructor() {
-    console.debug("ADDRESS SANITIZER DESTRUCTOR", this.lead_id);
-
-    $("head").find("style.address_sanitizer_style").remove();
-    CFV(AMO.CUSTOM_FIELD.CITY).off("input");
-    CFV(AMO.CUSTOM_FIELD.CITY).off("change");
+      `;
   }
 
   render() {

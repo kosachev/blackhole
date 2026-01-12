@@ -1,14 +1,17 @@
 import { AMO } from "../../../src/amo/amo.constants";
 import { CFV, leadDiscount, leadGoods, setLeadPrice } from "../common";
 
-export class LeadPrice {
+import { Plugin } from "./plugin";
+
+export class LeadPrice extends Plugin {
   readonly GOODS_LIST_SELECTOR = `div#${AMO.CATALOG.GOODS}.linked-form-holder.js-cf-group-wrapper.catalog_elements-in_card`;
 
   private readonly quantity_list_delay = 1000; // goods loaded lazely, so we shout wait
 
   private obervers: MutationObserver[] = [];
 
-  constructor(private lead_id: number) {
+  constructor(lead_id: number) {
+    super(lead_id);
     if (lead_id === 0 || !lead_id) return;
     console.debug("LEAD PRICE LOADED", lead_id);
 

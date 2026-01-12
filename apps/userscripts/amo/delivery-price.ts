@@ -8,19 +8,18 @@ import {
   validateIndexCf,
 } from "../common";
 
-export class DeliveryPrice {
+import { Plugin } from "./plugin";
+
+export class DeliveryPrice extends Plugin {
   readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/delivery_price`;
 
-  constructor(private lead_id: number) {
+  constructor(lead_id: number) {
+    super(lead_id);
     console.debug("DELIVERY CALCULATOR LOADED", lead_id);
 
     $(`div[data-id=${AMO.CUSTOM_FIELD.DELIVERY_COST}] > div`)
       .first()
       .append(`<span id="delivery_price" style="margin-left: 5px; cursor: pointer">⟳</span>`);
-
-    $("head").append(
-      `<style class="delivery_price_style" type="text/css">.delivery_price_loading { animation: rotate 4s infinite; } @keyframes rotate { 0% { transform: rotate(0deg) } 100% { transform: rotate(360deg) }</style>`,
-    );
 
     CFV(AMO.CUSTOM_FIELD.INDEX).on("input", this.render);
     CFV(AMO.CUSTOM_FIELD.DELIVERY_TYPE).on("change", this.render);
@@ -34,7 +33,10 @@ export class DeliveryPrice {
     CFV(AMO.CUSTOM_FIELD.INDEX).off("input");
     CFV(AMO.CUSTOM_FIELD.DELIVERY_TYPE).off("change");
     $("#delivery_price").off("click");
-    $("head").find("style.delivery_price_style").remove();
+  }
+
+  style() {
+    return `.delivery_price_loading { animation: rotate_delivery 4s infinite; } @keyframes rotate_delivery { 0% { transform: rotate(0deg) } 100% { transform: rotate(360deg) } }`;
   }
 
   render() {

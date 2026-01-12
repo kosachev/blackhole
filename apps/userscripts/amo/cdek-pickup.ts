@@ -1,5 +1,7 @@
 import { BACKEND_BASE_URL, CFV } from "../common";
 import { AMO } from "../../../src/amo/amo.constants";
+import { Plugin } from "./plugin";
+import { Modal } from "./modal";
 
 const defaultPickupTime = [
   { min: 9, max: 9, default: 9, can_choose: false },
@@ -11,76 +13,98 @@ const defaultPickupTime = [
   { min: 11, max: 11, default: 11, can_choose: false },
 ];
 
-export class CdekPickup {
-  readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/cdek_pickup`;
 
+
+export class CdekPickup extends Plugin {
+  readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/cdek_pickup`;
+  private modal: Modal;
   private errors: string[] = [];
 
-  constructor(private lead_id: number) {
+  constructor(lead_id: number) {
+    super(lead_id);
     console.debug("CKED PICKUP LOADED", lead_id);
-    const toplist = $("div.card-fields__top-name-more").find("ul");
-    if ($(toplist).find("li div#cdekPickup").length === 0) {
-      $(toplist).append(
-        '<li class="button-input__context-menu__item  element__ "><div id="cdekPickup" class="button-input__context-menu__item__inner"><span class="button-input__context-menu__item__icon-container">📦</span><span class="button-input__context-menu__item__text "> Вызов курьера</span></div></li>',
-      );
-    }
-    $("#cdekPickup").on("click", () => this.render());
-    $("head").append(
-      '<style class="cdek_pickup" type="text/css">input.datetime_input:invalid + span:after { content: "\u274C" }</style>',
-    );
+    this.modal = new Modal("CdekPickup", {
+      title: "📦 Вызов курьера",
+      width: 500,
+    });
+    this.addTopListButton({
+      id: "cdekPickup",
+      icon: "📦",
+      text: "Вызов курьера",
+      onClick: () => this.render(),
+    });
   }
 
   destructor() {
     console.debug("CKED PICKUP DESTRUCTOR", this.lead_id);
-    $("head").find("style.cdek_pickup").remove();
+    this.modal.close();
+  }
+
+  style() {
+    return 'input.datetime_input:invalid + span:after { content: "\\u274C" }';
   }
 
   private render() {
-    $("body").css("overflow", "hidden").attr("data-body-fixed", 1);
-    $("body").append(
-      `<div id="modalCdekPickup" class="modal modal-list"><div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; top: 20%; left: calc(50% - 250px); margin-left: 0; margin-bottom: 0; width: 500px;"><div class="modal-body__inner"><span class="modal-body__close"><span id="closeModalCdekPickup" class="icon icon-modal-close"></span></span><h2 class="modal-body__caption head_2">📦 Вызов курьера</h2><div id="cdekPickupInner"></div></div></div></div></div>`,
-    );
-
     this.errors = this.validatePreload();
+    let content = "";
 
     if (this.errors.length > 0) {
-      $("div#cdekPickupInner").append(
-        `<ul>${this.errors.map((e) => "<li>❌ " + e + "</li>").join("")}</ul>`,
-      );
+      content = `<ul>${this.errors.map((e) => "<li>❌ " + e + "</li>").join("")}</ul>`;
+      this.modal.create(content);
+      // Even if errors, show close button
+      this.modal.inner.append(`
+        <div class="modal-footer">
+          <button id="cdekPickupButtonCancel" type="button" class="btn btn-default">
+            Закрыть
+          </button>
+        </div>
+      `);
+      $("#cdekPickupButtonCancel").on("click", () => this.modal.close());
     } else {
       const min_date = this.calculateMinDate();
       const max_date = this.calculateMaxDate();
       const hours = this.calculateHours(min_date);
 
-      $("div#cdekPickupInner").append(`
+      content = `
       <form>
-      <label for="cdekPickupDate">Дата:</label>
-      <input type="date" id="cdekPickupDate" class="datetime_input" name="cdekPickupDate" value="${this.formatDate(
+      <div class="form-group">
+        <label for="cdekPickupDate">Дата:</label>
+        <input type="date" id="cdekPickupDate" class="form-control datetime_input" name="cdekPickupDate" value="${this.formatDate(
         min_date,
       )}" min="${this.formatDate(min_date)}" max="${this.formatDate(
         max_date,
       )}" required /><span class="validity"></span>
-      <label for="cdekPickupTime">Время:</label>
-      <input type="time" id="cdekPickupTime" class="datetime_input" name="cdekPickupTime" value="${hours.default
-        .toString()
-        .padStart(2, "0")}:00" min="${hours.min.toString().padStart(2, "0")}:00" max="${hours.max
-        .toString()
-        .padStart(2, "0")}:00" step="3600" required ${
-        hours.can_choose ? "" : "readonly"
-      }/><span class="validity"></span>
-      </form>`);
+      </div>
+      <div class="form-group">
+        <label for="cdekPickupTime">Время:</label>
+        <input type="time" id="cdekPickupTime" class="form-control datetime_input" name="cdekPickupTime" value="${hours.default
+          .toString()
+          .padStart(2, "0")}:00" min="${hours.min.toString().padStart(2, "0")}:00" max="${hours.max
+            .toString()
+            .padStart(2, "0")}:00" step="3600" required ${hours.can_choose ? "" : "readonly"
+        }/><span class="validity"></span>
+      </div>
+      </form>`;
+
+      this.modal.create(content);
+
+      this.modal.inner.append(`
+        <div class="modal-footer">
+          <button id="cdekPickupButtonCancel" type="button" class="btn btn-default">
+            Отмена
+          </button>
+          <button id="cdekPickupButtonGo" type="button" class="btn btn-disabled">
+            Вызвать
+          </button>
+        </div>`);
+
+      $("#cdekPickupButtonCancel").on("click", () => this.modal.close());
+      $("button#cdekPickupButtonGo").on("click", async (el) => await this.sendCdekPickup(el));
+      $("input#cdekPickupDate").on("change", () => this.handlePickupDate());
+      $("input#cdekPickupTime").on("change", () => this.validate());
+
+      this.validate();
     }
-    $("div#cdekPickupInner").append(
-      '<hr><button id="cdekPickupButtonGo" type="button" class="button-input button-cancel"><span class="button-input-inner "><span class="button-input-inner__text">Вызвать</span></span></button><button id="cdekPickupButtonCancel" type="button" class="button-input button-cancel"><span class="button-input-inner "><span class="button-input-inner__text">Отмена</span></span></button>',
-    );
-
-    $("#closeModalCdekPickup").on("click", this.close);
-    $("#cdekPickupButtonCancel").on("click", this.close);
-    $("button#cdekPickupButtonGo").on("click", async (el) => await this.sendCdekPickup(el));
-    $("input#cdekPickupDate").on("change", () => this.handlePickupDate());
-    $("input#cdekPickupTime").on("change", () => this.validate());
-
-    this.validate();
   }
 
   private handlePickupDate() {
@@ -106,11 +130,11 @@ export class CdekPickup {
       this.errors.length === 0;
 
     if (valid) {
-      $("button#cdekPickupButtonGo").attr("class", "button-input button-input_blue");
+      $("button#cdekPickupButtonGo").attr("class", "btn btn-primary");
     } else {
       $("button#cdekPickupButtonGo").attr(
         "class",
-        "button-input button-cancel button-input_disabled",
+        "btn btn-disabled",
       );
     }
 
@@ -142,10 +166,6 @@ export class CdekPickup {
     return defaultPickupTime[date.getDay()];
   }
 
-  private close() {
-    $("body").attr("data-body-fixed", 0).attr("style", "");
-    $("div#modalCdekPickup").remove();
-  }
 
   private validatePreload(): string[] {
     const errors: string[] = [];
@@ -172,11 +192,11 @@ export class CdekPickup {
   private async sendCdekPickup(
     el: JQuery.ClickEvent<HTMLElement, undefined, HTMLElement, HTMLElement>,
   ) {
-    if ($(el.currentTarget).attr("class") !== "button-input button-input_blue") {
+    if ($(el.currentTarget).hasClass("btn-disabled")) {
       console.debug("NOT GO");
       return;
     }
-    $(el.currentTarget).attr("class", "button-input button-cancel");
+    $(el.currentTarget).attr("class", "btn btn-disabled");
 
     const data = {
       lead_id: this.lead_id,
@@ -189,13 +209,15 @@ export class CdekPickup {
     console.debug("SEND DATA CDEK PICKUP", data);
 
     try {
+      this.modal.loading = true;
       const res = await fetch(this.BACKEND_URL, {
         method: "POST",
         headers: { "Content-type": "application/json" },
         body: JSON.stringify(data),
       });
 
-      this.operationResult(res.ok ? "✔ УСПЕШНО" : "✘ ОШИБКА");
+      this.modal.loading = false;
+      this.modal.operationResult(res.ok ? "✔ УСПЕШНО" : "✘ ОШИБКА");
       if (res.ok) {
         const pickups = JSON.parse(localStorage.getItem("cdek_pickups") ?? "[]");
         pickups.push({
@@ -209,16 +231,11 @@ export class CdekPickup {
         localStorage.setItem("cdek_pickups", JSON.stringify(pickups));
       }
     } catch (err) {
-      this.operationResult("✘ ОШИБКА");
+      this.modal.loading = false;
+      this.modal.operationResult("✘ ОШИБКА");
       console.error("Field to send data to backend", err);
     }
 
-    setTimeout(this.close, 1000);
-  }
-
-  private operationResult(result: string) {
-    $("div#modalCdekPickup").html(
-      `<div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; top: 30%; left: calc(50% - 100px); margin-left: 0; margin-bottom: 0; width: 200px;"><div class="modal-body__inner" style="text-align: center;"><h2 class="head_2" style="font-size: 18pt;">${result}</h2></div></div></div>`,
-    );
+    setTimeout(() => this.modal.close(), 1000);
   }
 }

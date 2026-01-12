@@ -1,21 +1,20 @@
 import { AMO } from "../../../src/amo/amo.constants";
 import { BACKEND_BASE_URL, CFV } from "../common";
 
-export class PaymentCancel {
+import { Plugin } from "./plugin";
+
+export class PaymentCancel extends Plugin {
   readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/payment_cancel`;
 
-  constructor(private leadId: number) {
-    console.debug("PAYMENT CANCEL LOADED", leadId);
+  constructor(lead_id: number) {
+    super(lead_id);
+    console.debug("PAYMENT CANCEL LOADED", lead_id);
 
     $(`div[data-id=${AMO.CUSTOM_FIELD.BANK_STATUS}] > div`)
       .first()
       .append(
         `<span id="payment_cancel" style="margin-left: 5px; cursor: pointer" title="Отменить платеж">✖</span>`,
       );
-
-    $("head").append(
-      `<style class="payment_cancel_style" type="text/css">.payment_cancel_loading { animation: rotate 4s infinite; } @keyframes rotate { 0% { transform: rotate(0deg) } 100% { transform: rotate(360deg) }</style>`,
-    );
 
     CFV(AMO.CUSTOM_FIELD.BANK_STATUS).on("change", this.render);
     CFV(AMO.CUSTOM_FIELD.BANK_PAYMENTID).on("change", this.render);
@@ -25,11 +24,14 @@ export class PaymentCancel {
   }
 
   destructor() {
-    console.debug("PAYMENT CANCE DESTRUCTOR", this.leadId);
+    console.debug("PAYMENT CANCE DESTRUCTOR", this.lead_id);
     CFV(AMO.CUSTOM_FIELD.BANK_STATUS).off("change");
     CFV(AMO.CUSTOM_FIELD.BANK_PAYMENTID).off("change");
     $("#payment_cancel").off("click");
-    $("head").find("style.payment_cancel_style").remove();
+  }
+
+  style() {
+    return `.payment_cancel_loading { animation: rotate_payment 4s infinite; } @keyframes rotate_payment { 0% { transform: rotate(0deg) } 100% { transform: rotate(360deg) } }`;
   }
 
   render() {
@@ -51,7 +53,7 @@ export class PaymentCancel {
     if (!paymentId || paymentId.length < 1) return;
 
     const data = {
-      leadId: this.leadId,
+      leadId: this.lead_id,
       paymentId,
       paymentStatus: CFV(AMO.CUSTOM_FIELD.BANK_STATUS).val() as string,
     };

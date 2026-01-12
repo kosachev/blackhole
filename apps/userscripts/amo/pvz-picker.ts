@@ -1,19 +1,18 @@
 import { AMO } from "../../../src/amo/amo.constants";
 import { BACKEND_BASE_URL, CFV, deliveryType, validateIndexCf } from "../common";
 
-export class PVZPicker {
+import { Plugin } from "./plugin";
+
+export class PVZPicker extends Plugin {
   readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/pvz_picker`;
 
-  constructor(private lead_id: number) {
+  constructor(lead_id: number) {
+    super(lead_id);
     console.debug("PVZ PICKER LOADED", lead_id);
 
     $(`div[data-id=${AMO.CUSTOM_FIELD.PVZ}] > div`)
       .first()
       .append(`<span id="pvz_picker" style="margin-left: 5px; cursor: pointer">⟳</span>`);
-
-    $("head").append(
-      `<style class="pvz_picker_style">#PVZPickerInner { height: 100vh } .pvz_picker_loading { animation: rotate 4s infinite; } @keyframes rotate { 0% { transform: rotate(0deg) } 100% { transform: rotate(360deg) }</style>`,
-    );
 
     CFV(AMO.CUSTOM_FIELD.INDEX).on("input", this.render);
     CFV(AMO.CUSTOM_FIELD.DELIVERY_TYPE).on("change", this.render);
@@ -38,8 +37,11 @@ export class PVZPicker {
     CFV(AMO.CUSTOM_FIELD.INDEX).off("input");
     CFV(AMO.CUSTOM_FIELD.DELIVERY_TYPE).off("change");
     $("#pvz_picker").off("click");
-    $("head").find("style.pvz_picker_style").remove();
     $(window).off("message");
+  }
+
+  style() {
+    return `.pvz_picker_loading { animation: rotate_pvz 4s infinite; } @keyframes rotate_pvz { 0% { transform: rotate(0deg) } 100% { transform: rotate(360deg) } }`;
   }
 
   private render() {

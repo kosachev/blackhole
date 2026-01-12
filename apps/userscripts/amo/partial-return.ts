@@ -7,39 +7,82 @@ type Good = {
   quantity: number;
   price: number;
 };
+import { Plugin } from "./plugin";
+import { Modal } from "./modal";
 
-export class ParialReturn {
+export class ParialReturn extends Plugin {
   readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/partial_return`;
+  private modal: Modal;
 
-  constructor(private lead_id: number) {
+  constructor(lead_id: number) {
+    super(lead_id);
     console.debug("PARTIAL RETURN LOADED", lead_id);
-    const toplist = $("div.card-fields__top-name-more").find("ul");
-    if ($(toplist).find("li div#splitLead").length === 0) {
-      $(toplist).append(
-        '<li class="button-input__context-menu__item  element__ "><div id="splitLead" class="button-input__context-menu__item__inner"><span class="button-input__context-menu__item__icon-container">⇌</span><span class="button-input__context-menu__item__text "> Частичная доставка</span></div></li>',
-      );
-    }
-    $("#splitLead").on("click", async () => await this.render());
-    $("head").append(
-      '<style class="partial_return" type="text/css">.split_li_sold { background: #CCFF66; } .split_li_return { background: #D5D8DB; } .split_li { margin: 3px; padding: 5px; border-radius: 5px; cursor: pointer; } .split_li_sold:before { content: "\u2705"; margin-right: 10px; } .split_li_return:before { content: "\u274C"; margin-right: 10px; }</style>',
-    );
+    this.modal = new Modal("ParialReturn", {
+      title: "⇌ Частичный возврат",
+      width: 650,
+    });
+    this.addTopListButton({
+      id: "splitLead",
+      icon: "⇌",
+      text: "Частичная доставка",
+      onClick: async () => await this.render(),
+    });
   }
 
   destructor() {
     console.debug("PARTIAL RETURN DESTRUCTOR", this.lead_id);
-    $("head").find("style.partial_return").remove();
+    this.modal.close();
+  }
+
+  style() {
+    return `
+      .split_li_sold { background: #f0fcf6; border: 1px solid #a6eacf; } 
+      .split_li_return { background: #fff3f3; border: 1px solid #ffa8a8; } 
+      .split_li { margin: 4px 0; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-family: "Robotos", "PT Sans", sans-serif; } 
+      .split_li:hover { transform: translateX(2px); }
+      .split_li_sold:before { content: "✅"; margin-right: 10px; } 
+      .split_li_return:before { content: "❌"; margin-right: 10px; }
+      .split_footer_stats { display: flex; justify-content: space-between; margin-bottom: 0; padding: 12px 16px; background: linear-gradient(135deg, #f8f9fa, #e9ecef); border-radius: 8px; font-family: "Robotos", "PT Sans", sans-serif; margin-top: 16px; }
+      .split_footer_stats span { display: flex; align-items: center; gap: 6px; }
+      .split_footer_stats .stat-value { font-size: 20px; font-weight: 700; }
+      #statSold { color: #20c997; }
+      #statReturn { color: #868e96; }
+    `;
   }
 
   private async render() {
-    $("body").css("overflow", "hidden").attr("data-body-fixed", 1);
-    $("body").append(
-      `<div id="modalSplitLead" class="modal modal-list"><div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; top: 20%; left: calc(50% - 250px); margin-left: 0; margin-bottom: 0; width: 500px;"><div class="modal-body__inner"><span class="modal-body__close"><span id="closeModalSplitLead" class="icon icon-modal-close"></span></span><h2 class="modal-body__caption head_2">⇌ Частичный возврат</h2><div id="goodsList"></div></div></div></div></div>`,
-    );
-    $("div#goodsList").append(
-      '<h2 class="head_2" id="headSold">Продажа</h2><ul id="goodsSold"></ul><hr><h2 class="head_2" id="headReturn">Возврат</h2><ul id="goodsReturn"></ul><hr><button id="splitButtonGo" type="button" class="button-input button-cancel"><span class="button-input-inner "><span class="button-input-inner__text">Отправить</span></span></button><button id="splitButtonCancel" type="button" class="button-input button-cancel"><span class="button-input-inner "><span class="button-input-inner__text">Отмена</span></span></button>',
-    );
-    $("#closeModalSplitLead").on("click", this.closeModalSplit);
-    $("button#splitButtonCancel").on("click", this.closeModalSplit);
+    // Content structure
+    const content = `
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        <div class="column">
+          <h3 style="font-size: 14px; color: #555; margin-bottom: 10px; font-weight: 600;">Продажа</h3>
+          <ul id="goodsSold" class="goods-list" style="min-height: 150px; max-height: 300px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px; padding: 8px;"></ul>
+        </div>
+        <div class="column">
+          <h3 style="font-size: 14px; color: #555; margin-bottom: 10px; font-weight: 600;">Возврат</h3>
+          <ul id="goodsReturn" class="goods-list" style="min-height: 150px; max-height: 300px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px; padding: 8px;"></ul>
+        </div>
+      </div>
+      <div class="split_footer_stats">
+        <span id="statSold">Продажа: <span class="stat-value">0</span></span>
+        <span id="statReturn">Возврат: <span class="stat-value">0</span></span>
+      </div>
+    `;
+
+    this.modal.create(content);
+
+    this.modal.inner.append(`
+      <div class="modal-footer">
+        <button id="splitButtonCancel" type="button" class="btn btn-default">
+          Отмена
+        </button>
+        <button id="splitButtonGo" type="button" class="btn btn-disabled">
+          Отправить
+        </button>
+      </div>
+    `);
+
+    $("#splitButtonCancel").on("click", () => this.modal.close());
     $("button#splitButtonGo").on("click", async (el) => await this.sendPartialReturn(el));
 
     await this.getGoodsFromLead(this.lead_id);
@@ -47,12 +90,15 @@ export class ParialReturn {
 
   private async getGoodsFromLead(lead_id: number) {
     try {
+      this.modal.loading = true;
       const goods = await leadGoods(lead_id);
+      this.modal.loading = false;
       goods.forEach((good) => this.addGoodToSold(good));
-      $("#modalSplitLead").on("click", "li.split_li", (el) => this.handleListClick(el));
+      this.modal.inner.on("click", "li.split_li", (el) => this.handleListClick(el));
     } catch (e) {
+      this.modal.loading = false;
       console.error("ERROR", e);
-      alert("Ошибка получения товаров из лида");
+      this.modal.error("Ошибка получения товаров из лида");
     }
   }
 
@@ -91,28 +137,24 @@ export class ParialReturn {
   }
 
   private splitCallsHead() {
-    $("h2#headSold").text("Продажа: " + $("ul#goodsSold").children().length);
-    $("h2#headReturn").text("Возврат: " + $("ul#goodsReturn").children().length);
+    $("#statSold .stat-value").text($("ul#goodsSold").children().length);
+    $("#statReturn .stat-value").text($("ul#goodsReturn").children().length);
     if ($("ul#goodsSold").children().length > 0 || $("ul#goodsReturn").children().length > 0) {
-      $("button#splitButtonGo").attr("class", "button-input button-input_blue");
+      $("button#splitButtonGo").attr("class", "btn btn-primary");
     } else {
-      $("button#splitButtonGo").attr("class", "button-input button-cancel");
+      $("button#splitButtonGo").attr("class", "btn btn-disabled");
     }
   }
 
-  private closeModalSplit() {
-    $("body").attr("data-body-fixed", 0).attr("style", "");
-    $("div#modalSplitLead").remove();
-  }
 
   private async sendPartialReturn(
     el: JQuery.ClickEvent<HTMLElement, undefined, HTMLElement, HTMLElement>,
   ) {
-    if ($(el.currentTarget).attr("class") !== "button-input button-input_blue") {
+    if ($(el.currentTarget).hasClass("btn-disabled")) {
       console.debug("NOT GO");
       return;
     }
-    $(el.currentTarget).attr("class", "button-input button-cancel");
+    $(el.currentTarget).attr("class", "btn btn-disabled");
 
     const data = {
       lead_id: this.lead_id,
@@ -160,23 +202,20 @@ export class ParialReturn {
     console.debug("SEND PARTIAL RETURN DATA", data);
 
     try {
+      this.modal.loading = true;
       const res = await fetch(this.BACKEND_URL, {
         method: "POST",
         headers: { "Content-type": "application/json" },
         body: JSON.stringify(data),
       });
 
-      this.operationResult(res.ok ? "✔ УСПЕШНО" : "✘ ОШИБКА");
+      this.modal.loading = false;
+      this.modal.operationResult(res.ok ? "✔ УСПЕШНО" : "✘ ОШИБКА");
     } catch (err) {
-      this.operationResult("✘ ОШИБКА");
+      this.modal.loading = false;
+      this.modal.operationResult("✘ ОШИБКА");
       console.error("Field to send data to backend", err);
-      setTimeout(this.closeModalSplit, 1000);
+      setTimeout(() => this.modal.close(), 1000);
     }
-  }
-
-  private operationResult(result: string) {
-    $("div#modalSplitLead").html(
-      `<div class="modal-scroller custom-scroll"><div class="modal-body" style="display: block; top: 30%; left: calc(50% - 100px); margin-left: 0; margin-bottom: 0; width: 200px;"><div class="modal-body__inner" style="text-align: center;"><h2 class="head_2" style="font-size: 18pt;">${result}</h2></div></div></div>`,
-    );
   }
 }
