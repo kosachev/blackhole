@@ -45,7 +45,7 @@ export class Permit extends Plugin {
 
     const content = /* html */ `<form>
         <div class="form-group">
-          <label for="permitDate">Дата:</label>
+          <label for="permitDate">Дата</label>
           <input
             type="date"
             id="permitDate"
@@ -58,7 +58,7 @@ export class Permit extends Plugin {
           /><span class="validity"></span>
         </div>
         <div class="form-group">
-          <label for="permitLast">Фамилия:</label>
+          <label for="permitLast">Фамилия</label>
           <input
             type="text"
             id="permitLast"
@@ -70,7 +70,7 @@ export class Permit extends Plugin {
           /><span class="validity"></span>
         </div>
         <div class="form-group">
-          <label for="permitFirst">Имя:</label>
+          <label for="permitFirst">Имя</label>
           <input
             type="text"
             id="permitFirst"
@@ -82,7 +82,7 @@ export class Permit extends Plugin {
           /><span class="validity"></span>
         </div>
         <div class="form-group">
-          <label for="permitMiddle">Отчество:</label>
+          <label for="permitMiddle">Отчество</label>
           <input
             type="text"
             id="permitMiddle"

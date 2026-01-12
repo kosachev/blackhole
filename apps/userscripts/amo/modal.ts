@@ -63,14 +63,12 @@ export class Modal {
       <div id="modal${this.tag}" class="modal modal-list userscript-modal">
         <div class="modal-backdrop"></div>
         <div class="modal-scroller custom-scroll">
-          <div class="modal-body" style="display: block; top: 20%; left: calc(50% - ${
-            this.width / 2
-          }px); width: ${this.width}px; margin-left: 0; margin-bottom: 0;">
+          <div class="modal-body" style="display: block; top: 20%; left: calc(50% - ${this.width / 2
+      }px); width: ${this.width}px; margin-left: 0; margin-bottom: 0;">
             <div class="overlay"><div class="loader"></div></div>
             <div class="modal-body__inner">
-              <span class="modal-body__close"><span id="modalClose${
-                this.tag
-              }" class="close-button">✖</span></span>
+              <span class="modal-body__close"><span id="modalClose${this.tag
+      }" class="close-button">✖</span></span>
               ${this.title ? `<h2 class="modal-title">${this.title}</h2>` : ""}
               <div id="modalInner${this.tag}">${content}</div>
             </div>
@@ -161,12 +159,27 @@ export class Modal {
       .modal .modal-body { padding: 30px; background: #fff; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
       .modal .modal-footer { margin-top: 30px; display: flex; justify-content: flex-end; align-items: center; gap: 12px; }
 
-      /* Modern Form Styles */
-      .modal .form-group { margin-bottom: 16px; display: flex; flex-direction: column; }
-      .modal label { margin-bottom: 6px; font-weight: 500; font-size: 13px; color: #555; }
+      /* Modern Form Styles - Floating Labels */
+      .modal .form-group { 
+        position: relative; 
+        margin-bottom: 12px; 
+        display: flex; 
+        flex-direction: column; 
+      }
+      .modal .form-group label { 
+        position: absolute; 
+        top: -8px; 
+        left: 10px; 
+        background: #fff; 
+        padding: 0 4px; 
+        font-weight: 500; 
+        font-size: 12px; 
+        color: #777; 
+        z-index: 1;
+      }
       .modal .form-control {
         width: 100%; 
-        padding: 10px 12px;
+        padding: 12px 12px;
         border: 1px solid #e0e0e0;
         border-radius: 6px;
         font-size: 14px;
@@ -174,6 +187,7 @@ export class Modal {
         box-sizing: border-box;
       }
       .modal .form-control:focus { outline: none; border-color: #4c8bf7; box-shadow: 0 0 0 3px rgba(76, 139, 247, 0.1); }
+      .modal .form-group:focus-within label { color: #4c8bf7; }
       .modal input[type="date"].form-control,
       .modal input[type="time"].form-control {
         width: auto;

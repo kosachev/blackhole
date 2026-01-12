@@ -55,7 +55,11 @@ export class Receipt extends Plugin {
         .scan_placeholder { color: #ccc; font-style: italic; font-size: 12px; }
         .scan_clear_btn { margin-top: 6px; color: #d6336c; font-size: 11px; cursor: pointer; border-bottom: 1px dashed #d6336c; display: none; }
         .scan_clear_btn:hover { color: #a61e4d; border-bottom-style: solid; }
-        .scan_footer_stats { display: flex; justify-content: space-between; margin-bottom: 0; padding: 10px; background: #f9f9f9; border-radius: 4px; font-size: 13px; color: #555; font-family: "Robotos", "PT Sans", sans-serif; }
+        .scan_footer_stats { display: flex; justify-content: space-between; margin-bottom: 0; padding: 12px 16px; background: linear-gradient(135deg, #f8f9fa, #e9ecef); border-radius: 8px; font-family: "Robotos", "PT Sans", sans-serif; }
+        .scan_footer_stats span { display: flex; align-items: center; gap: 6px; }
+        .scan_footer_stats .stat-value { font-size: 20px; font-weight: 700; }
+        #statTotal { color: #495057; }
+        #statScanned { color: #20c997; }
       `;
   }
 
@@ -229,8 +233,8 @@ export class Receipt extends Plugin {
       .toArray()
       .some((el) => JSON.parse($(el).attr("data-barcodes") || "[]").length > 0);
 
-    $("#statTotal").text(`Позиций: ${total}`);
-    $("#statScanned").text(`Готово: ${ready}`);
+    $("#statTotal .stat-value").text(total);
+    $("#statScanned .stat-value").text(ready);
     $("#scanButtonSend").attr("class", hasData ? "btn btn-primary" : "btn btn-disabled");
   }
 
@@ -327,8 +331,8 @@ export class Receipt extends Plugin {
           <ul id="goodsListToScan"></ul>
       </div>
       <div class="scan_footer_stats">
-          <span id="statTotal">Позиций: 0</span>
-          <span id="statScanned" style="color: #20c997; font-weight: bold;">Готово: 0</span>
+          <span id="statTotal">Позиций: <span class="stat-value">0</span></span>
+          <span id="statScanned">Готово: <span class="stat-value">0</span></span>
       </div>
       <div class="modal-footer">
           <button id="scanButtonCancel" type="button" class="btn btn-default">

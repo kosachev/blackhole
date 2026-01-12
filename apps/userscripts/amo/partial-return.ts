@@ -19,7 +19,7 @@ export class ParialReturn extends Plugin {
     console.debug("PARTIAL RETURN LOADED", lead_id);
     this.modal = new Modal("ParialReturn", {
       title: "⇌ Частичный возврат",
-      width: 500,
+      width: 650,
     });
     this.addTopListButton({
       id: "splitLead",
@@ -35,21 +35,37 @@ export class ParialReturn extends Plugin {
   }
 
   style() {
-    return '.split_li_sold { background: #CCFF66; } .split_li_return { background: #D5D8DB; } .split_li { margin: 3px; padding: 5px; border-radius: 5px; cursor: pointer; } .split_li_sold:before { content: "✅"; margin-right: 10px; } .split_li_return:before { content: "❌"; margin-right: 10px; }';
+    return `
+      .split_li_sold { background: #f0fcf6; border: 1px solid #a6eacf; } 
+      .split_li_return { background: #fff3f3; border: 1px solid #ffa8a8; } 
+      .split_li { margin: 4px 0; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-family: "Robotos", "PT Sans", sans-serif; } 
+      .split_li:hover { transform: translateX(2px); }
+      .split_li_sold:before { content: "✅"; margin-right: 10px; } 
+      .split_li_return:before { content: "❌"; margin-right: 10px; }
+      .split_footer_stats { display: flex; justify-content: space-between; margin-bottom: 0; padding: 12px 16px; background: linear-gradient(135deg, #f8f9fa, #e9ecef); border-radius: 8px; font-family: "Robotos", "PT Sans", sans-serif; margin-top: 16px; }
+      .split_footer_stats span { display: flex; align-items: center; gap: 6px; }
+      .split_footer_stats .stat-value { font-size: 20px; font-weight: 700; }
+      #statSold { color: #20c997; }
+      #statReturn { color: #868e96; }
+    `;
   }
 
   private async render() {
     // Content structure
     const content = `
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
         <div class="column">
-          <h2 class="head_2" id="headSold" style="font-size: 16px; margin-bottom: 10px; color: #555;">Продажа</h2>
-          <ul id="goodsSold" class="goods-list" style="min-height: 100px; border: 1px solid #eee; border-radius: 6px; padding: 10px;"></ul>
+          <h3 style="font-size: 14px; color: #555; margin-bottom: 10px; font-weight: 600;">Продажа</h3>
+          <ul id="goodsSold" class="goods-list" style="min-height: 150px; max-height: 300px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px; padding: 8px;"></ul>
         </div>
         <div class="column">
-          <h2 class="head_2" id="headReturn" style="font-size: 16px; margin-bottom: 10px; color: #555;">Возврат</h2>
-          <ul id="goodsReturn" class="goods-list" style="min-height: 100px; border: 1px solid #eee; border-radius: 6px; padding: 10px;"></ul>
+          <h3 style="font-size: 14px; color: #555; margin-bottom: 10px; font-weight: 600;">Возврат</h3>
+          <ul id="goodsReturn" class="goods-list" style="min-height: 150px; max-height: 300px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px; padding: 8px;"></ul>
         </div>
+      </div>
+      <div class="split_footer_stats">
+        <span id="statSold">Продажа: <span class="stat-value">0</span></span>
+        <span id="statReturn">Возврат: <span class="stat-value">0</span></span>
       </div>
     `;
 
@@ -121,8 +137,8 @@ export class ParialReturn extends Plugin {
   }
 
   private splitCallsHead() {
-    $("h2#headSold").text("Продажа: " + $("ul#goodsSold").children().length);
-    $("h2#headReturn").text("Возврат: " + $("ul#goodsReturn").children().length);
+    $("#statSold .stat-value").text($("ul#goodsSold").children().length);
+    $("#statReturn .stat-value").text($("ul#goodsReturn").children().length);
     if ($("ul#goodsSold").children().length > 0 || $("ul#goodsReturn").children().length > 0) {
       $("button#splitButtonGo").attr("class", "btn btn-primary");
     } else {
