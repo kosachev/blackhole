@@ -15,20 +15,25 @@ type RequestCloneLead = {
   tags: number[];
 };
 
-export class CloneLead {
+import { Plugin } from "./plugin";
+
+export class CloneLead extends Plugin {
   readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/clone_lead`;
 
-  constructor(private lead_id: number) {
+  constructor(lead_id: number) {
+    super(lead_id);
     console.debug("CLONE LEAD LOADED", lead_id);
 
-    const toplist = $("div.card-fields__top-name-more").find("ul");
-    if ($(toplist).find("li div#cloneLead").length === 0) {
-      $(toplist).append(
-        '<li class="button-input__context-menu__item  element__ "><div id="cloneLead" class="button-input__context-menu__item__inner"><span class="button-input__context-menu__item__icon-container">📑</span><span class="button-input__context-menu__item__text "> Клонировать сделку</span></div></li>',
-      );
-    }
+    this.addTopListButton({
+      id: "cloneLead",
+      icon: "📑",
+      text: "Клонировать сделку",
+      onClick: () => this.sendRequest(),
+    });
+  }
 
-    $("#cloneLead").on("click", () => this.sendRequest());
+  destructor() {
+    console.debug("CLONE LEAD DESTRUCTOR", this.lead_id);
   }
 
   async sendRequest() {

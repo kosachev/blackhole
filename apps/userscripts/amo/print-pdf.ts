@@ -1,9 +1,12 @@
 import { BACKEND_BASE_URL } from "../common";
 
-export class PrintPdf {
+import { Plugin } from "./plugin";
+
+export class PrintPdf extends Plugin {
   readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/print_pdf`;
 
-  constructor(private lead_id: number) {
+  constructor(lead_id: number) {
+    super(lead_id);
     console.debug("PRINT PDF LOADED", lead_id);
 
     $("div.card-holder").on("DOMNodeInserted", "div.feed-note-wrapper-note", (el) => {
@@ -12,9 +15,6 @@ export class PrintPdf {
         this.handleNote(e);
       }
     });
-    $("head").append(
-      '<style class="print_pdf" type="text/css">a.download_pdf { cursor: pointer }</style>',
-    );
 
     this.printPdf();
     this.render();
@@ -23,7 +23,10 @@ export class PrintPdf {
   destructor() {
     console.debug("PRINT PDF DESTRUCTOR", this.lead_id);
     $("div.card-holder").off("DOMNodeInserted");
-    $("head").find("style.print_pdf").remove();
+  }
+
+  style() {
+    return "a.download_pdf { cursor: pointer }";
   }
 
   render() {

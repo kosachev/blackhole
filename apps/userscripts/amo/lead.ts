@@ -1,4 +1,5 @@
 import { AMO } from "../../../src/amo/amo.constants";
+import { Plugin } from "./plugin";
 import { CdekPickup } from "./cdek-pickup";
 import { DeliveryPrice } from "./delivery-price";
 import { ParialReturn } from "./partial-return";
@@ -16,24 +17,25 @@ import { Receipt } from "./receipt";
 
 export class Lead {
   private to_destruct: CallableFunction[] = [];
+  private plugins: Plugin[] = [];
 
   constructor(private lead_id: number) {
     if (lead_id === 0 || !lead_id) return;
     console.debug("LEAD LOADED", lead_id);
 
     // flat check
-    const partial_return = new ParialReturn(lead_id);
-    const cdek_pickup = new CdekPickup(lead_id);
-    const print_pdf = new PrintPdf(lead_id);
-    const delivery_price = new DeliveryPrice(lead_id);
-    const pvz_picker = new PVZPicker(lead_id);
-    const lead_price = new LeadPrice(lead_id);
-    const permit = new Permit(lead_id);
-    const address_sanitizer = new AddressSanitizer(lead_id);
-    const _clone_lead = new CloneLead(lead_id);
-    const _first_lead_interaction = new FirstLeadInteraction(lead_id);
-    const payment_cancel = new PaymentCancel(lead_id);
-    const receipt = new Receipt(lead_id);
+    this.registerPlugin(new ParialReturn(lead_id));
+    this.registerPlugin(new CdekPickup(lead_id));
+    this.registerPlugin(new PrintPdf(lead_id));
+    this.registerPlugin(new DeliveryPrice(lead_id));
+    this.registerPlugin(new PVZPicker(lead_id));
+    this.registerPlugin(new LeadPrice(lead_id));
+    this.registerPlugin(new Permit(lead_id));
+    this.registerPlugin(new AddressSanitizer(lead_id));
+    this.registerPlugin(new CloneLead(lead_id));
+    this.registerPlugin(new FirstLeadInteraction(lead_id));
+    this.registerPlugin(new PaymentCancel(lead_id));
+    this.registerPlugin(new Receipt(lead_id));
 
     this.timezone();
     this.deleteCompanyField();
@@ -43,23 +45,20 @@ export class Lead {
 
     this.to_destruct.push(() => {
       $("body").off("input");
-      partial_return.destructor();
-      cdek_pickup.destructor();
-      print_pdf.destructor();
-      delivery_price.destructor();
-      pvz_picker.destructor();
-      lead_price.destructor();
-      permit.destructor();
-      address_sanitizer.destructor();
-      payment_cancel.destructor();
-      receipt.destructor();
     });
+  }
+
+  private registerPlugin(plugin: Plugin) {
+    this.plugins.push(plugin);
   }
 
   destructor() {
     console.debug("LEAD DESTRUCTOR", this.lead_id);
     for (const fn of this.to_destruct) {
       fn();
+    }
+    for (const plugin of this.plugins) {
+      plugin.destructor();
     }
     $("head").find("style.userstyles").remove();
   }
@@ -120,9 +119,9 @@ export class Lead {
       console.debug("VALIDATE INDEX FIELD", delivery_type, delivery_tariff);
 
       if (
-        delivery_type === "Экспресс по России" &&
+        (delivery_type === "Экспресс по России" &&
         delivery_tariff === "Склад - Склад" &&
-        !validatePVZCf()
+        !validatePVZCf())
       ) {
         CFV(AMO.CUSTOM_FIELD.PVZ).parent().parent().addClass("validation-not-valid");
       } else {
@@ -141,8 +140,7 @@ export class Lead {
   }
 
   private styles() {
-    $("head").append(/*html*/ `
-      <style class="userstyles" type="text/css">
+    let styles = `
         #widgets_block {
           display: none !important;
         }
@@ -153,6 +151,15 @@ export class Lead {
           max-width: 130px;
         }
         ${Modal.styles}
+    `;
+
+    for (const plugin of this.plugins) {
+      styles += plugin.style() + "\n";
+    }
+
+    $("head").append(/*html*/ `
+      <style class="userstyles" type="text/css">
+        ${styles}
       </style>`);
   }
 }

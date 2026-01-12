@@ -1,54 +1,37 @@
 import { BACKEND_BASE_URL, CFV } from "../common";
+import { Plugin } from "./plugin";
+import { Modal } from "./modal";
 
-export class Permit {
+export class Permit extends Plugin {
   readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/permit`;
 
-  constructor(private lead_id: number) {
+  private modal: Modal;
+
+  constructor(lead_id: number) {
+    super(lead_id);
     console.debug("PERMIT LOADED", lead_id);
-    const toplist = $("div.card-fields__top-name-more").find("ul");
-    if ($(toplist).find("li div#permit").length === 0) {
-      $(toplist).append(/*html*/ `
-        <li class="button-input__context-menu__item  element__ ">
-          <div id="permit" class="button-input__context-menu__item__inner">
-            <span class="button-input__context-menu__item__icon-container">🪪</span
-            ><span class="button-input__context-menu__item__text "> Заказ пропуска</span>
-          </div>
-        </li>`);
-    }
-    $("#permit").on("click", () => this.render());
-    $("head").append(/*html*/ `
-      <style class="permit" type="text/css">
-        input.datetime_input:invalid + span:after {
-          content: "❌";
-        }
-      </style>`);
+    this.modal = new Modal("Permit", {
+      title: "🪪 Заказ пропуска",
+      width: 500,
+    });
+    this.addTopListButton({
+      id: "permit",
+      icon: "🪪",
+      text: "Заказ пропуска",
+      onClick: () => this.render(),
+    });
   }
 
   destructor() {
     console.debug("PERMIT DESTRUCTOR", this.lead_id);
-    $("head").find("style.permit").remove();
+    this.modal.close();
+  }
+
+  style() {
+    return 'input.datetime_input:invalid + span:after { content: "❌"; }';
   }
 
   private render() {
-    $("body").css("overflow", "hidden").attr("data-body-fixed", 1);
-    $("body").append(/*html*/ `
-      <div id="modalPermit" class="modal modal-list">
-        <div class="modal-scroller custom-scroll">
-          <div
-            class="modal-body"
-            style="display: block; top: 20%; left: calc(50% - 250px); margin-left: 0; margin-bottom: 0; width: 500px;"
-          >
-            <div class="modal-body__inner">
-              <span class="modal-body__close">
-                <span id="closeModalPermit" class="icon icon-modal-close"></span>
-              </span>
-              <h2 class="modal-body__caption head_2">🪪 Заказ пропуска</h2>
-              <div id="permitInner"></div>
-            </div>
-          </div>
-        </div>
-      </div> `);
-
     const min_date = this.calculateMinDate();
     const max_date = this.calculateMaxDate();
     const visit_date = CFV(1369498).attr("value");
@@ -60,17 +43,13 @@ export class Permit {
 
     const [last, first, middle] = $("input.js-linked-name-view").attr("value")?.split(" ");
 
-    $("div#permitInner").append(/*html*/ ` <form>
-        <div>
-          <label
-            for="permitDate"
-            style="display: inline-block; width: 70px; text-align: right; padding-right: 10px"
-            >Дата:</label
-          >
+    const content = /* html */ `<form>
+        <div class="form-group">
+          <label for="permitDate">Дата:</label>
           <input
             type="date"
             id="permitDate"
-            class="datetime_input"
+            class="form-control datetime_input"
             name="permitDate"
             value="${target_date}"
             min="${this.formatDate(min_date)}"
@@ -78,73 +57,57 @@ export class Permit {
             required
           /><span class="validity"></span>
         </div>
-        <div>
-          <label
-            for="permitLast"
-            style="display: inline-block; width: 70px; text-align: right; padding-right: 10px"
-            >Фамилия:</label
-          >
+        <div class="form-group">
+          <label for="permitLast">Фамилия:</label>
           <input
             type="text"
             id="permitLast"
-            class="datetime_input"
+            class="form-control"
             ${last ? "value=" + last : ""}
-            style=" width: 100px"
             pattern="[а-яА-Я]{3,}"
             required
             title="3 символа и более"
           /><span class="validity"></span>
         </div>
-        <div>
-          <label
-            for="permitFirst"
-            style="display: inline-block; width: 70px; text-align: right; padding-right: 10px"
-            >Имя:</label
-          >
+        <div class="form-group">
+          <label for="permitFirst">Имя:</label>
           <input
             type="text"
             id="permitFirst"
-            class="datetime_input"
+            class="form-control"
             ${first ? "value=" + first : ""}
-            style=" width: 100px"
             pattern="[а-яА-Я]{3,}"
             required
             title="3 символа и более"
           /><span class="validity"></span>
         </div>
-        <div>
-          <label
-            for="permitMiddle"
-            style="display: inline-block; width: 70px; text-align: right; padding-right: 10px"
-            >Отчество:</label
-          >
+        <div class="form-group">
+          <label for="permitMiddle">Отчество:</label>
           <input
             type="text"
             id="permitMiddle"
-            class="datetime_input"
+            class="form-control"
             ${middle ? "value=" + middle : ""}
-            style=" width: 100px"
             pattern="[а-яА-Я]{3,}"
             required
             title="3 символа и более"
           /><span class="validity"></span>
         </div>
-      </form>`);
+      </form>`;
 
-    $("div#permitInner").append(/*html*/ `
-        <hr />
-        <button id="permitButtonGo" type="button" class="button-input button-cancel">
-          <span class="button-input-inner "
-            ><span class="button-input-inner__text">Заказать</span></span
-          ></button
-        ><button id="permitButtonCancel" type="button" class="button-input button-cancel">
-          <span class="button-input-inner "
-            ><span class="button-input-inner__text">Отмена</span></span
-          >
-        </button>`);
+    this.modal.create(content);
 
-    $("#closeModalPermit").on("click", this.close);
-    $("#permitButtonCancel").on("click", this.close);
+    this.modal.inner.append(`
+        <div class="modal-footer">
+          <button id="permitButtonCancel" type="button" class="btn btn-default">
+            Отмена
+          </button>
+          <button id="permitButtonGo" type="button" class="btn btn-disabled">
+            Заказать
+          </button>
+        </div>`);
+
+    $("#permitButtonCancel").on("click", () => this.modal.close());
     $("button#permitButtonGo").on("click", async (el) => await this.sendPermit(el));
     $("input#permitDate").on("change", () => this.validate());
     $("input#permitFirst").on("change", () => this.validate());
@@ -162,9 +125,9 @@ export class Permit {
       ($("input#permitLast")[0] as HTMLFormElement)?.checkValidity();
 
     if (valid) {
-      $("button#permitButtonGo").attr("class", "button-input button-input_blue");
+      $("button#permitButtonGo").attr("class", "btn btn-primary");
     } else {
-      $("button#permitButtonGo").attr("class", "button-input button-cancel button-input_disabled");
+      $("button#permitButtonGo").attr("class", "btn btn-disabled");
     }
 
     return valid;
@@ -186,19 +149,14 @@ export class Permit {
     return new Date(today.getFullYear(), today.getMonth() + 2, 0);
   }
 
-  private close() {
-    $("body").attr("data-body-fixed", 0).attr("style", "");
-    $("div#modalPermit").remove();
-  }
-
   private async sendPermit(
     el: JQuery.ClickEvent<HTMLElement, undefined, HTMLElement, HTMLElement>,
   ) {
-    if ($(el.currentTarget).attr("class") !== "button-input button-input_blue") {
+    if ($(el.currentTarget).hasClass("btn-disabled")) {
       console.debug("NOT GO");
       return;
     }
-    $(el.currentTarget).attr("class", "button-input button-cancel");
+    $(el.currentTarget).attr("class", "btn btn-disabled");
 
     const data = {
       lead_id: this.lead_id,
@@ -211,33 +169,21 @@ export class Permit {
     console.debug("SEND DATA PERMIT", data);
 
     try {
-      this.operationResult("⏳ ЗАГРУЗКА");
+      this.modal.loading = true;
       const res = await fetch(this.BACKEND_URL, {
         method: "POST",
         headers: { "Content-type": "application/json" },
         body: JSON.stringify(data),
       });
 
-      this.operationResult(res.ok ? "✔ УСПЕШНО" : "✘ ОШИБКА");
+      this.modal.loading = false;
+      this.modal.operationResult(res.ok ? "✔ УСПЕШНО" : "✘ ОШИБКА");
     } catch (err) {
-      this.operationResult("✘ ОШИБКА");
+      this.modal.loading = false;
+      this.modal.operationResult("✘ ОШИБКА");
       console.error("Field to send data to backend", err);
     }
 
-    setTimeout(this.close, 1000);
-  }
-
-  private operationResult(result: string) {
-    $("div#modalPermit").html(/*html*/ `
-      <div class="modal-scroller custom-scroll">
-        <div
-          class="modal-body"
-          style="display: block; top: 30%; left: calc(50% - 100px); margin-left: 0; margin-bottom: 0; width: 200px;"
-        >
-          <div class="modal-body__inner" style="text-align: center;">
-            <h2 class="head_2" style="font-size: 18pt;">${result}</h2>
-          </div>
-        </div>
-      </div>`);
+    setTimeout(() => this.modal.close(), 1000);
   }
 }

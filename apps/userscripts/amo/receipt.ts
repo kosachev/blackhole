@@ -10,25 +10,53 @@ type Good = {
 
 type ScanItem = Good & { barcodes: string[] };
 
-export class Receipt {
+import { Plugin } from "./plugin";
+
+export class Receipt extends Plugin {
   private readonly BACKEND_URL = `${BACKEND_BASE_URL}/web/barcode_scan`;
   private readonly MODAL_TAG = "ScanBarcode";
   private modal: Modal;
   private scanTimeout: any = null;
 
-  constructor(private lead_id: number) {
+  constructor(lead_id: number) {
+    super(lead_id);
     this.modal = new Modal(this.MODAL_TAG, {
       title: "🧾 Пробить чек",
       width: 600,
       menu: { text: "Пробить чек", icon: "🧾" },
     });
     this.modal.initMenu(() => this.open());
-    this.injectStyles();
   }
 
   destructor() {
     this.modal.close();
-    $("head").find("style.receipt_scanner_styles").remove();
+  }
+
+  style() {
+    return /* css */ `
+        .scan_li { display: flex; justify-content: space-between; align-items: flex-start; margin: 5px 0; padding: 10px 15px; border: 1px solid #eef2f4; border-radius: 4px; cursor: pointer; transition: background 0.2s, border-color 0.2s; background: #fff; position: relative; box-sizing: border-box; min-height: 60px; font-family: "Robotos", "PT Sans", sans-serif; }
+        .scan_li.scanned { background: #f0fcf6; border-color: #a6eacf; }
+        .scan_li.partial { background: #fff9db; border-color: #ffe066; }
+        .scan_li.active { border-color: #4c8bf7 !important; box-shadow: 0 0 0 2px rgba(76, 139, 247, 0.25); z-index: 5; }
+        .scan_status_icon { width: 30px; min-width: 30px; display: flex; justify-content: center; align-items: center; align-self: center; margin-right: 12px; font-weight: bold; font-size: 26px; line-height: 1; text-align: center; }
+        .scan_li.scanned .scan_status_icon:before { content: "✔"; color: #20c997; }
+        .scan_li.partial .scan_status_icon:before { content: "•"; color: #fcc419; font-size: 36px; }
+        .scan_li:not(.scanned):not(.partial) .scan_status_icon:before { content: "○"; color: #ccc; font-size: 22px; }
+        .scan_info { flex-grow: 1; margin-right: 10px; align-self: center; }
+        .scan_name { font-weight: bold; font-size: 14px; color: #333; line-height: 1.3; }
+        .scan_meta { font-size: 12px; color: #888; margin-top: 4px; }
+        .scan_barcode_box { width: 200px; text-align: right; display: flex; flex-direction: column; align-items: flex-end; align-self: center; }
+        .scan_counter { font-size: 12px; font-weight: bold; color: #555; margin-bottom: 6px; background: #eee; padding: 3px 8px; border-radius: 10px; }
+        .scanned .scan_counter { background: #20c997; color: white; }
+        .partial .scan_counter { background: #fcc419; color: #fff; text-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+        .scan_codes_wrapper { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; max-width: 100%; }
+        .scan_code_pill { background: #e8ecef; padding: 2px 6px; border-radius: 3px; color: #333; font-family: monospace; font-size: 11px; border: 1px solid #dde2e5; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+        .scanned .scan_code_pill, .partial .scan_code_pill { background: rgba(255,255,255,0.7); border-color: rgba(0,0,0,0.1); }
+        .scan_placeholder { color: #ccc; font-style: italic; font-size: 12px; }
+        .scan_clear_btn { margin-top: 6px; color: #d6336c; font-size: 11px; cursor: pointer; border-bottom: 1px dashed #d6336c; display: none; }
+        .scan_clear_btn:hover { color: #a61e4d; border-bottom-style: solid; }
+        .scan_footer_stats { display: flex; justify-content: space-between; margin-bottom: 0; padding: 10px; background: #f9f9f9; border-radius: 4px; font-size: 13px; color: #555; font-family: "Robotos", "PT Sans", sans-serif; }
+      `;
   }
 
   private async open() {
@@ -203,10 +231,7 @@ export class Receipt {
 
     $("#statTotal").text(`Позиций: ${total}`);
     $("#statScanned").text(`Готово: ${ready}`);
-    $("#scanButtonSend").attr(
-      "class",
-      hasData ? "button-input button-input_blue" : "button-input button-cancel",
-    );
+    $("#scanButtonSend").attr("class", hasData ? "btn btn-primary" : "btn btn-disabled");
   }
 
   private async loadGoods() {
@@ -251,9 +276,9 @@ export class Receipt {
 
   private async submit(e: any) {
     const btn = $(e.currentTarget);
-    if (!btn.hasClass("button-input_blue")) return;
+    if (!btn.hasClass("btn-primary")) return; // Updated check
 
-    btn.attr("class", "button-input button-cancel");
+    btn.attr("class", "btn btn-disabled"); // Updated state
 
     const items: ScanItem[] = $("li.scan_li")
       .map((_, el) => {
@@ -306,37 +331,12 @@ export class Receipt {
           <span id="statScanned" style="color: #20c997; font-weight: bold;">Готово: 0</span>
       </div>
       <div class="modal-footer">
-          <button id="scanButtonSend" type="button" class="button-input button-cancel"><span class="button-input-inner"><span class="button-input-inner__text">Отправить</span></span></button>
-          <button id="scanButtonCancel" type="button" class="button-input button-cancel"><span class="button-input-inner"><span class="button-input-inner__text">Отмена</span></span></button>
+          <button id="scanButtonCancel" type="button" class="btn btn-default">
+            Отмена
+          </button>
+          <button id="scanButtonSend" type="button" class="btn btn-disabled">
+            Отправить
+          </button>
       </div>`;
-  }
-
-  private injectStyles() {
-    $("head").append(
-      `<style class="receipt_scanner_styles" type="text/css">
-        .scan_li { display: flex; justify-content: space-between; align-items: flex-start; margin: 5px 0; padding: 10px 15px; border: 1px solid #eef2f4; border-radius: 4px; cursor: pointer; transition: background 0.2s, border-color 0.2s; background: #fff; position: relative; box-sizing: border-box; min-height: 60px; }
-        .scan_li.scanned { background: #f0fcf6; border-color: #a6eacf; }
-        .scan_li.partial { background: #fff9db; border-color: #ffe066; }
-        .scan_li.active { border-color: #4c8bf7 !important; box-shadow: 0 0 0 2px rgba(76, 139, 247, 0.25); z-index: 5; }
-        .scan_status_icon { width: 30px; min-width: 30px; display: flex; justify-content: center; align-items: center; align-self: center; margin-right: 12px; font-weight: bold; font-size: 26px; line-height: 1; text-align: center; }
-        .scan_li.scanned .scan_status_icon:before { content: "✔"; color: #20c997; }
-        .scan_li.partial .scan_status_icon:before { content: "•"; color: #fcc419; font-size: 36px; }
-        .scan_li:not(.scanned):not(.partial) .scan_status_icon:before { content: "○"; color: #ccc; font-size: 22px; }
-        .scan_info { flex-grow: 1; margin-right: 10px; align-self: center; }
-        .scan_name { font-weight: bold; font-size: 14px; color: #333; line-height: 1.3; }
-        .scan_meta { font-size: 12px; color: #888; margin-top: 4px; }
-        .scan_barcode_box { width: 200px; text-align: right; display: flex; flex-direction: column; align-items: flex-end; align-self: center; }
-        .scan_counter { font-size: 12px; font-weight: bold; color: #555; margin-bottom: 6px; background: #eee; padding: 3px 8px; border-radius: 10px; }
-        .scanned .scan_counter { background: #20c997; color: white; }
-        .partial .scan_counter { background: #fcc419; color: #fff; text-shadow: 0 1px 1px rgba(0,0,0,0.1); }
-        .scan_codes_wrapper { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; max-width: 100%; }
-        .scan_code_pill { background: #e8ecef; padding: 2px 6px; border-radius: 3px; color: #333; font-family: monospace; font-size: 11px; border: 1px solid #dde2e5; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-        .scanned .scan_code_pill, .partial .scan_code_pill { background: rgba(255,255,255,0.7); border-color: rgba(0,0,0,0.1); }
-        .scan_placeholder { color: #ccc; font-style: italic; font-size: 12px; }
-        .scan_clear_btn { margin-top: 6px; color: #d6336c; font-size: 11px; cursor: pointer; border-bottom: 1px dashed #d6336c; display: none; }
-        .scan_clear_btn:hover { color: #a61e4d; border-bottom-style: solid; }
-        .scan_footer_stats { display: flex; justify-content: space-between; margin-bottom: 0; padding: 10px; background: #f9f9f9; border-radius: 4px; font-size: 13px; color: #555; }
-      </style>`,
-    );
   }
 }

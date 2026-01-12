@@ -60,11 +60,12 @@ export class Modal {
   create(content: string) {
     $("body").css("overflow", "hidden").attr("data-body-fixed", 1);
     $("body").append(`
-      <div id="modal${this.tag}" class="modal modal-list">
+      <div id="modal${this.tag}" class="modal modal-list userscript-modal">
+        <div class="modal-backdrop"></div>
         <div class="modal-scroller custom-scroll">
           <div class="modal-body" style="display: block; top: 20%; left: calc(50% - ${
             this.width / 2
-          }px); width: ${this.width}px;">
+          }px); width: ${this.width}px; margin-left: 0; margin-bottom: 0;">
             <div class="overlay"><div class="loader"></div></div>
             <div class="modal-body__inner">
               <span class="modal-body__close"><span id="modalClose${
@@ -78,6 +79,8 @@ export class Modal {
       </div>`);
 
     $(`#modalClose${this.tag}`).on("click", () => this.close());
+    // Also close on backdrop click?
+    $(`#modal${this.tag} .modal-backdrop`).on("click", () => this.close());
   }
 
   on(event: string, selector: string, handler: (e: JQuery.Event) => void) {
@@ -112,7 +115,7 @@ export class Modal {
   operationResult(result: string) {
     this.el.html(`
       <div class="modal-scroller custom-scroll">
-        <div class="modal-body" style="display: block; top: 30%; left: calc(50% - 125px); width: 250px;">
+        <div class="modal-body" style="display: block; top: 30%; left: calc(50% - 125px); width: 250px; margin-left: 0; margin-bottom: 0;">
           <div class="modal-body__inner" style="text-align: center;">
             <h2 class="head_2" style="font-size: 18pt;">${result}</h2>
           </div>
@@ -147,12 +150,58 @@ export class Modal {
 
   static get styles(): string {
     return /*css*/ `
-      .modal .modal-title { text-align: center; font-size: 26px; font-weight: 600; font-family: "PT Sans", sans-serif; margin-bottom: 20px; }
-      .modal .close-button { color: #333; cursor: pointer; }
-      .modal .close-button:hover { color: red; }
-      .modal .modal-footer { height: 50px; margin-top: 10px; display: flex; justify-content: flex-start; align-items: center; flex-direction: row-reverse; }
-      .modal .overlay { display: none; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.3); z-index: 9999; }
-      .modal .overlay .loader { border: 10px solid #f3f3f3; border-top: 10px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; }
+      .userscript-modal { position: fixed !important; top: 0; left: 0; width: 100%; height: 100%; z-index: 9000; }
+      .userscript-modal .modal-backdrop { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1; }
+      .userscript-modal .modal-scroller { position: relative; z-index: 2; height: 100%; overflow-y: auto; pointer-events: none; }
+      .userscript-modal .modal-body { pointer-events: auto; } /* Re-enable pointer events for body */
+
+      .modal .modal-title { text-align: center; font-size: 24px; font-weight: 700; font-family: "Robotos", "PT Sans", sans-serif; margin-bottom: 24px; color: #333; }
+      .modal .close-button { color: #999; cursor: pointer; position: absolute; top: 15px; right: 15px; font-size: 18px; transition: color 0.2s; }
+      .modal .close-button:hover { color: #f44336; }
+      .modal .modal-body { padding: 30px; background: #fff; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+      .modal .modal-footer { margin-top: 30px; display: flex; justify-content: flex-end; align-items: center; gap: 12px; }
+
+      /* Modern Form Styles */
+      .modal .form-group { margin-bottom: 16px; display: flex; flex-direction: column; }
+      .modal label { margin-bottom: 6px; font-weight: 500; font-size: 13px; color: #555; }
+      .modal .form-control {
+        width: 100%; 
+        padding: 10px 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        box-sizing: border-box;
+      }
+      .modal .form-control:focus { outline: none; border-color: #4c8bf7; box-shadow: 0 0 0 3px rgba(76, 139, 247, 0.1); }
+      .modal input[type="date"].form-control,
+      .modal input[type="time"].form-control {
+        width: auto;
+        min-width: 160px;
+        align-self: flex-start;
+      }
+
+      /* Modern Button Styles */
+      .modal .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition: background 0.2s;
+        display: inline-flex; 
+        align-items: center;
+        justify-content: center;
+      }
+      .modal .btn-primary { background: #4c8bf7; color: white; }
+      .modal .btn-primary:hover { background: #3b76d6; }
+      .modal .btn-default { background: #f0f2f5; color: #555; }
+      .modal .btn-default:hover { background: #e4e6e9; }
+      .modal .btn-disabled { opacity: 0.6; cursor: not-allowed; }
+
+      .modal .overlay { display: none; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.7); z-index: 9999; backdrop-filter: blur(2px); }
+      .modal .overlay .loader { border: 4px solid #f3f3f3; border-top: 4px solid #4c8bf7; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
       @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     `;
   }
