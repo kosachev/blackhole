@@ -465,14 +465,20 @@ OrderId: ${payment.OrderId}
 
       if (res.requests[0].errors?.length > 0 || res.requests[0].state !== "ACCEPTED") {
         lead.note(
-          `❌ СДЭК: ошибки при создании заказа\n${res.requests[0].errors?.map((err) => err.message)}`.trim(),
+          `❌ СДЭК: ошибки при создании заказа\n${res.requests[0].errors?.map(
+            (err) => err.message,
+          )}`.trim(),
         );
         this.logger.error(
-          `STATUS_CDEK, lead_id: ${lead.data.id}, error: ${res.requests[0].errors?.map((err) => err.message)}`,
+          `STATUS_CDEK, lead_id: ${lead.data.id}, error: ${res.requests[0].errors?.map(
+            (err) => err.message,
+          )}`,
         );
       } else {
         lead.note(
-          `✎ СДЭК: создан заказ на доставку${is_pvz ? " в ПВЗ" : ""} по тарифу ${lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TARIFF) as string}`,
+          `✎ СДЭК: создан заказ на доставку${is_pvz ? " в ПВЗ" : ""} по тарифу ${
+            lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TARIFF) as string
+          }`,
         );
         lead.custom_fields.set(AMO.CUSTOM_FIELD.CDEK_UUID, res.entity.uuid);
         this.logger.log(`STATUS_CDEK, lead_id: ${lead.data.id}, cdek_uuid: ${res.entity.uuid}`);
@@ -516,7 +522,9 @@ OrderId: ${payment.OrderId}
         ]);
 
         this.logger.error(
-          `CDEK_ORDER_VALIDATION, lead_id: ${lead.data.id}, uuid: ${order.entity.uuid}, error: ${res.requests[0].errors?.map((err) => err.message)}`,
+          `CDEK_ORDER_VALIDATION, lead_id: ${lead.data.id}, uuid: ${
+            order.entity.uuid
+          }, error: ${res.requests[0].errors?.map((err) => err.message)}`,
         );
       }
     }, 15 * 1000); // 15 seconds
@@ -536,8 +544,8 @@ OrderId: ${payment.OrderId}
       const loss_reason = lead.tags.has(AMO.TAG.RETURN)
         ? AMO.LOSS_REASON.CDEK_RETURN
         : lead.tags.has(AMO.TAG.PARTIAL_RETURN)
-          ? AMO.LOSS_REASON.CDEK_PARTIAL_RETURN
-          : undefined;
+        ? AMO.LOSS_REASON.CDEK_PARTIAL_RETURN
+        : undefined;
 
       if (loss_reason) {
         lead.data.loss_reason_id = loss_reason;
@@ -679,27 +687,37 @@ OrderId: ${payment.OrderId}
         ["Экспресс по России", "Почта России", "Авито"].includes(
           lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) as string,
         ),
-        `Неверный тип доставки ${lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) ?? ""}, должен быть "Экспресс по России" или "Почта России" или "Авито"`,
+        `Неверный тип доставки ${
+          lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) ?? ""
+        }, должен быть "Экспресс по России" или "Почта России" или "Авито"`,
       ],
       delivery_type_post: [
         lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) === "Почта России",
-        `Неверный тип доставки ${lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) ?? ""}, должен быть "Почта России"`,
+        `Неверный тип доставки ${
+          lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) ?? ""
+        }, должен быть "Почта России"`,
       ],
       delivery_type_cdek: [
         lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) === "Экспресс по России",
-        `Неверный тип доставки ${lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) ?? ""}, должен быть "Экспресс по России"`,
+        `Неверный тип доставки ${
+          lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) ?? ""
+        }, должен быть "Экспресс по России"`,
       ],
       payment_not_equired: [
         ["Экспресс по России", "Почта России"].includes(
           lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) as string,
         ),
-        `Оплата для типа доставки "${lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) ?? ""}" не требуется`,
+        `Оплата для типа доставки "${
+          lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) ?? ""
+        }" не требуется`,
       ],
       delivery_type_courier: [
         ["Курьером (в пределах МКАД)", "Курьером (Московская область)"].includes(
           lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) as string,
         ),
-        `Неверный тип доставки "${lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) ?? ""}" для курьерской доставки, должен быть "Курьером (в пределах МКАД)" или "Курьером (Московская область)"`,
+        `Неверный тип доставки "${
+          lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) ?? ""
+        }" для курьерской доставки, должен быть "Курьером (в пределах МКАД)" или "Курьером (Московская область)"`,
       ],
       email_exists: [
         lead.contact.custom_fields.get(AMO.CONTACT.EMAIL) ? true : false,
@@ -808,8 +826,8 @@ OrderId: ${payment.OrderId}
       const site = lead.tags.has(AMO.TAG.SITE)
         ? "Gerda"
         : lead.tags.has(AMO.TAG.TILDA)
-          ? "gerdacollection"
-          : undefined;
+        ? "gerdacollection"
+        : undefined;
 
       const result = await this.googleSheets.sales.addLead({
         shippingDate: stringDate(),
@@ -821,7 +839,7 @@ OrderId: ${payment.OrderId}
         deliveryType: lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE),
         paymentType: lead.custom_fields.get(AMO.CUSTOM_FIELD.PAY_TYPE),
         leadId: lead.data.id.toString(),
-        ads: lead.custom_fields.get(AMO.CUSTOM_FIELD.AD_UTM_SOURCE),
+        ads: lead.getAdsString(),
         site,
         color,
       });

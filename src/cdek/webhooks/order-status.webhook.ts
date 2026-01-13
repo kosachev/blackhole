@@ -118,7 +118,11 @@ export class OrderStatusWebhook extends AbstractWebhook {
       custom_fields: [
         [
           AMO.CUSTOM_FIELD.CDEK_STATUS,
-          `${data.attributes.status_code}${data.attributes.status_reason_code ? "/" + data.attributes.status_reason_code : ""}${data.attributes.city_name ? ", " + data.attributes.city_name : ""}, ${new Date().toLocaleString("ru-RU")}`,
+          `${data.attributes.status_code}${
+            data.attributes.status_reason_code ? "/" + data.attributes.status_reason_code : ""
+          }${
+            data.attributes.city_name ? ", " + data.attributes.city_name : ""
+          }, ${new Date().toLocaleString("ru-RU")}`,
         ],
       ],
     };
@@ -130,7 +134,9 @@ export class OrderStatusWebhook extends AbstractWebhook {
           [AMO.CUSTOM_FIELD.TRACK_NUMBER, data.attributes.cdek_number],
           [AMO.CUSTOM_FIELD.CDEK_INVOICE_URL, orderUrl(data.attributes.cdek_number)],
         );
-        parsed.note = `✎ СДЭК${prefix}: получен трек-код ${data.attributes.cdek_number}, накладная ${orderUrl(data.attributes.cdek_number)} (1)`;
+        parsed.note = `✎ СДЭК${prefix}: получен трек-код ${
+          data.attributes.cdek_number
+        }, накладная ${orderUrl(data.attributes.cdek_number)} (1)`;
         this.getPrintForm(data.attributes.cdek_number, +data.attributes.number);
         this.cdek_service.deleteOrderValidationToTimer(data.uuid);
         break;
@@ -187,7 +193,9 @@ export class OrderStatusWebhook extends AbstractWebhook {
         this.handlePartialReturn(data);
         break;
       case "5":
-        parsed.note = `ℹ СДЭК${prefix}: посылка не вручена адресату (5)${status_reason_code[data.attributes.status_reason_code] ?? ""}\n⇌ СДЕК ВОЗВРАТ: Сделка переведена в возвраты`;
+        parsed.note = `ℹ СДЭК${prefix}: посылка не вручена адресату (5)${
+          status_reason_code[data.attributes.status_reason_code] ?? ""
+        }\n⇌ СДЕК ВОЗВРАТ: Сделка переведена в возвраты`;
         parsed.tag.push(AMO.TAG.RETURN);
         parsed.status = AMO.STATUS.RETURN;
         parsed.pipeline = AMO.PIPELINE.RETURN;
@@ -200,7 +208,9 @@ export class OrderStatusWebhook extends AbstractWebhook {
         parsed.status = data.attributes.is_return ? AMO.STATUS.RETURN : AMO.STATUS.SENT;
         break;
       case "10":
-        parsed.note = `ℹ СДЭК${prefix}: посылка прибыла на склад города-получателя ${data.attributes.city_name ?? ""}, ожидает доставки до двери (10)`;
+        parsed.note = `ℹ СДЭК${prefix}: посылка прибыла на склад города-получателя ${
+          data.attributes.city_name ?? ""
+        }, ожидает доставки до двери (10)`;
         break;
       case "11":
         parsed.note = `ℹ СДЭК${prefix}: посылка выдана на доставку (11)`;
@@ -216,7 +226,9 @@ export class OrderStatusWebhook extends AbstractWebhook {
         }
         break;
       case "12":
-        parsed.note = `ℹ СДЭК${prefix}: посылка прибыла на склад до востребования города-получателя ${data.attributes.city_name ?? ""}, ожидает забора клиентом (12)`;
+        parsed.note = `ℹ СДЭК${prefix}: посылка прибыла на склад до востребования города-получателя ${
+          data.attributes.city_name ?? ""
+        }, ожидает забора клиентом (12)`;
         if (!data.attributes.is_return) {
           parsed.salesbot = AMO.SALESBOT.ORDER_AT_PVZ;
         }
@@ -408,7 +420,9 @@ export class OrderStatusWebhook extends AbstractWebhook {
           entity_id: lead_by_direct_uuid,
           note_type: "common",
           params: {
-            text: `ℹ СДЕК ВОЗВРАТ\nВозвратный UUID: ${data.uuid}\nВозвратная накладная: ${orderUrl(data.attributes.cdek_number)}${reverse_price ? `\nСтоимость доставки: ${reverse_price}` : ""}`,
+            text: `ℹ СДЕК ВОЗВРАТ\nВозвратный UUID: ${data.uuid}\nВозвратная накладная: ${orderUrl(
+              data.attributes.cdek_number,
+            )}${reverse_price ? `\nСтоимость доставки: ${reverse_price}` : ""}`,
           },
         },
       ]),
@@ -455,8 +469,8 @@ export class OrderStatusWebhook extends AbstractWebhook {
       const site = lead.tags.has(AMO.TAG.SITE)
         ? "Gerda"
         : lead.tags.has(AMO.TAG.TILDA)
-          ? "gerdacollection"
-          : undefined;
+        ? "gerdacollection"
+        : undefined;
 
       const result = await this.googleSheets.sales.addLead({
         shippingDate: stringDate(),
@@ -468,7 +482,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
         paymentType: lead.custom_fields.get(AMO.CUSTOM_FIELD.PAY_TYPE),
         leadId: leadId,
         cdekNumber: cdekNumber,
-        ads: lead.custom_fields.get(AMO.CUSTOM_FIELD.AD_UTM_SOURCE),
+        ads: lead.getAdsString(),
         site,
       });
 

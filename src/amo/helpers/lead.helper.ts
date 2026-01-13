@@ -478,6 +478,26 @@ export class LeadHelper {
     return phone;
   }
 
+  getAdsString(): string | undefined {
+    const ads = [];
+    for (const field of [
+      AMO.CUSTOM_FIELD.AD_UTM_SOURCE,
+      AMO.CUSTOM_FIELD.AD_UTM_MEDIUM,
+      AMO.CUSTOM_FIELD.AD_UTM_CAMPAIGN_NAME,
+      AMO.CUSTOM_FIELD.AD_UTM_GROUP,
+      AMO.CUSTOM_FIELD.AD_UTM_CONTENT,
+      AMO.CUSTOM_FIELD.AD_UTM_TERM,
+      AMO.CUSTOM_FIELD.AD_UTM_REFFERER,
+      AMO.CUSTOM_FIELD.AD_DEVICE_TYPE,
+      AMO.CUSTOM_FIELD.AD_UTM_REGION,
+    ]) {
+      if (this.custom_fields.has(field)) {
+        ads.push(this.custom_fields.get(field));
+      }
+    }
+    return ads.length > 0 ? ads.join(", ") : undefined;
+  }
+
   parseTariff(): number {
     switch (this.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TARIFF)) {
       case "Дверь - Дверь":
