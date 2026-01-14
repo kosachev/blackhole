@@ -1,7 +1,5 @@
-import fs from "node:fs";
-import path from "node:path";
-import zlib from "node:zlib";
-import * as tar from "tar-fs";
+import { readdir, unlink } from "node:fs/promises";
+import { join } from "node:path";
 
 import { Cron } from "@nestjs/schedule";
 import { CronService } from "../cron.service";
@@ -13,29 +11,37 @@ export class ArchiveLogsJob extends CronService {
     const date = new Date();
 
     date.setMonth(date.getMonth() - 1);
-    const prev_month = `${date.getFullYear()}-${date.getMonth() + 1 < 10 ? "0" : ""}${date.getMonth() + 1}`;
+    const prevMonth = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}`;
 
-    const archive = fs.createWriteStream(
-      path.join(this.config.get<string>("LOG_ARCHIVE_PATH"), `${prev_month}.tar.gz`),
-    );
-    const gzip = zlib.createGzip();
-    gzip.pipe(archive);
-    tar
-      .pack("./logs", {
-        filter: (name) =>
-          !path.basename(name).startsWith(prev_month) || !path.basename(name).endsWith(".log"),
-      })
-      .pipe(gzip);
+    const logsDir = this.config.get<string>("LOGS_PATH") || "./logs";
+    const archiveDir = this.config.get<string>("LOG_ARCHIVE_PATH");
+    const archivePath = join(archiveDir, `${prevMonth}.tar.gz`);
 
-    await new Promise((resolve, reject) => {
-      archive.on("finish", () => resolve(undefined));
-      archive.on("error", reject);
-    });
-    for (const file of fs.readdirSync("./logs")) {
-      if (!file.startsWith(prev_month) || !file.endsWith(".log")) continue;
-      fs.unlinkSync(`./logs/${file}`);
+    try {
+      const filesInLogs = await readdir(logsDir);
+      const filesToArchive: Record<string, any> = {};
+
+      for (const file of filesInLogs) {
+        if (file.startsWith(prevMonth) && file.endsWith(".log")) {
+          filesToArchive[file] = await Bun.file(join(logsDir, file)).bytes();
+        }
+      }
+
+      if (Object.keys(filesToArchive).length === 0) {
+        this.logger.log(`No logs found for ${prevMonth} to archive`);
+        return;
+      }
+
+      const archive = new Bun.Archive(filesToArchive, { compress: "gzip" });
+      await Bun.write(archivePath, await archive.bytes());
+
+      for (const file in filesToArchive) {
+        await unlink(join(logsDir, file));
+      }
+
+      this.logger.log(`Logs archived to ${archivePath}`);
+    } catch (error) {
+      this.logger.error(`Failed to archive logs: ${error.message}`);
     }
-
-    this.logger.log(`Logs archived to ${archive.path}`);
   }
 }
