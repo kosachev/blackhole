@@ -60,7 +60,6 @@ export class Lead {
     for (const plugin of this.plugins) {
       plugin.destructor();
     }
-    $("head").find("style.userstyles").remove();
   }
 
   private timezone() {
@@ -119,9 +118,9 @@ export class Lead {
       console.debug("VALIDATE INDEX FIELD", delivery_type, delivery_tariff);
 
       if (
-        (delivery_type === "Экспресс по России" &&
+        delivery_type === "Экспресс по России" &&
         delivery_tariff === "Склад - Склад" &&
-        !validatePVZCf())
+        !validatePVZCf()
       ) {
         CFV(AMO.CUSTOM_FIELD.PVZ).parent().parent().addClass("validation-not-valid");
       } else {
@@ -156,10 +155,11 @@ export class Lead {
     for (const plugin of this.plugins) {
       styles += plugin.style() + "\n";
     }
-
-    $("head").append(/*html*/ `
-      <style class="userstyles" type="text/css">
-        ${styles}
-      </style>`);
+    if ($(".userstyles-lead").length === 0) {
+      $("head").append(/*html*/ `
+        <style class="userstyles-lead" type="text/css">
+          ${styles}
+        </style>`);
+    }
   }
 }

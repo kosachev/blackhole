@@ -5,7 +5,8 @@ export class Pipeline {
     if (pipeline_id === 0 || !pipeline_id) return;
     console.debug("PIPELINE LOADED", pipeline_id);
 
-    this.outdateTasks();
+    this.styles();
+    // this.outdateTasks();
     this.cdekPickupInformer();
   }
 
@@ -14,14 +15,6 @@ export class Pipeline {
     for (const fn of this.to_destruct) {
       fn();
     }
-  }
-
-  private outdateTasks() {
-    $("div.pipeline_leads__item").each((i, el) => {
-      if ($(el).find("span.pipeline_leads__task-icon.pipeline_leads__task-icon_red").length > 0) {
-        $(el).css({ background: "#fedbdb", border: "2px solid rgba(255,50,50,.2)" });
-      }
-    });
   }
 
   private cdekPickupInformer() {
@@ -38,5 +31,17 @@ export class Pipeline {
     }
     target.attr("title", `Ближайшая дата забора: ${pickups[0].date} ${pickups[0].time}`);
     target.append(`<span class="pickup_informer">🚚</span>`);
+  }
+
+  private styles() {
+    if ($(".userstyles-pipeline").length === 0) {
+      $("head").append(/*html*/ `
+        <style class="userstyles-pipeline" type="text/css">
+          .pipeline_leads__item:has(span.pipeline_leads__task-icon_red) {
+            background: #fedbdb;
+            border: 2px solid rgba(255,50,50,.2);
+          }
+        </style>`);
+    }
   }
 }
