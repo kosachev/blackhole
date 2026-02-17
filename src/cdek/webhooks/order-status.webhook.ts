@@ -177,8 +177,8 @@ export class OrderStatusWebhook extends AbstractWebhook {
             +data.attributes.number,
             "Возврат выдан на доставку курьеру. Принять возврат",
           );
-          // TODO: move back when CDEK hooks will be fixed
-          //this.cdekReturnRecieved(data.attributes.number);
+
+          this.cdekReturnRecieved(data.attributes.number);
           break;
         }
         if (!data.attributes.status_reason_code) {
@@ -469,8 +469,8 @@ export class OrderStatusWebhook extends AbstractWebhook {
       const site = lead.tags.has(AMO.TAG.SITE)
         ? "Gerda"
         : lead.tags.has(AMO.TAG.TILDA)
-        ? "gerdacollection"
-        : undefined;
+          ? "gerdacollection"
+          : undefined;
 
       const result = await this.googleSheets.sales.addLead({
         shippingDate: stringDate(),
