@@ -3,7 +3,17 @@
   <head>
     <title>Выбор ПВЗ</title>
     <meta http-equiv="Permissions-Policy" content="clipboard-write=(self)" />
-    <script src="https://maps.api.2gis.ru/2.0/loader.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
     <style>
       body {
         margin: 0;
@@ -112,18 +122,6 @@
         margin-bottom: 3px;
       }
 
-      .dg-control-round__icon_name_fullscreen:after {
-        background-image: none !important;
-        content: "✖" !important;
-        right: 2px !important;
-        top: -7px !important;
-        color: rgb(78, 78, 78);
-      }
-
-      .dg-error-message {
-        display: none !important;
-      }
-
       #loading {
         position: absolute;
         top: 50%;
@@ -193,6 +191,30 @@
         outline: none;
         background-image: linear-gradient(to top, #fff 0, #efefef 100%);
       }
+
+      #yandex-logo {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        z-index: 1000;
+        width: 88px;
+        height: 48px;
+      }
+
+      #open-yandex-maps {
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+        z-index: 1000;
+        padding: 7px 12px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.94);
+        color: #222;
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        text-decoration: none;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+      }
     </style>
   </head>
   <body>
@@ -202,14 +224,25 @@
       </div>
     </div>
     <div id="search">
-      <input type="text" id="search-input" placeholder="улица, дом..." />
+      <input type="text" id="search-input" placeholder="адрес или код ПВЗ..." />
     </div>
+    <a id="yandex-logo" href="https://yandex.ru/maps/" target="_blank" rel="noopener noreferrer">
+      <img src="/public/yandex_logo_ru.svg" alt="Яндекс Карты" width="88" height="48" />
+    </a>
+    <a
+      id="open-yandex-maps"
+      href="https://yandex.ru/maps/"
+      target="_blank"
+      rel="noopener noreferrer"
+      >Открыть в Яндекс Картах</a
+    >
     <script type="module">
       const url = new URL(window.location.href);
       const BACKEND_BASE = url.searchParams.get("backend");
       const ORIGIN = url.searchParams.get("origin");
       const INDEX = url.searchParams.get("index");
       const QUERY = url.searchParams.get("query");
+      const YANDEX_TILES_API_KEY = "__YANDEX_TILES_API_KEY__";
 
       try {
         if (!BACKEND_BASE || !ORIGIN || !INDEX) {
@@ -217,11 +250,12 @@
           throw new Error("Some query params missing");
         }
 
-        const [res, location, _] = await Promise.all([
-          fetch(`${BACKEND_BASE}/web/pvz_picker?index=${INDEX}`),
-          geocodeLocation(INDEX),
-          DG,
-        ]);
+        if (!YANDEX_TILES_API_KEY || YANDEX_TILES_API_KEY.startsWith("__")) {
+          throw new Error("Yandex Tiles API key is not configured");
+        }
+
+        const res = await fetch(`${BACKEND_BASE}/web/pvz_picker?index=${INDEX}`);
+        if (!res.ok) throw new Error(`Unable to load pickup points: ${res.status}`);
 
         document.getElementById("search").style.opacity = 1;
 
@@ -229,71 +263,78 @@
 
         document.getElementById("map").innerHTML = `<div id="info"></div>`;
 
-        data = data.filter((item) => !item.take_only && item.type == "PVZ");
+        data = data.filter(
+          (item) =>
+            !item.take_only &&
+            item.type == "PVZ" &&
+            Number.isFinite(Number(item.location?.latitude)) &&
+            Number.isFinite(Number(item.location?.longitude)),
+        );
 
-        if (location.length == 0) {
-          alert("Не удалось определить местоположение по индексу");
-          throw new Error("Location not found");
+        if (data.length == 0) {
+          alert("Для этого индекса не найдены ПВЗ");
+          throw new Error("Pickup points not found");
         }
 
-        const map = DG.map("map", {
-          center: location[0],
-          zoom: 13,
-        });
+        const map = L.map("map", { attributionControl: false });
+        L.tileLayer(
+          `https://tiles.api-maps.yandex.ru/v1/tiles/?x={x}&y={y}&z={z}&lang=ru_RU&l=map&maptype=map&projection=web_mercator&apikey=${YANDEX_TILES_API_KEY}`,
+          {
+            minZoom: 1,
+            maxZoom: 20,
+            tileSize: 256,
+          },
+        ).addTo(map);
 
-        document.getElementsByClassName("leaflet-right")[0].style.display = "none";
-
-        // client icon
-        DG.marker(location[0], {
-          icon: DG.icon({
-            iconUrl: "https://maps.api.2gis.ru/2.0/img/DGCustomization__markerHover.png",
-            iconRetinaUrl: "https://maps.api.2gis.ru/2.0/img/DGCustomization__markerHover.png",
-            iconSize: [22, 34],
-            iconAnchor: [22, 34],
-            popupAnchor: [-10, 0],
-          }),
-        })
-          .addTo(map)
-          .bindLabel(`Индекс ${INDEX}`);
-
+        const pvzMarkers = [];
         for (const item of data) {
-          DG.marker([item.location.latitude, item.location.longitude])
+          const coordinates = [
+            Number(item.location.latitude),
+            Number(item.location.longitude),
+          ];
+          const marker = L.marker(coordinates)
             .addTo(map)
-            .bindLabel(item.name)
+            .bindTooltip(item.name)
             .bindPopup(item.location.address)
             .on("click", (e) => {
               showInfo(item);
               map.setView([e.latlng.lat, e.latlng.lng]);
             });
+          pvzMarkers.push({ item, marker });
         }
 
-        async function geocodeLocation(search, bounds) {
-          let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(search)}&countrycodes=ru`;
-          if (bounds && bounds.length === 2) {
-            url += `&bounded=1&viewbox=${+bounds[1] - 0.5},${+bounds[0] - 0.25},${+bounds[1] + 0.5},${+bounds[0] + 0.25}`;
-          }
+        const allPoints = L.featureGroup(pvzMarkers.map(({ marker }) => marker));
+        map.fitBounds(allPoints.getBounds(), { padding: [40, 40], maxZoom: 13 });
 
-          const res = await fetch(url);
-          if (!res.ok) throw new Error(`Unable to fetch location for index ${search}`);
-          const data = await res.json();
-
-          return data.map((item) => [item.lat, item.lon]);
+        function matchesSearch(item, search) {
+          const haystack = [
+            item.code,
+            item.name,
+            item.location.city,
+            item.location.address,
+            item.location.postal_code,
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .toLocaleLowerCase("ru-RU");
+          return search
+            .toLocaleLowerCase("ru-RU")
+            .split(/\s+/)
+            .filter(Boolean)
+            .every((token) => haystack.includes(token));
         }
 
         async function searchAddress(search) {
-          const results = await geocodeLocation(search, location[0]);
-          if (results.length > 0) {
-            const popups = DG.featureGroup();
-            for (let i = 0; i < results.length; i++) {
-              DG.popup()
-                .setLatLng(results[i])
-                .setContent(`#${i + 1} ${search}`)
-                .addTo(popups);
+          const matches = pvzMarkers.filter(({ item }) => matchesSearch(item, search));
+          if (matches.length > 0) {
+            const group = L.featureGroup(matches.map(({ marker }) => marker));
+            map.fitBounds(group.getBounds(), { padding: [40, 40], maxZoom: 16 });
+            if (matches.length === 1) {
+              matches[0].marker.openPopup();
+              showInfo(matches[0].item);
             }
-            popups.addTo(map);
-            map.fitBounds(popups.getBounds());
           } else {
-            alert(`Не удалось найти адрес ${search}`);
+            alert(`Не удалось найти ПВЗ по запросу «${search}»`);
           }
         }
 
@@ -418,7 +459,12 @@
           },
           ORIGIN,
         );
-        alert("Неверно указан индекс");
+        const message = err instanceof Error ? err.message : String(err);
+        if (message.includes("API key")) {
+          alert("Карта ПВЗ не настроена: отсутствует ключ Yandex Tiles API");
+        } else if (!message.includes("Pickup points not found")) {
+          alert("Не удалось загрузить карту ПВЗ");
+        }
         console.error("ERROR on PVZ iframe", err);
       }
     </script>
