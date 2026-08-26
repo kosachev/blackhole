@@ -17,7 +17,9 @@ function parseData(): TildaProduct {
   return {
     name: document.querySelector('h1[itemprop="name"]')?.textContent?.trim() ?? "",
     sku:
-      document.querySelector('span.js-store-prod-sku[itemprop="sku"]')?.textContent?.trim() ?? "",
+      document
+        .querySelector(".t-store__prod-popup__sku .js-store-prod-sku")
+        ?.textContent?.trim() ?? "",
     price: isNaN(price) ? 0 : price,
 
     size:
@@ -28,7 +30,7 @@ function parseData(): TildaProduct {
 }
 
 function addSkuTracker() {
-  const span = document.querySelector('span.js-store-prod-sku[itemprop="sku"]');
+  const span = document.querySelector(".t-store__prod-popup__sku .js-store-prod-sku");
   if (!span) {
     console.error("No span with SKU");
     return;
