@@ -313,8 +313,8 @@
           pvzMarkers.push({ item, marker });
         }
 
-        const allPoints = L.featureGroup(pvzMarkers.map(({ marker }) => marker));
         // do not zoom to all points
+        // const allPoints = L.featureGroup(pvzMarkers.map(({ marker }) => marker));
         // map.fitBounds(allPoints.getBounds(), { padding: [40, 40], maxZoom: 13 });
 
         function matchesSearch(item, search) {
@@ -338,8 +338,9 @@
         async function searchAddress(search) {
           const matches = pvzMarkers.filter(({ item }) => matchesSearch(item, search));
           if (matches.length > 0) {
-            const group = L.featureGroup(matches.map(({ marker }) => marker));
-            map.fitBounds(group.getBounds(), { padding: [40, 40], maxZoom: 16 });
+            map.setView([matches[0].marker._latlng.lat, matches[0].marker._latlng.lng, 13]);
+            // const group = L.featureGroup(matches.map(({ marker }) => marker));
+            // map.fitBounds(group.getBounds(), { padding: [40, 40], maxZoom: 16 });
             if (matches.length === 1) {
               matches[0].marker.openPopup();
               showInfo(matches[0].item);
