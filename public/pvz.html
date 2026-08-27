@@ -318,35 +318,59 @@
         // map.fitBounds(allPoints.getBounds(), { padding: [40, 40], maxZoom: 13 });
 
         function matchesSearch(item, search) {
-          const haystack = [
-            item.code,
-            item.name,
-            item.location.city,
-            item.location.address,
-            item.location.postal_code,
-          ]
-            .filter(Boolean)
-            .join(" ")
-            .toLocaleLowerCase("ru-RU");
-          return search
-            .toLocaleLowerCase("ru-RU")
-            .split(/\s+/)
-            .filter(Boolean)
-            .every((token) => haystack.includes(token));
+          const q = search.trim().toLowerCase();
+          const code = (item.code || "").toLowerCase();
+
+          if (code === q) return true;
+
+          const text =
+            `${item.name || ""} ${item.location?.city || ""} ${item.location?.address || ""}`.toLowerCase();
+          const tokens = q.split(/\s+/).filter(Boolean);
+
+          return tokens.length > 0 && tokens.every((token) => text.includes(token));
+        }
+
+        async function geocodeLocation(search, centerCoords) {
+          try {
+            let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(search)}&countrycodes=ru&accept-language=ru&limit=1`;
+
+            if (centerCoords && centerCoords.length === 2) {
+              const [lat, lon] = [+centerCoords[0], +centerCoords[1]];
+              const dLat = 0.3;
+              const dLon = 0.5;
+              url += `&viewbox=${lon - dLon},${lat + dLat},${lon + dLon},${lat - dLat}&bounded=0`;
+            }
+
+            const res = await fetch(url);
+            if (!res.ok) return null;
+            const data = await res.json();
+
+            return data[0] ? [parseFloat(data[0].lat), parseFloat(data[0].lon)] : null;
+          } catch (err) {
+            return null;
+          }
         }
 
         async function searchAddress(search) {
+          if (!search?.trim()) return;
+
           const matches = pvzMarkers.filter(({ item }) => matchesSearch(item, search));
+
           if (matches.length > 0) {
-            map.setView([matches[0].marker._latlng.lat, matches[0].marker._latlng.lng, 13]);
-            // const group = L.featureGroup(matches.map(({ marker }) => marker));
-            // map.fitBounds(group.getBounds(), { padding: [40, 40], maxZoom: 16 });
-            if (matches.length === 1) {
-              matches[0].marker.openPopup();
-              showInfo(matches[0].item);
-            }
+            const target = matches[0];
+            map.setView(target.marker.getLatLng(), 15);
+            target.marker.openPopup();
+            if (typeof showInfo === "function") showInfo(target.item);
+            return;
+          }
+
+          const center = map.getCenter();
+          const coords = await geocodeLocation(search, [center.lat, center.lng]);
+
+          if (coords) {
+            map.setView(coords, 15);
           } else {
-            alert(`Не удалось найти ПВЗ по запросу «${search}»`);
+            alert(`Ничего не найдено по запросу «${search}»`);
           }
         }
 
