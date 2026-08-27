@@ -250,6 +250,18 @@
           throw new Error("Some query params missing");
         }
 
+        let mapProviderUrl = "";
+
+        if (BACKEND_BASE.includes("localhost")) {
+          mapProviderUrl =
+            "https://core-renderer-tiles.maps.yandex.net/tiles?x={x}&y={y}&z={z}&lang=ru_RU&l=map&maptype=map&projection=web_mercator";
+        } else {
+          if (!YANDEX_TILES_API_KEY || YANDEX_TILES_API_KEY.startsWith("__")) {
+            throw new Error("Yandex Tiles API key is not configured");
+          }
+          mapProviderUrl = `https://tiles.api-maps.yandex.ru/v1/tiles/?x={x}&y={y}&z={z}&lang=ru_RU&l=map&maptype=map&projection=web_mercator&apikey=${YANDEX_TILES_API_KEY}`;
+        }
+
         if (!YANDEX_TILES_API_KEY || YANDEX_TILES_API_KEY.startsWith("__")) {
           throw new Error("Yandex Tiles API key is not configured");
         }
@@ -276,22 +288,20 @@
           throw new Error("Pickup points not found");
         }
 
-        const map = L.map("map", { attributionControl: false });
-        L.tileLayer(
-          `https://tiles.api-maps.yandex.ru/v1/tiles/?x={x}&y={y}&z={z}&lang=ru_RU&l=map&maptype=map&projection=web_mercator&apikey=${YANDEX_TILES_API_KEY}`,
-          {
-            minZoom: 1,
-            maxZoom: 20,
-            tileSize: 256,
-          },
-        ).addTo(map);
+        const map = L.map("map", {
+          zoom: 13,
+          center: [data[0].location.latitude, data[0].location.longitude],
+          attributionControl: false,
+        });
+        L.tileLayer(mapProviderUrl, {
+          minZoom: 1,
+          maxZoom: 20,
+          tileSize: 256,
+        }).addTo(map);
 
         const pvzMarkers = [];
         for (const item of data) {
-          const coordinates = [
-            Number(item.location.latitude),
-            Number(item.location.longitude),
-          ];
+          const coordinates = [Number(item.location.latitude), Number(item.location.longitude)];
           const marker = L.marker(coordinates)
             .addTo(map)
             .bindTooltip(item.name)
@@ -304,7 +314,8 @@
         }
 
         const allPoints = L.featureGroup(pvzMarkers.map(({ marker }) => marker));
-        map.fitBounds(allPoints.getBounds(), { padding: [40, 40], maxZoom: 13 });
+        // do not zoom to all points
+        // map.fitBounds(allPoints.getBounds(), { padding: [40, 40], maxZoom: 13 });
 
         function matchesSearch(item, search) {
           const haystack = [
