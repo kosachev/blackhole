@@ -4,6 +4,8 @@
     "node": true
   },
   "rules": {
-    "eslint/no-unsafe-optional-chaining": "off"
-  }
+    "eslint/no-unsafe-optional-chaining": "off",
+    "eslint/no-unused-vars": "off"
+  },
+  "ignorePatterns": ["public/**, data/**"]
 }
