@@ -11,6 +11,9 @@
     "moduleDetection": "force",
     "allowJs": true,
 
+    // Type checking
+    "types": ["node", "bun"],
+
     // Bundler mode
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
