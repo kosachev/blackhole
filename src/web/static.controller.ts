@@ -19,8 +19,11 @@ export class StaticController {
     const yandexTilesApiKey = encodeURIComponent(
       this.config.getOrThrow<string>("YANDEX_TILES_API_KEY"),
     );
+    const dadataApiKey = encodeURIComponent(this.config.getOrThrow<string>("DADATA_API_KEY"));
     // @ts-expect-error pvz is a string because of with
-    return pvz.replace("__YANDEX_TILES_API_KEY__", yandexTilesApiKey);
+    return pvz
+      .replace("__YANDEX_TILES_API_KEY__", yandexTilesApiKey)
+      .replace("__DADATA_API_KEY__", dadataApiKey);
   }
 
   @Get("yandex_logo_ru.svg")

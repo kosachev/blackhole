@@ -243,6 +243,7 @@
       const INDEX = url.searchParams.get("index");
       const QUERY = url.searchParams.get("query");
       const YANDEX_TILES_API_KEY = "__YANDEX_TILES_API_KEY__";
+      const DADATA_API_KEY = decodeURIComponent("__DADATA_API_KEY__");
 
       try {
         if (!BACKEND_BASE || !ORIGIN || !INDEX) {
@@ -332,20 +333,45 @@
 
         async function geocodeLocation(search, centerCoords) {
           try {
-            let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(search)}&countrycodes=ru&accept-language=ru&limit=1`;
-
-            if (centerCoords && centerCoords.length === 2) {
-              const [lat, lon] = [+centerCoords[0], +centerCoords[1]];
-              const dLat = 0.3;
-              const dLon = 0.5;
-              url += `&viewbox=${lon - dLon},${lat + dLat},${lon + dLon},${lat - dLat}&bounded=0`;
-            }
-
-            const res = await fetch(url);
+            const [centerLat, centerLon] = centerCoords.map(Number);
+            const dLat = 0.3;
+            const dLon = 0.5;
+            const res = await fetch(
+              "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address",
+              {
+                method: "POST",
+                headers: {
+                  Accept: "application/json",
+                  "Content-Type": "application/json",
+                  Authorization: `Token ${DADATA_API_KEY}`,
+                },
+                body: JSON.stringify({
+                  query: search,
+                  count: 20,
+                  locations: [{ country_iso_code: "RU" }],
+                  locations_geo: [
+                    {
+                      lat: centerLat,
+                      lon: centerLon,
+                      radius_meters: 60000,
+                    },
+                  ],
+                }),
+              },
+            );
             if (!res.ok) return null;
             const data = await res.json();
+            const suggestion = data.suggestions?.find(
+              (item) =>
+                Number.isFinite(Number(item.data?.geo_lat)) &&
+                Number.isFinite(Number(item.data?.geo_lon)) &&
+                Math.abs(Number(item.data.geo_lat) - centerLat) <= dLat &&
+                Math.abs(Number(item.data.geo_lon) - centerLon) <= dLon,
+            );
 
-            return data[0] ? [parseFloat(data[0].lat), parseFloat(data[0].lon)] : null;
+            return suggestion
+              ? [Number(suggestion.data.geo_lat), Number(suggestion.data.geo_lon)]
+              : null;
           } catch (err) {
             return null;
           }
