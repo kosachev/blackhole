@@ -301,6 +301,7 @@
         }).addTo(map);
 
         const pvzMarkers = [];
+        let addressSearchMarker = null;
         for (const item of data) {
           const coordinates = [Number(item.location.latitude), Number(item.location.longitude)];
           const marker = L.marker(coordinates)
@@ -380,6 +381,9 @@
         async function searchAddress(search) {
           if (!search?.trim()) return;
 
+          addressSearchMarker?.remove();
+          addressSearchMarker = null;
+
           const matches = pvzMarkers.filter(({ item }) => matchesSearch(item, search));
 
           if (matches.length > 0) {
@@ -394,6 +398,13 @@
           const coords = await geocodeLocation(search, [center.lat, center.lng]);
 
           if (coords) {
+            addressSearchMarker = L.circleMarker(coords, {
+              radius: 9,
+              color: "#fff",
+              weight: 3,
+              fillColor: "#d71920",
+              fillOpacity: 1,
+            }).addTo(map);
             map.setView(coords, 15);
           } else {
             alert(`Ничего не найдено по запросу «${search}»`);

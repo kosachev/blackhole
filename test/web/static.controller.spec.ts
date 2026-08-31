@@ -21,6 +21,8 @@ describe("StaticController", () => {
     expect(html).toContain('decodeURIComponent("dadata%20key%2Fwith%20spaces")');
     expect(html).toContain("const center = map.getCenter()");
     expect(html).toContain("locations_geo");
+    expect(html).toContain("L.circleMarker(coords");
+    expect(html).toContain('fillColor: "#d71920"');
     expect(html).not.toContain("__YANDEX_TILES_API_KEY__");
     expect(html).not.toContain("__DADATA_API_KEY__");
     expect(html).not.toContain("maps.api.2gis.ru");
