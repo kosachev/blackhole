@@ -4,6 +4,7 @@ import { Injectable, Logger, type OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { SalesSheet } from "./sales.sheet";
 import { SpendingsSheet } from "./spendings.sheet";
+import { KpiSheet } from "./kpi.sheet";
 
 @Injectable()
 export class GoogleSheetsService implements OnModuleInit {
@@ -12,6 +13,7 @@ export class GoogleSheetsService implements OnModuleInit {
   private doc: GoogleSpreadsheet;
   sales: SalesSheet;
   spendings: SpendingsSheet;
+  kpi: KpiSheet;
 
   constructor(private readonly config: ConfigService) {
     this.doc = new GoogleSpreadsheet(
@@ -33,6 +35,10 @@ export class GoogleSheetsService implements OnModuleInit {
 
     this.spendings = new SpendingsSheet(
       this.doc.sheetsByTitle[this.config.get<string>("GOOGLE_SPENDINGS_SHEET_NAME")],
+    );
+
+    this.kpi = new KpiSheet(
+      this.doc.sheetsByTitle[this.config.get<string>("GOOGLE_KPI_SHEET_NAME")],
     );
   }
 }

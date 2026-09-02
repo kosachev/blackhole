@@ -68,10 +68,14 @@ export class LeadHelper {
   contact: Contact;
   old_status_id?: number;
   account_id?: number;
+  responsible_user_id?: number;
+  modified_user_id?: number;
+  created_at?: number;
+  updated_at?: number;
 
   private constructor(
     private readonly client: Amo,
-    public data: Partial<Lead> & { id: number },
+    public data: Partial<Lead> & { id: number; modified_user_id?: number },
     params?: {
       custom_fields?: Map<number, string>;
       tags?: Set<number>;
@@ -79,6 +83,10 @@ export class LeadHelper {
       contact?: Contact;
       old_status_id?: number;
       account_id?: number;
+      responsible_user_id?: number;
+      modified_user_id?: number;
+      created_at?: number;
+      updated_at?: number;
     },
   ) {
     this.custom_fields = params?.custom_fields ?? new Map();
@@ -93,6 +101,10 @@ export class LeadHelper {
     };
     this.old_status_id = params?.old_status_id;
     this.account_id = params?.account_id;
+    this.responsible_user_id = params?.responsible_user_id;
+    this.modified_user_id = params?.modified_user_id;
+    this.created_at = params?.created_at;
+    this.updated_at = params?.updated_at;
     this.data = LeadHelper.convertFieldsToNumber(data);
     this.data.price = this.data.price ?? 0;
 

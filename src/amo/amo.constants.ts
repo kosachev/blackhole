@@ -107,6 +107,7 @@ export const AMO = {
     ADMIN: 1092156, // Меховой салон GERDA
     MANAGER1: 1109421, // Manager-1
     MANAGER2: 1110687, // Manager-2
+    MANAGER3: 14171622, // Manager-3
   },
   /* -------------------------------- Каталоги -------------------------------- */
   CATALOG: {

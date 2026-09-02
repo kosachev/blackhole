@@ -3,7 +3,7 @@ import { AbstractWebhook } from "./abstract.webhook";
 import { LeadHelper } from "../helpers/lead.helper";
 import { generateSku } from "../helpers/sku.helper";
 import { AMO } from "../amo.constants";
-import { stringDate } from "../../utils/timestamp.function";
+import { stringDate, stringDateTime } from "../../utils/timestamp.function";
 import { type SalesEntryColor, SalesSheet } from "../../google-sheets/sales.sheet";
 import { type EntityOperation } from "cdek/src/types/api/base";
 
@@ -60,6 +60,10 @@ export class LeadStatusWebhook extends AbstractWebhook {
       }
       case AMO.STATUS.WAITING: {
         this.statusWaiting(lead);
+        break;
+      }
+      case AMO.STATUS.VISIT: {
+        this.statusVisit(lead);
         break;
       }
     }
@@ -191,6 +195,8 @@ OrderId: ${payment.OrderId}
 
       lead.note("✅ email: письмо с подтверждением оплаты отправлено");
       this.logger.log(`STATUS_PAYMENT, lead_id: ${lead.data.id}, mail sent`);
+
+      await this.addKpiToGoogleSheets(lead, "payment");
     } catch (err) {
       this.logger.error(err);
       lead.note("❌ email: ошибка при отправке письма с подтверждением оплаты");
@@ -250,6 +256,8 @@ OrderId: ${payment.OrderId}
 
       lead.note(`✎ Сформирован товарный чек: ${yadisk_url}`);
       this.logger.log(`STATUS_DELIVERY, lead_id: ${lead.data.id}, pdf: ${yadisk_url}`);
+
+      await this.addKpiToGoogleSheets(lead, "delivery");
     } catch (err) {
       this.logger.error(err);
       lead.note("❌ Товарный чек: ошибка при создании");
@@ -489,6 +497,11 @@ OrderId: ${payment.OrderId}
       this.logger.error(err);
       lead.note("❌ СДЭК: не удалось создать заказ в сдэк");
     }
+  }
+
+  private async statusVisit(lead: LeadHelper) {
+    this.logger.log(`STATUS_VISIT, lead_id: ${lead.data.id}`);
+    await this.addKpiToGoogleSheets(lead, "visit");
   }
 
   private statusInWork(lead: LeadHelper) {
@@ -839,6 +852,53 @@ OrderId: ${payment.OrderId}
         "GoogleSheets",
       );
       lead.note(`❌ Google Sheets: Ошибка при добавлении сделки\n${(error as Error).message}`);
+    }
+  }
+
+  private async addKpiToGoogleSheets(lead: LeadHelper, kpiType: string): Promise<void> {
+    function decodeUser(id?: number): string | undefined {
+      switch (id) {
+        case AMO.USER.MANAGER1:
+          return "Manager-1";
+        case AMO.USER.MANAGER2:
+          return "Manager-2";
+        case AMO.USER.MANAGER3:
+          return "Manager-3";
+      }
+    }
+
+    const responsibleUser = decodeUser(lead.data.responsible_user_id);
+    const statusUser = decodeUser(lead.data.modified_user_id);
+
+    if (!responsibleUser) {
+      return;
+    }
+
+    try {
+      const result = await this.googleSheets.kpi.addKpi([
+        {
+          kpiReachedAt: stringDateTime(),
+          leadCreatedAt: stringDateTime(new Date(+lead.data.created_at * 1000)),
+          leadId: lead.data.id.toString(),
+          responsibleUser,
+          statusUser,
+          kpiType,
+          price: lead.data.price,
+        },
+      ]);
+
+      if (result.addedRows > 0) {
+        this.logger.log(
+          `ADD_KPI, leadId: ${lead.data.id}, status: ${kpiType}, added entries: ${result.addedRows}`,
+          "GoogleSheets",
+        );
+      }
+    } catch (error) {
+      this.logger.error(
+        `ADD_KPI_ERROR, leadId: ${lead.data.id}, status: ${kpiType}, error: ${(error as Error).message}`,
+        (error as Error).stack,
+        "GoogleSheets",
+      );
     }
   }
 }
