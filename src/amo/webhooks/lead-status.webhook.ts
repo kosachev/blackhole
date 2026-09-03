@@ -864,13 +864,15 @@ OrderId: ${payment.OrderId}
           return "Manager-2";
         case AMO.USER.MANAGER3:
           return "Manager-3";
+        case AMO.USER.ADMIN:
+          return "Admin";
       }
     }
 
     const responsibleUser = decodeUser(lead.data.responsible_user_id);
     const statusUser = decodeUser(lead.data.modified_user_id);
 
-    if (!responsibleUser) {
+    if (!responsibleUser || lead.data.responsible_user_id === AMO.USER.ADMIN) {
       return;
     }
 
