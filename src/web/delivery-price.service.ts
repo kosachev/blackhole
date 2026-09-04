@@ -164,6 +164,10 @@ export class DeliveryPriceService implements OnModuleInit {
               field_id: AMO.CUSTOM_FIELD.DELIVERY_COST,
               values: [{ value: total.toString() }],
             },
+            {
+              field_id: AMO.CUSTOM_FIELD.PREPAY,
+              values: [{ value: total.toString() }],
+            },
           ],
         }),
       );
