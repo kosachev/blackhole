@@ -1,10 +1,12 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, Logger, type OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AMO } from "../amo/amo.constants";
 import { AmoService } from "../amo/amo.service";
 import { CdekService } from "../cdek/cdek.service";
 
 import { postCalculator } from "@shevernitskiy/post-calculator";
+import { GoogleSheetsService } from "../google-sheets/google-sheets.service";
+import { Cron } from "@nestjs/schedule";
 
 export type RequestDeliveryPrice = {
   lead_id: number;
@@ -34,11 +36,16 @@ enum CdekTariff {
 }
 
 @Injectable()
-export class DeliveryPriceService {
+export class DeliveryPriceService implements OnModuleInit {
+  protected readonly logger: Logger = new Logger(DeliveryPriceService.name);
+
+  private cdekDymanicPriceAddition?: number;
+
   constructor(
     private readonly config: ConfigService,
     private readonly amo: AmoService,
     private readonly cdek: CdekService,
+    private readonly googleSheets: GoogleSheetsService,
   ) {}
 
   async handler(data: RequestDeliveryPrice) {
@@ -51,6 +58,38 @@ export class DeliveryPriceService {
         break;
       default:
         throw new BadRequestException("Unknown delivery type");
+    }
+  }
+
+  async onModuleInit(): Promise<void> {
+    await this.fetchCdekPriceAdditionFromGS();
+  }
+
+  getCdekPriceAddition(): number {
+    const dynamic = this.cdekDymanicPriceAddition;
+    const max = this.config.get<number>("CDEK_MAX_PRICE_ADDITION");
+
+    return Math.min(dynamic ?? max ?? 0, max ?? Infinity);
+  }
+
+  // every day at 7:25 AM
+  @Cron("0 25 7 * * *")
+  async fetchCdekPriceAdditionFromGS(): Promise<void> {
+    try {
+      const sheetCdekPrice = await this.googleSheets.cdekPrice.getCdekDelta();
+
+      if (
+        (sheetCdekPrice !== undefined && Number.isFinite(sheetCdekPrice)) ||
+        this.cdekDymanicPriceAddition === undefined
+      ) {
+        this.cdekDymanicPriceAddition = sheetCdekPrice * -1;
+      }
+
+      this.logger.log(
+        `DELIVERY_PRICE, CDEK price addition fetched ${sheetCdekPrice}, current ${this.cdekDymanicPriceAddition}`,
+      );
+    } catch (error) {
+      this.logger.error(`DELIVERY_PRICE, failed to fetch CDEK price addition`, error);
     }
   }
 
@@ -68,6 +107,9 @@ export class DeliveryPriceService {
       .get<string>("CDEK_DEFAULT_PARCEL_SIZE")
       .split("x")
       .map(Number);
+
+    const tariff = this.parseTariff(data.delivery_tariff);
+    const cdekPriceAddition = this.getCdekPriceAddition();
 
     const res = await this.cdek.client.calculatorByAvaibleTariffs({
       from_location: {
@@ -105,54 +147,59 @@ export class DeliveryPriceService {
     }
 
     const promises: unknown[] = [];
-    const tariff = this.parseTariff(data.delivery_tariff);
-    let tariff_unavaible = "";
+    const picked_tariff = res.tariff_codes?.find((item) => item.tariff_code === tariff);
+    let message = "";
 
-    if (tariff) {
-      const picked_tariff = res.tariff_codes?.find((item) => item.tariff_code === tariff);
-      if (picked_tariff) {
-        promises.push(
-          this.amo.client.lead.updateLeadById(data.lead_id, {
-            custom_fields_values: [
-              {
-                field_id: AMO.CUSTOM_FIELD.CDEK_PREIOD,
-                values: [{ value: `${picked_tariff.period_min}-${picked_tariff.period_max}` }],
-              },
-              {
-                field_id: AMO.CUSTOM_FIELD.DELIVERY_COST,
-                values: [{ value: `${picked_tariff.delivery_sum + insurance}` }],
-              },
-            ],
-          }),
-        );
-      } else {
-        tariff_unavaible = `Выбранный тариф "${data.delivery_tariff}" недоступен!\n`;
-        promises.push(
-          this.amo.client.lead.updateLeadById(data.lead_id, {
-            custom_fields_values: [
-              {
-                field_id: AMO.CUSTOM_FIELD.DELIVERY_TARIFF,
-                values: [{ value: null }],
-              },
-            ],
-          }),
-        );
-      }
+    if (tariff && picked_tariff) {
+      const total = this.ceilToTens(picked_tariff.delivery_sum + insurance + cdekPriceAddition);
+
+      promises.push(
+        this.amo.client.lead.updateLeadById(data.lead_id, {
+          custom_fields_values: [
+            {
+              field_id: AMO.CUSTOM_FIELD.CDEK_PREIOD,
+              values: [{ value: `${picked_tariff.period_min}-${picked_tariff.period_max}` }],
+            },
+            {
+              field_id: AMO.CUSTOM_FIELD.DELIVERY_COST,
+              values: [{ value: total.toString() }],
+            },
+          ],
+        }),
+      );
+
+      message = `стоимость доставки ${total}₽ для тарифа "${data.delivery_tariff}"`;
+    } else {
+      promises.push(
+        this.amo.client.lead.updateLeadById(data.lead_id, {
+          custom_fields_values: [
+            {
+              field_id: AMO.CUSTOM_FIELD.DELIVERY_TARIFF,
+              values: [{ value: null }],
+            },
+          ],
+        }),
+      );
+
+      message =
+        data.delivery_tariff && data.delivery_tariff !== "Выбрать" && !tariff
+          ? `тариф "${data.delivery_tariff}" не найден, доступные тарифы\n`
+          : "доступные тарифы\n";
+      message += res.tariff_codes
+        .filter((item) => Object.values(CdekTariff).includes(item.tariff_code))
+        .sort((a, b) => a.delivery_sum - b.delivery_sum)
+        .map(
+          (item) =>
+            `${item.tariff_name} - ${this.ceilToTens(item.delivery_sum + insurance + cdekPriceAddition)}₽, ${item.period_min}-${item.period_max}д`,
+        )
+        .join("\n");
     }
     promises.push(
       this.amo.client.note.addNotes("leads", [
         {
           entity_id: data.lead_id,
           note_type: "common",
-          params: {
-            text: `₽ СДЕК: страховка ${insurance}₽, вес ${Math.round(total_weight / 10) / 100}кг, объёмный вес ${Math.round((length * width * height) / 50) / 100}кг, 2% - ${total_price * 0.02}, 3% - ${total_price * 0.03}\n${tariff_unavaible}${res.tariff_codes
-              .filter((item) => Object.values(CdekTariff).includes(item.tariff_code))
-              .map(
-                (item) =>
-                  `${item.tariff_name} - ${item.delivery_sum + insurance}₽ (тариф ${item.delivery_sum}₽), ${item.period_min}-${item.period_max}д`,
-              )
-              .join("\n")}`,
-          },
+          params: { text: `₽ СДЕК: ${message}` },
         },
       ]),
     );
@@ -160,7 +207,7 @@ export class DeliveryPriceService {
     await Promise.all(promises);
   }
 
-  parseTariff(tariff: string): number {
+  parseTariff(tariff: string): number | undefined {
     switch (tariff) {
       case "Дверь - Дверь":
         return CdekTariff.DOOR_TO_DOOR;
@@ -178,9 +225,12 @@ export class DeliveryPriceService {
         return CdekTariff.ECONOMY_OFFICE_TO_DOOR;
       case "Склад - Склад эконом":
         return CdekTariff.ECONOMY_OFFICE_TO_OFFICE;
-      default:
-        return undefined;
     }
+    return undefined;
+  }
+
+  ceilToTens(value: number): number {
+    return Math.ceil(value / 10) * 10;
   }
 
   async postDelivery(data: RequestDeliveryPrice) {
