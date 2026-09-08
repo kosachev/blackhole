@@ -177,14 +177,16 @@ export class LeadCreateService {
       data.ad.device_type = "desktop";
     }
 
-    const responsible_user_id = RESPONSIBLE_USER_MAP[data.responsible_user] ?? AMO.USER.ADMIN;
+    // TODO: its better to not use responsible_user on incoming data, but for now it's ok
+    // const responsible_user_id = RESPONSIBLE_USER_MAP[data.responsible_user] ?? AMO.USER.ADMIN;
 
     const lead = await this.amo.client.lead.addComplex([
       {
         name: data.name,
         price: price,
+        status_id: AMO.STATUS.UNHANDLED,
         tags_to_add: this.valuesToTags(data.tag),
-        responsible_user_id,
+        // responsible_user_id,
         custom_fields_values: [
           ...this.deliveryTypeToCf(data.delivery_type),
           ...this.valuesToCf({
@@ -200,11 +202,11 @@ export class LeadCreateService {
             contact_id
               ? {
                   id: contact_id,
-                  responsible_user_id,
+                  // responsible_user_id,
                 }
               : {
                   name: data.client.name,
-                  responsible_user_id,
+                  // responsible_user_id,
                   custom_fields_values: this.valuesToCf({
                     phone: data.client.phone,
                     email: data.client.email,
