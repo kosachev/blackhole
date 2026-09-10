@@ -177,6 +177,12 @@ export class LeadCreateService {
       data.ad.device_type = "desktop";
     }
 
+    const form_page = data.tag?.includes("SITE")
+      ? "https://gerda.msk.ru/"
+      : data.tag?.includes("TILDA")
+        ? "https://gerdacollection.ru/"
+        : "неизвестный сайт";
+
     // TODO: its better to not use responsible_user on incoming data, but for now it's ok
     // const responsible_user_id = RESPONSIBLE_USER_MAP[data.responsible_user] ?? AMO.USER.ADMIN;
 
@@ -184,7 +190,7 @@ export class LeadCreateService {
       {
         name: data.name,
         price: price,
-        status_id: AMO.STATUS.UNHANDLED,
+        // status_id: AMO.STATUS.UNHANDLED,
         tags_to_add: this.valuesToTags(data.tag),
         // responsible_user_id,
         custom_fields_values: [
@@ -198,6 +204,14 @@ export class LeadCreateService {
           ...this.valuesToCf(data.ad),
         ],
         _embedded: {
+          metadata: {
+            // @ts-ignore
+            category: "forms",
+            form_id: "69",
+            form_name: "NEST",
+            form_page,
+            form_sent_at: Math.round(Date.now() / 1000),
+          },
           contacts: [
             contact_id
               ? {
