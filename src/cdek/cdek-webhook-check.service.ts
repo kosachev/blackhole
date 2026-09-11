@@ -30,8 +30,8 @@ export class CdekWebhookCheckService implements OnModuleInit {
       ];
 
       const current = await this.cdek.client.getWebhooks();
-      const missing = needed.filter((need) =>
-        current?.some((curr) => curr.url === need.url && curr.type === need.type),
+      const missing = needed.filter(
+        (need) => !current.some((curr) => curr.url === need.url && curr.type === need.type),
       );
 
       if (missing.length === 0) {
