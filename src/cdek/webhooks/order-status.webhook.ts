@@ -267,6 +267,11 @@ export class OrderStatusWebhook extends AbstractWebhook {
       with: ["catalog_elements", "contacts"],
     });
 
+    if (!direct_lead) {
+      this.logger.error(`CDEK_ORDER_STATUS, Can't find lead for ${data.attributes.number}`);
+      return;
+    }
+
     const direct_cat_els = await Promise.all(
       direct_lead._embedded.catalog_elements.map((item) =>
         this.amo.catalog.getCatalogElementById(item.id, AMO.CATALOG.GOODS),
