@@ -24,26 +24,34 @@ export class CdekController {
     this.execution_time = Date.now();
   }
 
-  @UseInterceptors(AutoOkResponse)
   @Post("webhook")
   async handle(@Body() data: any): Promise<string> {
-    this.execution_time = Date.now();
-
-    switch (data.type) {
-      case "ORDER_STATUS":
-        await this.order_status.handle(data);
-        break;
-      case "PRINT_FORM":
-        await this.print_form.handle(data);
-        break;
-      case "DOWNLOAD_PHOTO":
-        await this.download_photo.handle(data);
-        break;
-      case "PREALERT_CLOSED":
-        await this.prealert_close.handle(data);
-        break;
-    }
+    this.processInBackground(data);
     return "OK";
+  }
+
+  private async processInBackground(data: any): Promise<void> {
+    const execution_time = Date.now();
+
+    try {
+      switch (data.type) {
+        case "ORDER_STATUS":
+          await this.order_status.handle(data);
+          break;
+        case "PRINT_FORM":
+          await this.print_form.handle(data);
+          break;
+        case "DOWNLOAD_PHOTO":
+          await this.download_photo.handle(data);
+          break;
+        case "PREALERT_CLOSED":
+          await this.prealert_close.handle(data);
+          break;
+      }
+      this.logger.log(`Processed in ${Date.now() - execution_time}ms`);
+    } catch (error) {
+      this.logger.error(`Error processing webhook ${data.type}:`, error);
+    }
   }
 
   @Get("execution_time")
