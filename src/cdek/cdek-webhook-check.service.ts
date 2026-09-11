@@ -2,7 +2,7 @@ import { Injectable, Logger, type OnModuleInit } from "@nestjs/common";
 import { CdekService } from "./cdek.service";
 import { Cron } from "@nestjs/schedule";
 import { TelegramService } from "../telegram/telegram.service";
-import type { ConfigService } from "@nestjs/config";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class CdekWebhookCheckService implements OnModuleInit {
