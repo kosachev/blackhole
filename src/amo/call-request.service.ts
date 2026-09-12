@@ -33,6 +33,7 @@ export class CallRequestService {
     const lead = await this.amo.client.lead.addComplex([
       {
         name: "Звонок " + data.name,
+        tags_to_add: [{ id: AMO.TAG.CALL_REQUEST }],
         custom_fields_values: [
           {
             field_id: AMO.CUSTOM_FIELD.COMMENT_CLIENT,
