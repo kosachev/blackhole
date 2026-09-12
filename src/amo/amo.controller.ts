@@ -4,6 +4,7 @@ import { LeadStatusWebhook } from "./webhooks/lead-status.webhook";
 import { LeadAddWebhook } from "./webhooks/lead-add.webhook";
 import { LeadChangeWebhook } from "./webhooks/lead-change.webhook";
 import { LeadCreateService, type Order, type Good } from "./lead-create.service";
+import { type CallRequest, CallRequestService } from "./call-request.service";
 
 @Controller("amo")
 export class AmoController {
@@ -12,6 +13,7 @@ export class AmoController {
     private readonly lead_add: LeadAddWebhook,
     private readonly lead_change: LeadChangeWebhook,
     private readonly lead_create: LeadCreateService,
+    private readonly call_request: CallRequestService,
   ) {}
 
   @UseInterceptors(AutoOkResponse)
@@ -44,6 +46,12 @@ export class AmoController {
   @Post("good_emplace")
   async goodEmplace(@Body() data: Good): Promise<string> {
     await this.lead_create.goodEmplaceHandler(data);
+    return "OK";
+  }
+
+  @Post("call_request")
+  async callRequest(@Body() data: CallRequest): Promise<string> {
+    await this.call_request.callRequesthandler(data);
     return "OK";
   }
 }

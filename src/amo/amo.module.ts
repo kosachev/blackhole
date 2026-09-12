@@ -7,6 +7,7 @@ import { LeadAddWebhook } from "./webhooks/lead-add.webhook";
 import { LeadChangeWebhook } from "./webhooks/lead-change.webhook";
 import { VisitReminderService } from "./visit-reminder.service";
 import { LeadCreateService } from "./lead-create.service";
+import { CallRequestService } from "./call-request.service";
 
 @Global()
 @Module({
@@ -18,8 +19,9 @@ import { LeadCreateService } from "./lead-create.service";
     LeadChangeWebhook,
     VisitReminderService,
     LeadCreateService,
+    CallRequestService,
   ],
   controllers: [AmoController],
-  exports: [AmoService, LeadCreateService],
+  exports: [AmoService, LeadCreateService, CallRequestService],
 })
 export class AmoModule {}
