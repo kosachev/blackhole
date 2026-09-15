@@ -66,11 +66,16 @@ export class OrderStatusWebhook extends AbstractWebhook {
       `CDEK_ORDER_STATUS, lead_id: ${data.attributes.number}, uuid: ${data.uuid}, trackcode: ${data.attributes.cdek_number}, code: ${data.attributes.status_code}, return: ${data.attributes.is_return}`,
     );
 
+    if (parsed.status === AMO.STATUS.CLOSED && parsed.pipeline === AMO.PIPELINE.RETURN) {
+      parsed.loss_reason = await this.getReturnLossReason(+data.attributes.number);
+    }
+
     const promises: Promise<unknown>[] = [
       this.amo.lead.updateLeadById(Number(data.attributes.number), {
         updated_at: Math.round(Date.now() / 1000),
         status_id: parsed.status,
         pipeline_id: parsed.pipeline,
+        loss_reason_id: parsed.loss_reason,
         custom_fields_values: parsed.custom_fields.map((item) => ({
           field_id: item[0],
           values: [{ value: item[1] }],
@@ -664,5 +669,23 @@ export class OrderStatusWebhook extends AbstractWebhook {
     await this.cdekGoogleSheetsUpdate(returnLeadId, () =>
       this.googleSheets.sales.cdekReturnRecieved(returnLeadId),
     );
+  }
+
+  private async getReturnLossReason(leadId: number): Promise<number | undefined> {
+    try {
+      const lead = await this.amo.lead.getLeadById(leadId, {
+        with: ["catalog_elements", "contacts"],
+      });
+
+      if (lead._embedded.tags?.find((item) => item.id === AMO.TAG.RETURN))
+        return AMO.LOSS_REASON.CDEK_RETURN;
+
+      if (lead._embedded.tags?.find((item) => item.id === AMO.TAG.PARTIAL_RETURN))
+        return AMO.LOSS_REASON.CDEK_PARTIAL_RETURN;
+
+      return undefined;
+    } catch (error) {
+      this.logger.error(`CDEK_STATUS_ERROR, leadId: ${leadId}, error: ${error.message}`);
+    }
   }
 }
