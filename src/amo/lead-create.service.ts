@@ -177,6 +177,8 @@ export class LeadCreateService {
       data.ad.device_type = "desktop";
     }
 
+    const note: string[] = this.truncateOrderStrings(data);
+
     // TODO: its better to not use responsible_user on incoming data, but for now it's ok
     const responsible_user_id = RESPONSIBLE_USER_MAP[data.responsible_user] ?? AMO.USER.MANAGER1;
 
@@ -249,6 +251,18 @@ export class LeadCreateService {
     if (!link) {
       this.logger.error("LEAD_CREATE, failed to link goods to lead");
       throw new InternalServerErrorException("Failed to link goods to lead");
+    }
+
+    if (note.length > 0) {
+      await this.amo.client.note.addNotes("leads", [
+        {
+          entity_id: lead[0].id,
+          note_type: "common",
+          params: {
+            text: note.join("\n"),
+          },
+        },
+      ]);
     }
 
     this.logger.log(`LEAD_CREATE, success, lead_id: ${lead[0].id}, price: ${price}`);
@@ -413,5 +427,35 @@ export class LeadCreateService {
 
   private stripPhone(phone: string): string {
     return phone.replace(/\D/g, "");
+  }
+
+  private truncateOrderStrings(data: Order): string[] {
+    const longFields: string[] = [];
+
+    function traverse(obj: any): void {
+      if (!obj || typeof obj !== "object") {
+        return;
+      }
+
+      for (const key of Object.keys(obj)) {
+        if (key === "goods") {
+          continue;
+        }
+
+        const value = obj[key];
+
+        if (typeof value === "string") {
+          if (value.length > 250) {
+            longFields.push(`${key}: ${value}`);
+            obj[key] = value.slice(0, 250);
+          }
+        } else if (typeof value === "object" && value !== null) {
+          traverse(value);
+        }
+      }
+    }
+
+    traverse(data);
+    return longFields;
   }
 }
