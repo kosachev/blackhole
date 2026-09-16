@@ -359,6 +359,8 @@ OrderId: ${payment.OrderId}
     }
 
     try {
+      if (!lead.custom_fields.get(AMO.CONTACT.EMAIL)) return;
+
       await this.mail.orderSend({
         delivery_type: lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) as string,
         email: lead.contact.custom_fields.get(AMO.CONTACT.EMAIL) as string,
@@ -387,7 +389,6 @@ OrderId: ${payment.OrderId}
         "building_exists",
         "name_exists",
         "phone_exists",
-        "email_exists",
         "goods_exists",
         "delivery_tariff_picked",
         "pvz_exists",
