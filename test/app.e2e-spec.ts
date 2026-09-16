@@ -3,44 +3,14 @@ import { spec } from "pactum";
 import { describe, test, beforeAll, afterAll } from "bun:test";
 
 import { type INestApplication } from "@nestjs/common";
-import { Test } from "@nestjs/testing";
-import { AppModule } from "../src/app.module";
-import { createAmoServiceMock } from "./mocks/amo.mock";
-import { createCdekServiceMock } from "./mocks/cdek.mock";
-import { createMailServiceMock } from "./mocks/mail.mock";
-import { createGoogleSheetsServiceMock } from "./mocks/google-sheets.mock";
-import { createYandexDiskServiceMock } from "./mocks/yadisk.mock";
-import { AmoService } from "../src/amo/amo.service";
-import { CdekService } from "../src/cdek/cdek.service";
-import { MailService } from "../src/mail/mail.service";
-import { GoogleSheetsService } from "../src/google-sheets/google-sheets.service";
-import { YandexDiskService } from "../src/yandex-disk/yandex-disk.service";
+import { createTestApp } from "./helpers/create-test-app";
 
 describe("App e2e", () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    const moduleRefBuilder = await Test.createTestingModule({
-      imports: [AppModule],
-    });
+    ({ app } = await createTestApp());
 
-    moduleRefBuilder
-      .overrideProvider(AmoService)
-      .useValue(createAmoServiceMock())
-      .overrideProvider(CdekService)
-      .useValue(createCdekServiceMock())
-      .overrideProvider(MailService)
-      .useValue(createMailServiceMock())
-      .overrideProvider(GoogleSheetsService)
-      .useValue(createGoogleSheetsServiceMock())
-      .overrideProvider(YandexDiskService)
-      .useValue(createYandexDiskServiceMock());
-
-    const moduleRef = await moduleRefBuilder.compile();
-
-    app = moduleRef.createNestApplication();
-
-    await app.init();
     await app.listen(process.env.PORT ?? 6969);
   });
 

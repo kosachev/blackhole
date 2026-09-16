@@ -4,9 +4,12 @@ import { mock } from "bun:test";
 export const createCdekServiceMock = () => ({
   client: {
     getOrderByUUID: mock((uuid: string) => [uuid]),
-    createOrderReceipt: mock((uuid: string) => [uuid]),
+    // Shape mirrors the real SDK response consumed by getPrintForm()
+    // (printRequest.entity.uuid); the old `[uuid]` array made it throw.
+    createOrderReceipt: mock((data: unknown) => ({ entity: { uuid: "mock-receipt-uuid" } })),
   },
   deleteOrderValidationToTimer: mock((uuid: string) => [uuid]),
+  setPrintformToLead: mock((uuid: string, data: unknown) => [uuid, data]),
 });
 
 export const order_status_static: UpdateOrderStatus = {

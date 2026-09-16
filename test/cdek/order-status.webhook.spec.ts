@@ -1,50 +1,21 @@
-import { createAmoServiceMock } from "../mocks/amo.mock";
-import { createCdekServiceMock, order_status_factory } from "../mocks/cdek.mock";
-import { createYandexDiskServiceMock } from "../mocks/yadisk.mock";
-import { createGoogleSheetsServiceMock } from "../mocks/google-sheets.mock";
-import { createMailServiceMock } from "../mocks/mail.mock";
+import { order_status_factory } from "../mocks/cdek.mock";
+import { createTestApp } from "../helpers/create-test-app";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
 import { type INestApplication } from "@nestjs/common";
-import { Test } from "@nestjs/testing";
-import { AppModule } from "../../src/app.module";
 import { OrderStatusWebhook } from "../../src/cdek/webhooks/order-status.webhook";
 
 import { AMO } from "../../src/amo/amo.constants";
-import { AmoService } from "../../src/amo/amo.service";
-import { CdekService } from "../../src/cdek/cdek.service";
-import { MailService } from "../../src/mail/mail.service";
-import { GoogleSheetsService } from "../../src/google-sheets/google-sheets.service";
-import { YandexDiskService } from "../../src/yandex-disk/yandex-disk.service";
 
 describe("CDEK OrderStatusWebhook", () => {
   let app: INestApplication;
   let service: OrderStatusWebhook;
 
   beforeAll(async () => {
-    const moduleRefBuilder = await Test.createTestingModule({
-      imports: [AppModule],
-      providers: [OrderStatusWebhook],
-    });
+    const { app: testApp, moduleRef } = await createTestApp();
 
-    moduleRefBuilder
-      .overrideProvider(AmoService)
-      .useValue(createAmoServiceMock())
-      .overrideProvider(CdekService)
-      .useValue(createCdekServiceMock())
-      .overrideProvider(MailService)
-      .useValue(createMailServiceMock())
-      .overrideProvider(GoogleSheetsService)
-      .useValue(createGoogleSheetsServiceMock())
-      .overrideProvider(YandexDiskService)
-      .useValue(createYandexDiskServiceMock());
-
-    const moduleRef = await moduleRefBuilder.compile();
-
-    app = moduleRef.createNestApplication();
+    app = testApp;
     service = moduleRef.get<OrderStatusWebhook>(OrderStatusWebhook);
-
-    await app.init();
   });
 
   afterAll(async () => {

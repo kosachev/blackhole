@@ -10,6 +10,15 @@ import { type EntityOperation } from "cdek/src/types/api/base";
 @Injectable()
 export class LeadStatusWebhook extends AbstractWebhook {
   async handle(data: unknown) {
+    // Empty/garbage payloads (health-checks, retries, probes) carry no leads.
+    // Skip them quietly instead of throwing into ExceptionsHandler; the
+    // endpoint answers "OK" regardless via AutoOkResponse.
+    const leads = (data as any)?.leads;
+    if (!leads || Object.keys(leads).length === 0) {
+      this.logger.warn("LEAD_STATUS, invalid payload, skipping");
+      return;
+    }
+
     const lead = await LeadHelper.createFromWebhook(this.amo, data, {
       load_goods: true,
       load_contact: true,
