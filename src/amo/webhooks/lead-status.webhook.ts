@@ -96,7 +96,7 @@ export class LeadStatusWebhook extends AbstractWebhook {
         "prepay_valid_amount",
         "payment_status",
       ],
-      warnings: ["index_exists", "email_exists"],
+      warnings: ["index_exists"],
     });
 
     if (lead.errors.length > 0 || lead.warnings.length > 0) {
@@ -187,7 +187,7 @@ OrderId: ${payment.OrderId}
   }
 
   private async statusPayment(lead: LeadHelper) {
-    this.validation({ lead, errors: ["order_number_exists"], warnings: ["email_exists"] });
+    this.validation({ lead, errors: ["order_number_exists"] });
 
     if (lead.errors.length > 0) {
       lead.note(["🔍 Статус: Оплата", ...lead.errors].join("\n"));
