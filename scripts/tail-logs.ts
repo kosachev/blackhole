@@ -57,6 +57,7 @@ const source = new EventSource(`${host}/log_viewer/tail${file ?? ""}`);
 
 source.onmessage = (ev) => {
   try {
+    if (!ev.data || ev.data.trim() === "") return;
     const data = JSON.parse(ev.data);
     if (level(data.level)[0] >= current_level) {
       console.log(

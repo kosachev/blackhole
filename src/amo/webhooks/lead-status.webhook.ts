@@ -139,33 +139,38 @@ OrderId: ${payment.OrderId}
     await lead.saveToAmo();
 
     try {
-      await Promise.all([
-        this.mail.invoice({
-          name: lead.contact.name,
-          address: lead.getFullAddress(true),
-          phone: lead.contact.custom_fields.get(AMO.CONTACT.PHONE),
-          email: lead.contact.custom_fields.get(AMO.CONTACT.EMAIL),
-          delivery_type: lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) as string,
-          order_number: lead.data.id.toString(),
-          goods: [...lead.goods.values()].map((good) => ({
-            name: good.name,
-            quantity: good.quantity,
-            price: good.price,
-          })),
-          total_price: lead.totalPrice(),
-          discount: lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT) as string,
-          prepayment: prepay,
-          PaymentURL: payment.PaymentURL,
-          is_gerdacollection: lead.tags.has(AMO.TAG.TILDA),
-        }),
-        this.amo.salesbot.runTask([
-          {
-            bot_id: AMO.SALESBOT.PAYMENT_URL,
-            entity_id: lead.data.id,
-            entity_type: 2,
-          },
-        ]),
+      this.amo.salesbot.runTask([
+        {
+          bot_id: AMO.SALESBOT.PAYMENT_URL,
+          entity_id: lead.data.id,
+          entity_type: 2,
+        },
       ]);
+
+      const email = lead.contact.custom_fields.get(AMO.CONTACT.EMAIL);
+      if (!email) {
+        lead.note("⚠️ email: письмо с платежной ссылкой не отправлено, нет email");
+        return;
+      }
+
+      await this.mail.invoice({
+        name: lead.contact.name,
+        address: lead.getFullAddress(true),
+        phone: lead.contact.custom_fields.get(AMO.CONTACT.PHONE),
+        email: lead.contact.custom_fields.get(AMO.CONTACT.EMAIL),
+        delivery_type: lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) as string,
+        order_number: lead.data.id.toString(),
+        goods: [...lead.goods.values()].map((good) => ({
+          name: good.name,
+          quantity: good.quantity,
+          price: good.price,
+        })),
+        total_price: lead.totalPrice(),
+        discount: lead.custom_fields.get(AMO.CUSTOM_FIELD.DISCOUNT) as string,
+        prepayment: prepay,
+        PaymentURL: payment.PaymentURL,
+        is_gerdacollection: lead.tags.has(AMO.TAG.TILDA),
+      });
 
       lead.note("✅ email: письмо с платежной ссылкой отправлено");
       this.logger.log(`STATUS_REQUISITE, lead_id: ${lead.data.id}, mail sent`);
@@ -195,6 +200,12 @@ OrderId: ${payment.OrderId}
     }
 
     try {
+      const email = lead.contact.custom_fields.get(AMO.CONTACT.EMAIL);
+      if (!email) {
+        lead.note("⚠️ email: письмо с подтверждением оплаты не отправлено, нет email");
+        return;
+      }
+
       await this.mail.prepaymentConfirm({
         email: lead.contact.custom_fields.get(AMO.CONTACT.EMAIL),
         order_number: lead.data.id.toString(),

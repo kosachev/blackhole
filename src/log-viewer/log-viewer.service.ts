@@ -23,13 +23,15 @@ export class LogViewerService {
     return new Observable<MessageEvent>((subscriber) => {
       if (preload) {
         const content = readFileSync(resolve(process.cwd(), file), { encoding: "utf8" });
-        content.split("\n").forEach((line) => subscriber.next({ data: line }));
+        content
+          .split("\n")
+          .forEach((line) => line.trim() !== "" && subscriber.next({ data: line }));
       }
       const listener = async (curr: Stats, prev: Stats) => {
         (await this.readNBytes(file, prev.size, curr.size))
           .trim()
           .split("\n")
-          .forEach((line) => subscriber.next({ data: line }));
+          .forEach((line) => line.trim() !== "" && subscriber.next({ data: line }));
       };
       watchFile(resolve(process.cwd(), file), listener);
       req.on("close", () => unwatchFile(file, listener));
