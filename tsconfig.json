@@ -12,7 +12,7 @@
     "allowJs": true,
 
     // Type checking
-    "types": ["node", "bun", "jquery"],
+    "types": ["node", "bun"],
 
     // Bundler mode
     "moduleResolution": "bundler",
