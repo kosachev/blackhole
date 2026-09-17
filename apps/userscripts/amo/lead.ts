@@ -14,6 +14,7 @@ import { CloneLead } from "./clone-lead";
 import { FirstLeadInteraction } from "./first-lead-interaction";
 import { PaymentCancel } from "./payment-cancel";
 import { Receipt } from "./receipt";
+import { Barcode } from "./barcode";
 
 export class Lead {
   private to_destruct: CallableFunction[] = [];
@@ -36,6 +37,7 @@ export class Lead {
     this.registerPlugin(new FirstLeadInteraction(lead_id));
     this.registerPlugin(new PaymentCancel(lead_id));
     this.registerPlugin(new Receipt(lead_id));
+    this.registerPlugin(new Barcode(lead_id));
 
     this.timezone();
     this.deleteCompanyField();
