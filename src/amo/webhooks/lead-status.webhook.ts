@@ -203,6 +203,7 @@ OrderId: ${payment.OrderId}
       const email = lead.contact.custom_fields.get(AMO.CONTACT.EMAIL);
       if (!email) {
         lead.note("⚠️ email: письмо с подтверждением оплаты не отправлено, нет email");
+        await this.addKpiToGoogleSheets(lead, "payment");
         return;
       }
 
