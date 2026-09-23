@@ -103,6 +103,7 @@ export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bo
   function drawTableLine(
     coordinates: [number, number],
     data: { width: number; text: string; align?: "left" | "right" | "center"; bold?: boolean }[],
+    height = invoice.table.line_height,
   ) {
     let cur_x = coordinates[0];
     for (const { width, text, align, bold } of data) {
@@ -110,7 +111,7 @@ export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bo
         x: cur_x,
         y: coordinates[1],
         width: width,
-        height: invoice.table.line_height,
+        height,
         opacity: 0,
         borderWidth: invoice.table.border_width,
       });
@@ -122,8 +123,9 @@ export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bo
             : align === "center"
               ? cur_x + (width - font.widthOfTextAtSize(text, invoice.table.font_size)) / 2
               : cur_x + 3.5,
-        y: coordinates[1] + 2.5,
+        y: coordinates[1] + height - invoice.table.line_height + 2.5,
         size: invoice.table.font_size,
+        lineHeight: invoice.table.line_height,
         font: bold ? font_bold : font,
       });
       cur_x += width;
@@ -143,17 +145,32 @@ export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bo
   );
 
   let total = data.delivery_cost ?? 0;
+  let extra_height = 0;
+  const name_width = 340;
+  const name_text_width = (text: string) => font.widthOfTextAtSize(text, invoice.table.font_size);
 
   for (const [index, item] of data.goods.entries()) {
+    const name_lines = item.name.split(/\r\n|\r|\n/).flatMap((line) =>
+      line
+        ? breakTextIntoLines(line, [" "], name_width - 7, name_text_width).flatMap((part) =>
+            name_text_width(part) > name_width - 7
+              ? breakTextIntoLines(part, [""], name_width - 7, name_text_width)
+              : [part],
+          )
+        : [""],
+    );
+    const row_height = name_lines.length * invoice.table.line_height;
+    extra_height += row_height - invoice.table.line_height;
     drawTableLine(
-      [invoice.table.x, top(table_y + invoice.table.line_height * (index + 1))],
+      [invoice.table.x, top(table_y + invoice.table.line_height * (index + 1) + extra_height)],
       [
         { width: 12, text: (index + 1).toString() },
-        { width: 340, text: item.name },
+        { width: name_width, text: name_lines.join("\n") },
         { width: 70, text: item.price.toString(), align: "center" },
         { width: 70, text: item.quantity.toString(), align: "center" },
         { width: 70, text: (item.price * item.quantity).toString(), align: "center" },
       ],
+      row_height,
     );
     total += item.price * item.quantity;
   }
@@ -164,7 +181,9 @@ export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bo
   drawTableLine(
     [
       invoice.table.x,
-      top(table_y + invoice.table.line_height * (data.goods.length + addition_lines)),
+      top(
+        table_y + invoice.table.line_height * (data.goods.length + addition_lines) + extra_height,
+      ),
     ],
     [
       { width: 352, text: "Доставка", align: "right" },
@@ -178,7 +197,9 @@ export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bo
     drawTableLine(
       [
         invoice.table.x,
-        top(table_y + invoice.table.line_height * (data.goods.length + addition_lines)),
+        top(
+          table_y + invoice.table.line_height * (data.goods.length + addition_lines) + extra_height,
+        ),
       ],
       [
         { width: 352, text: "Скидка", align: "right" },
@@ -192,7 +213,9 @@ export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bo
   drawTableLine(
     [
       invoice.table.x,
-      top(table_y + invoice.table.line_height * (data.goods.length + addition_lines)),
+      top(
+        table_y + invoice.table.line_height * (data.goods.length + addition_lines) + extra_height,
+      ),
     ],
     [
       { width: 352, text: "ИТОГО", align: "right", bold: true },
@@ -201,9 +224,13 @@ export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bo
   );
 
   // footer
+  const footer_y = Math.max(
+    invoice.footer.y + comment_height + extra_height,
+    table_y + invoice.table.line_height * (data.goods.length + addition_lines) + extra_height + 24,
+  );
   page.drawText(invoice.footer.text(total), {
     x: invoice.footer.x,
-    y: top(invoice.footer.y + comment_height),
+    y: top(footer_y),
     size: invoice.footer.font_size,
     lineHeight: invoice.footer.line_height,
   });
