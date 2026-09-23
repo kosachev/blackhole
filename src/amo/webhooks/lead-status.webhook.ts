@@ -255,6 +255,7 @@ OrderId: ${payment.OrderId}
         customer_address: lead.getFullAddress(),
         delivery_time: lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TIME) as string,
         payment_type: lead.custom_fields.get(AMO.CUSTOM_FIELD.PAY_TYPE) as string,
+        comment: lead.custom_fields.get(AMO.CUSTOM_FIELD.COMMENT_MANAGER),
         goods: [...lead.goods.values()].map((good) => ({
           name: good.name,
           price: Math.round(good.price * lead.getDiscountMultiplyier()),

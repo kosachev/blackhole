@@ -52,6 +52,7 @@ type Invoice = {
   delivery_time?: string;
   delivery_cost?: number;
   payment_type?: string;
+  comment?: string;
   goods: {
     name: string;
     price: number;
@@ -178,6 +179,7 @@ export class PDFService implements OnModuleInit {
 Адрес: ${params.customer_address}
 Время доставки: ${params.delivery_time ?? ""}
 Способ оплаты: ${params.payment_type ?? ""}`,
+      comment: params.comment,
       goods: params.goods,
       delivery_cost: params.delivery_cost,
       discount: params.discount,

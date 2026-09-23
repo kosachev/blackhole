@@ -1,5 +1,5 @@
 import { convert } from "number-to-words-ru";
-import { PDFFont, PDFPage } from "pdf-lib";
+import { breakTextIntoLines, PDFFont, PDFPage } from "pdf-lib";
 
 const invoice = {
   header: { x: 15, y: 20, font_size: 10, line_height: 14 },
@@ -31,6 +31,7 @@ export type Invoice = {
   id: string;
   date: string;
   lead: string;
+  comment?: string;
   goods: {
     name: string;
     price: number;
@@ -72,6 +73,31 @@ export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bo
     lineHeight: invoice.lead.line_height,
   });
 
+  const comment = data.comment?.trim();
+  const text_width = (text: string) => font.widthOfTextAtSize(text, invoice.lead.font_size);
+  const max_width = page.getWidth() - invoice.lead.x * 2;
+  const comment_lines = comment
+    ? `Комментарий: ${comment}`.split(/\r\n|\r|\n/).flatMap((line) =>
+        line
+          ? breakTextIntoLines(line, [" "], max_width, text_width).flatMap((part) =>
+              text_width(part) > max_width
+                ? breakTextIntoLines(part, [""], max_width, text_width)
+                : [part],
+            )
+          : [""],
+      )
+    : [];
+  const comment_height = comment_lines.length * invoice.lead.line_height;
+  if (comment_lines.length > 0) {
+    page.drawText(comment_lines.join("\n"), {
+      x: invoice.lead.x,
+      y: top(invoice.lead.y + data.lead.split("\n").length * invoice.lead.line_height),
+      size: invoice.lead.font_size,
+      lineHeight: invoice.lead.line_height,
+    });
+  }
+  const table_y = invoice.table.y + comment_height;
+
   // table
 
   function drawTableLine(
@@ -106,7 +132,7 @@ export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bo
 
   // table header
   drawTableLine(
-    [invoice.table.x, top(invoice.table.y)],
+    [invoice.table.x, top(table_y)],
     [
       { width: 12, text: "#", bold: true },
       { width: 340, text: "Название товара", align: "center", bold: true },
@@ -120,7 +146,7 @@ export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bo
 
   for (const [index, item] of data.goods.entries()) {
     drawTableLine(
-      [invoice.table.x, top(invoice.table.y + invoice.table.line_height * (index + 1))],
+      [invoice.table.x, top(table_y + invoice.table.line_height * (index + 1))],
       [
         { width: 12, text: (index + 1).toString() },
         { width: 340, text: item.name },
@@ -138,7 +164,7 @@ export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bo
   drawTableLine(
     [
       invoice.table.x,
-      top(invoice.table.y + invoice.table.line_height * (data.goods.length + addition_lines)),
+      top(table_y + invoice.table.line_height * (data.goods.length + addition_lines)),
     ],
     [
       { width: 352, text: "Доставка", align: "right" },
@@ -152,7 +178,7 @@ export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bo
     drawTableLine(
       [
         invoice.table.x,
-        top(invoice.table.y + invoice.table.line_height * (data.goods.length + addition_lines)),
+        top(table_y + invoice.table.line_height * (data.goods.length + addition_lines)),
       ],
       [
         { width: 352, text: "Скидка", align: "right" },
@@ -166,7 +192,7 @@ export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bo
   drawTableLine(
     [
       invoice.table.x,
-      top(invoice.table.y + invoice.table.line_height * (data.goods.length + addition_lines)),
+      top(table_y + invoice.table.line_height * (data.goods.length + addition_lines)),
     ],
     [
       { width: 352, text: "ИТОГО", align: "right", bold: true },
@@ -177,7 +203,7 @@ export function fillInvoice(page: PDFPage, data: Invoice, font: PDFFont, font_bo
   // footer
   page.drawText(invoice.footer.text(total), {
     x: invoice.footer.x,
-    y: top(invoice.footer.y),
+    y: top(invoice.footer.y + comment_height),
     size: invoice.footer.font_size,
     lineHeight: invoice.footer.line_height,
   });
