@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { LeadCreateService, type Order } from "../amo/lead-create.service";
 import { timestampToDateString } from "../utils/timestamp.function";
+import type { TelegramService } from "../telegram/telegram.service";
 
 const DELIVERY_TYPE_MAP = {
   Самовывоз: "PICKUP",
@@ -65,11 +66,17 @@ export type TildaOrderData = {
 @Injectable()
 export class TildaService {
   private readonly logger = new Logger(TildaService.name);
-  constructor(private readonly leadCreateService: LeadCreateService) {}
+  constructor(
+    private readonly leadCreateService: LeadCreateService,
+    private readonly telegram: TelegramService,
+  ) {}
 
   async handler(data: TildaOrderData, headers: Headers): Promise<void> {
     if (!data.payment) {
       this.logger.error(`TILDA_NEW_ORDER, no payment in data:\n${JSON.stringify(data, null, 2)}`);
+      this.telegram.textToAdmin(
+        `❌ Ошибка валидации входящего вебхука от тильды:\n${JSON.stringify(data, null, 2)}`,
+      );
       return;
     }
 
