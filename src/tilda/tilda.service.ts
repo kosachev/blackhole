@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { LeadCreateService, type Order } from "../amo/lead-create.service";
 import { timestampToDateString } from "../utils/timestamp.function";
-import type { TelegramService } from "../telegram/telegram.service";
+import { TelegramService } from "../telegram/telegram.service";
 
 const DELIVERY_TYPE_MAP = {
   Самовывоз: "PICKUP",
