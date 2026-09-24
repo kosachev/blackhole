@@ -482,7 +482,7 @@ export class OrderStatusWebhook extends AbstractWebhook {
           ? "gerdacollection"
           : undefined;
 
-      const result = await this.googleSheets.sales.addLead({
+      const salesEntry = {
         shippingDate: stringDate(),
         status: "Отправлено",
         goods: [...lead.goods.values()],
@@ -494,7 +494,14 @@ export class OrderStatusWebhook extends AbstractWebhook {
         cdekNumber: cdekNumber,
         ads: lead.getAdsString(),
         site,
+      };
+
+      this.db.sales.addLead({
+        ...salesEntry,
+        shippingDate: Math.floor(Date.now() / 1000),
       });
+
+      const result = await this.googleSheets.sales.addLead(salesEntry);
 
       await this.amo.note.addNotes("leads", [
         {
@@ -581,12 +588,14 @@ export class OrderStatusWebhook extends AbstractWebhook {
   }
 
   private async cdekFullSuccess(leadId: string): Promise<void> {
+    this.db.sales.cdekFullSuccess(leadId);
     await this.cdekGoogleSheetsUpdate(leadId, () =>
       this.googleSheets.sales.cdekFullSuccess(leadId),
     );
   }
 
   private async cdekFullReturn(leadId: string): Promise<void> {
+    this.db.sales.cdekFullReturn(leadId);
     await this.cdekGoogleSheetsUpdate(leadId, () => this.googleSheets.sales.cdekFullReturn(leadId));
   }
 
@@ -598,6 +607,13 @@ export class OrderStatusWebhook extends AbstractWebhook {
     paymentType?: string,
   ): Promise<void> {
     try {
+      this.db.sales.cdekPartialReturn(
+        leadId,
+        returnLeadId,
+        goodSkuSuccess,
+        goodSkuReturn,
+        paymentType,
+      );
       const result = await this.googleSheets.sales.cdekPartialReturn(
         leadId,
         returnLeadId,
@@ -660,12 +676,14 @@ export class OrderStatusWebhook extends AbstractWebhook {
     returnLeadId: string,
     returnCdekNumber: string,
   ): Promise<void> {
+    this.db.sales.cdekReturnCdekNumber(returnLeadId, returnCdekNumber);
     await this.cdekGoogleSheetsUpdate(returnLeadId, () =>
       this.googleSheets.sales.cdekReturnCdekNumber(returnLeadId, returnCdekNumber),
     );
   }
 
   private async cdekReturnRecieved(returnLeadId: string): Promise<void> {
+    this.db.sales.cdekReturnRecieved(returnLeadId);
     await this.cdekGoogleSheetsUpdate(returnLeadId, () =>
       this.googleSheets.sales.cdekReturnRecieved(returnLeadId),
     );
