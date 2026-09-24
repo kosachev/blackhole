@@ -4,6 +4,7 @@ import { ScheduleModule } from "@nestjs/schedule";
 import { AmoModule } from "./amo/amo.module";
 import { CdekModule } from "./cdek/cdek.module";
 import { CronModule } from "./cron/cron.module";
+import { DbModule } from "./db/db.module";
 import { GoogleSheetsModule } from "./google-sheets/google-sheets.module";
 import { MailModule } from "./mail/mail.module";
 import { WebModule } from "./web/web.module";
@@ -36,6 +37,7 @@ import { TBankModule } from "./tbank/tbank.module";
     YandexDiskModule,
     YandexMetrikaModule,
     PDFModule,
+    DbModule,
     GoogleSheetsModule,
     WebModule,
     PostModule,
