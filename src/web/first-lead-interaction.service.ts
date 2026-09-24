@@ -44,8 +44,6 @@ export class FirstLeadInteractionService {
     if (
       !Number.isFinite(data.dateCreate) ||
       !Number.isFinite(data.leadId) ||
-      !Number.isSafeInteger(data.userId) ||
-      data.userId <= 0 ||
       data.dateCreate >= Date.now()
     ) {
       throw new BadRequestException("Invalid data");
@@ -60,30 +58,21 @@ export class FirstLeadInteractionService {
     if (data.ym_client_id) text += `\nYM ClientID: ${data.ym_client_id}`;
     if (data.source) text += `\nИсточник: ${data.source}`;
 
-    const lead = await this.amo.client.lead.getLeadById(data.leadId, { with: ["contacts"] });
-    const firstInteraction = lead.custom_fields_values?.find(
-      (field) => field.field_id === AMO.CUSTOM_FIELD.FIRST_TIME_INTERACTION,
-    );
-    if (firstInteraction?.values?.some(({ value }) => value != null && value !== "")) return;
-
-    const mainContact = lead._embedded?.contacts?.find((contact) => contact.is_main === true);
-    if (mainContact) {
-      await this.amo.client.contact.updateContactById(mainContact.id, {
-        responsible_user_id: data.userId,
-      });
-    }
-
-    await this.amo.client.lead.updateLeadById(data.leadId, {
-      responsible_user_id: data.userId,
-      tags_to_add,
-      custom_fields_values,
-    });
-    await this.amo.client.note.addNotes("leads", [
-      {
-        entity_id: data.leadId,
-        note_type: "common",
-        params: { text },
-      },
+    await Promise.all([
+      this.amo.client.lead.updateLeadById(data.leadId, {
+        tags_to_add,
+        custom_fields_values,
+        ...([AMO.USER.MANAGER1, AMO.USER.MANAGER2, AMO.USER.MANAGER3].includes(data.userId)
+          ? { responsible_user_id: data.userId }
+          : {}),
+      }),
+      this.amo.client.note.addNotes("leads", [
+        {
+          entity_id: data.leadId,
+          note_type: "common",
+          params: { text },
+        },
+      ]),
     ]);
 
     this.logger.log(
