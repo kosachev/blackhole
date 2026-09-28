@@ -3,12 +3,12 @@ import { CdekService } from "./cdek.service";
 import { AmoService } from "../amo/amo.service";
 import { AMO } from "../amo/amo.constants";
 import { Cron } from "@nestjs/schedule";
+import { DbService } from "../db/db.service";
 import { GoogleSheetsService } from "../google-sheets/google-sheets.service";
 import type { GetCashOnDeliveryRegistry, GetOrder } from "cdek/src/types/api/response";
 import type { RequestUpdateLead } from "@shevernitskiy/amo/src/api/lead/types";
 import type { RequestAddNote } from "@shevernitskiy/amo/src/api/note/types";
 import { stringDate } from "../utils/timestamp.function";
-import type { SpendingsEntry } from "../google-sheets/spendings.sheet";
 
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
@@ -52,6 +52,7 @@ export class CdekRegistryCheckService {
   constructor(
     private readonly cdek: CdekService,
     private readonly amo: AmoService,
+    private readonly db: DbService,
     private readonly googleSheets: GoogleSheetsService,
   ) {}
 
@@ -216,7 +217,7 @@ export class CdekRegistryCheckService {
   }
 
   async proccessOrders(ordersMap: Map<string, CombinedOrderData>): Promise<ProccessOrdersResult> {
-    const courierPickups: SpendingsEntry[] = [];
+    const courierPickups: { date: Date; description: string; amount: number }[] = [];
     const amoUpdates: RequestUpdateLead[] = [];
     const amoNotes: RequestAddNote[] = [];
     let updatedEntries = 0;
@@ -235,7 +236,7 @@ export class CdekRegistryCheckService {
           ? new Date(data.entity.statuses.at(-1)?.date_time)
           : new Date();
         courierPickups.push({
-          date: stringDate(date),
+          date,
           description: `Забор товара СДЭК ${data.cdek_number} (реестр ${data.registry_number})`,
           amount: data.total_sum_without_agent,
         });
@@ -249,14 +250,14 @@ export class CdekRegistryCheckService {
       ) {
         returnOrders++;
 
-        const res = await this.googleSheets.sales.updateEntry(
-          { returnCdekNumber: [cdek_number] },
-          {
-            ownerReturnDeliveryPrice: data.total_sum_without_agent,
-            returnClosedByRegister: data.registry_number.toString(),
-          },
-          false,
-        );
+        const search = { returnCdekNumber: [cdek_number] };
+        const update = {
+          ownerReturnDeliveryPrice: data.total_sum_without_agent,
+          returnClosedByRegister: data.registry_number.toString(),
+        };
+
+        this.db.sales.updateEntry(search, update);
+        const res = await this.googleSheets.sales.updateEntry(search, update, false);
 
         updatedEntries += res.updatedEntries;
         continue;
@@ -271,15 +272,15 @@ export class CdekRegistryCheckService {
               ? "Наличные"
               : undefined;
 
-        const res = await this.googleSheets.sales.updateEntry(
-          { cdekNumber: [cdek_number] },
-          {
-            ownerDeliveryPrice: data.total_sum_without_agent + data.agent_commission_sum,
-            closedByRegister: data.registry_number.toString(),
-            paymentType: paymentTitle,
-          },
-          false,
-        );
+        const search = { cdekNumber: [cdek_number] };
+        const update = {
+          ownerDeliveryPrice: data.total_sum_without_agent + data.agent_commission_sum,
+          closedByRegister: data.registry_number.toString(),
+          paymentType: paymentTitle,
+        };
+
+        this.db.sales.updateEntry(search, update);
+        const res = await this.googleSheets.sales.updateEntry(search, update, false);
 
         if (data.entity.number) {
           amoNotes.push({
@@ -321,8 +322,22 @@ export class CdekRegistryCheckService {
     }
 
     if (courierPickups.length > 0) {
+      this.db.spendings.addSpendings(
+        courierPickups.map((spending) => ({
+          date: Math.floor(spending.date.getTime() / 1000),
+          description: spending.description,
+          amount: spending.amount,
+        })),
+      );
+
       await this.googleSheets.spendings
-        .addSpendings(courierPickups)
+        .addSpendings(
+          courierPickups.map((spending) => ({
+            date: stringDate(spending.date),
+            description: spending.description,
+            amount: spending.amount,
+          })),
+        )
         .catch((e) => this.logger.error(`PROCCESS_ORDERS_GS_ERROR: ${e.message}`, e.stack));
     }
 

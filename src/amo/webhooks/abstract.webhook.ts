@@ -9,6 +9,7 @@ import { MailService } from "../../mail/mail.service";
 import { PDFService } from "../../pdf/pdf.service";
 import { YandexDiskService } from "../../yandex-disk/yandex-disk.service";
 import { YandexMetrikaService } from "../../yandex-metrika/yandex-metrika.service";
+import { DbService } from "../../db/db.service";
 import { GoogleSheetsService } from "../../google-sheets/google-sheets.service";
 import { TBankService } from "../../tbank/tbank.service";
 
@@ -27,6 +28,7 @@ export abstract class AbstractWebhook {
     protected readonly pdf: PDFService,
     protected readonly yadisk: YandexDiskService,
     protected readonly yametrika: YandexMetrikaService,
+    protected readonly db: DbService,
     protected readonly googleSheets: GoogleSheetsService,
     protected readonly tbankService: TBankService,
   ) {

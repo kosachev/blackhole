@@ -59,7 +59,13 @@ export class FirstLeadInteractionService {
     if (data.source) text += `\nИсточник: ${data.source}`;
 
     await Promise.all([
-      this.amo.client.lead.updateLeadById(data.leadId, { tags_to_add, custom_fields_values }),
+      this.amo.client.lead.updateLeadById(data.leadId, {
+        tags_to_add,
+        custom_fields_values,
+        ...([AMO.USER.MANAGER1, AMO.USER.MANAGER2, AMO.USER.MANAGER3].includes(data.userId)
+          ? { responsible_user_id: data.userId }
+          : {}),
+      }),
       this.amo.client.note.addNotes("leads", [
         {
           entity_id: data.leadId,

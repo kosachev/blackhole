@@ -43,5 +43,8 @@ lerna-debug.log*
 */amo_token.json
 */registries.json
 
+/data/*.db*
+/*.csv
+
 .vscode
 run.ts

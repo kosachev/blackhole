@@ -640,6 +640,10 @@ OrderId: ${payment.OrderId}
       await this.addLeadToGoogleSheets(lead, undefined, SalesSheet.colors.lightGreen);
     } else if (deliveryType === "Авито" || deliveryType === "Почта России") {
       try {
+        this.db.sales.cdekFullSuccess(
+          lead.data.id.toString(),
+          lead.custom_fields.get(AMO.CUSTOM_FIELD.PAY_TYPE),
+        );
         const result = await this.googleSheets.sales.cdekFullSuccess(
           lead.data.id.toString(),
           lead.custom_fields.get(AMO.CUSTOM_FIELD.PAY_TYPE),
@@ -835,7 +839,7 @@ OrderId: ${payment.OrderId}
           ? "gerdacollection"
           : undefined;
 
-      const result = await this.googleSheets.sales.addLead({
+      const salesEntry = {
         shippingDate: stringDate(),
         status,
         goods: [...lead.goods.values()],
@@ -848,7 +852,14 @@ OrderId: ${payment.OrderId}
         ads: lead.getAdsString(),
         site,
         color,
+      };
+
+      this.db.sales.addLead({
+        ...salesEntry,
+        shippingDate: Math.floor(Date.now() / 1000),
       });
+
+      const result = await this.googleSheets.sales.addLead(salesEntry);
 
       lead.note(
         result.addedEntries > 0
@@ -898,18 +909,25 @@ OrderId: ${payment.OrderId}
       return;
     }
 
+    const kpiEntry = {
+      kpiReachedAt: stringDateTime(),
+      leadCreatedAt: stringDateTime(new Date(+lead.data.created_at * 1000)),
+      leadId: lead.data.id.toString(),
+      responsibleUser,
+      statusUser,
+      kpiType,
+      price: lead.data.price,
+    };
+
     try {
-      const result = await this.googleSheets.kpi.addKpi([
+      this.db.kpi.addKpi([
         {
-          kpiReachedAt: stringDateTime(),
-          leadCreatedAt: stringDateTime(new Date(+lead.data.created_at * 1000)),
-          leadId: lead.data.id.toString(),
-          responsibleUser,
-          statusUser,
-          kpiType,
-          price: lead.data.price,
+          ...kpiEntry,
+          kpiReachedAt: Math.floor(Date.now() / 1000),
+          leadCreatedAt: +lead.data.created_at,
         },
       ]);
+      const result = await this.googleSheets.kpi.addKpi([kpiEntry]);
 
       if (result.addedRows > 0) {
         this.logger.log(
