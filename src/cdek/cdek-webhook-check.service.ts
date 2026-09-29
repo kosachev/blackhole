@@ -21,7 +21,7 @@ export class CdekWebhookCheckService implements OnModuleInit {
   }
 
   // executes every hour
-  @Cron("0 0 * * * *")
+  @Cron("0 */10 * * * *")
   async checkCdekWebhooks() {
     try {
       const needed = [
