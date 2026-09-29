@@ -1,7 +1,7 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { LeadCreateService, type Order } from "../amo/lead-create.service";
 import { timestampToDateString } from "../utils/timestamp.function";
-import { TelegramService } from "../telegram/telegram.service";
+import { CallRequestService } from "../amo/call-request.service";
 
 const DELIVERY_TYPE_MAP = {
   Самовывоз: "PICKUP",
@@ -63,26 +63,35 @@ export type TildaOrderData = {
   sigma: string;
 };
 
+export type TildaWebhookData = Omit<TildaOrderData, "payment" | "delivery" | "formname"> &
+  Partial<Pick<TildaOrderData, "payment" | "delivery" | "formname">>;
+
 @Injectable()
 export class TildaService {
   private readonly logger = new Logger(TildaService.name);
   constructor(
     private readonly leadCreateService: LeadCreateService,
-    private readonly telegram: TelegramService,
+    private readonly callRequestService: CallRequestService,
   ) {}
 
-  async handler(data: TildaOrderData, headers: Headers): Promise<void> {
+  async handler(data: TildaWebhookData, headers: Headers): Promise<void> {
     if (!data.payment) {
-      this.logger.error(`TILDA_NEW_ORDER, no payment in data:\n${JSON.stringify(data, null, 2)}`);
-      this.telegram.textToAdmin(
-        `❌ Ошибка валидации входящего вебхука от тильды:\n${JSON.stringify(data, null, 2)}`,
-      );
+      await this.callRequestService.callRequesthandler({
+        name: (data.Name ?? data.name ?? "").trim(),
+        phone: (data.Phone ?? data.fastphone ?? "").replace(/\D/g, ""),
+        comment: data.Textarea,
+        source: "TILDA",
+      });
       return;
+    }
+
+    if (!Array.isArray(data.payment.products) || data.payment.products.length === 0) {
+      throw new BadRequestException("Tilda order must contain payment.products");
     }
 
     this.logger.log(`TILDA_NEW_ORDER, id: ${data.payment.orderid}, amount: ${data.payment.amount}`);
 
-    const order = this.tildaOrderDTO(data);
+    const order = this.tildaOrderDTO(data as TildaOrderData);
     if (headers["User-Agent"] || headers["user-agent"]) {
       order.ad.user_agent = headers["User-Agent"] || headers["user-agent"];
     }

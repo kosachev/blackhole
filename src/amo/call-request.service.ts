@@ -11,6 +11,7 @@ export type CallRequest = {
   name: string;
   phone: string;
   comment?: string;
+  source?: "TILDA";
 };
 
 @Injectable()
@@ -33,7 +34,10 @@ export class CallRequestService {
     const lead = await this.amo.client.lead.addComplex([
       {
         name: "Звонок " + data.name,
-        tags_to_add: [{ id: AMO.TAG.CALL_REQUEST }],
+        tags_to_add: [
+          { id: AMO.TAG.CALL_REQUEST },
+          ...(data.source === "TILDA" ? [{ id: AMO.TAG.TILDA }] : []),
+        ],
         custom_fields_values: [
           {
             field_id: AMO.CUSTOM_FIELD.COMMENT_CLIENT,
