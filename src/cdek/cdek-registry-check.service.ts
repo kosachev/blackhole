@@ -5,6 +5,7 @@ import { AMO } from "../amo/amo.constants";
 import { Cron } from "@nestjs/schedule";
 import { DbService } from "../db/db.service";
 import { GoogleSheetsService } from "../google-sheets/google-sheets.service";
+import { SalesSheet } from "../google-sheets/sales.sheet";
 import type { GetCashOnDeliveryRegistry, GetOrder } from "cdek/src/types/api/response";
 import type { RequestUpdateLead } from "@shevernitskiy/amo/src/api/lead/types";
 import type { RequestAddNote } from "@shevernitskiy/amo/src/api/note/types";
@@ -21,7 +22,7 @@ type FailedOrder = {
 
 type CombinedOrderData = GetCashOnDeliveryRegistry["registries"][number]["orders"][number] & {
   registry_number: number;
-  entity: GetOrder["entity"];
+  entity: NonNullable<GetOrder["entity"]>;
 };
 
 type ProccessOrdersResult = {
@@ -190,7 +191,7 @@ export class CdekRegistryCheckService {
       results.forEach((res, index) => {
         const currentOrder = chunk[index];
 
-        if (res.status === "fulfilled") {
+        if (res.status === "fulfilled" && res.value.entity) {
           const apiData = res.value;
 
           const combined: CombinedOrderData = {
@@ -228,9 +229,9 @@ export class CdekRegistryCheckService {
       // Courier pickup from office
       if (
         data.entity.recipient.name.toLowerCase().includes("сдек") ||
-        data.entity.recipient.company.toLowerCase().includes("сдек") ||
+        (data.entity.recipient.company ?? "").toLowerCase().includes("сдек") ||
         data.entity.recipient.name.toLowerCase().includes("сдэк") ||
-        data.entity.recipient.company.toLowerCase().includes("сдэк")
+        (data.entity.recipient.company ?? "").toLowerCase().includes("сдэк")
       ) {
         const date = data.entity.statuses.at(-1)?.date_time
           ? new Date(data.entity.statuses.at(-1)?.date_time)
@@ -245,8 +246,8 @@ export class CdekRegistryCheckService {
 
       // Return order
       if (
-        data.entity.sender.company.toLowerCase().includes("сдек") ||
-        data.entity.sender.company.toLowerCase().includes("сдэк")
+        (data.entity.sender.company ?? "").toLowerCase().includes("сдек") ||
+        (data.entity.sender.company ?? "").toLowerCase().includes("сдэк")
       ) {
         returnOrders++;
 
@@ -254,6 +255,7 @@ export class CdekRegistryCheckService {
         const update = {
           ownerReturnDeliveryPrice: data.total_sum_without_agent,
           returnClosedByRegister: data.registry_number.toString(),
+          status: "Возврат получен",
         };
 
         this.db.sales.updateEntry(search, update);
@@ -281,6 +283,27 @@ export class CdekRegistryCheckService {
 
         this.db.sales.updateEntry(search, update);
         const res = await this.googleSheets.sales.updateEntry(search, update, false);
+
+        updatedEntries += res.updatedEntries;
+
+        const deliveredSkus = (data.entity.packages ?? [])
+          .flatMap((parcel) => parcel.items ?? [])
+          .filter((item) => Math.abs(item.amount - (item.delivery_amount ?? item.amount)) === 0)
+          .map((item) => item.ware_key);
+
+        if (deliveredSkus.length > 0) {
+          const statusSearch = { cdekNumber: [cdek_number], goodSku: deliveredSkus };
+          const statusUpdate = { status: "Доставлено" };
+
+          this.db.sales.updateEntry(statusSearch, statusUpdate);
+          const statusRes = await this.googleSheets.sales.updateEntry(
+            statusSearch,
+            { ...statusUpdate, color: SalesSheet.colors.lightGreen },
+            false,
+          );
+
+          updatedEntries += statusRes.updatedEntries;
+        }
 
         if (data.entity.number) {
           amoNotes.push({
@@ -310,8 +333,6 @@ export class CdekRegistryCheckService {
             custom_fields_values,
           });
         }
-
-        updatedEntries += res.updatedEntries;
       }
     }
 

@@ -4,6 +4,7 @@ export const createAmoServiceMock = () => ({
   client: {
     lead: {
       updateLeadById: mock((id: any, lead: any) => [id, lead]),
+      updateLeads: mock((leads: any[]) => [leads]),
       getLeadById: mock((id: any, options: any) => [id, options]),
     },
     note: {

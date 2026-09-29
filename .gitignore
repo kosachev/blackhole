@@ -42,6 +42,7 @@ lerna-debug.log*
 # Amo
 */amo_token.json
 */registries.json
+/data/registries-*.json
 
 /data/*.db*
 /*.csv
