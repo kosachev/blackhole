@@ -813,7 +813,7 @@ Content-Disposition: form-data; name="DXScript"
   }
 
   private async getSessionId(): Promise<string> {
-    const main = await fetch("https://2an.ru/", {
+    const main = await fetch("https://my.7811178.ru/", {
       method: "GET",
       signal: AbortSignal.timeout(10000),
       headers: {
@@ -825,7 +825,7 @@ Content-Disposition: form-data; name="DXScript"
   }
 
   private async newOrderRequest(body: string, session_id: string, boundary: string): Promise<void> {
-    const res = await fetch("https://2an.ru/new_order.aspx", {
+    const res = await fetch("https://my.7811178.ru/new_order.aspx", {
       method: "POST",
       signal: AbortSignal.timeout(10000),
       headers: {
@@ -839,10 +839,10 @@ Content-Disposition: form-data; name="DXScript"
         Connection: "keep-alive",
         "Content-Length": Buffer.byteLength(body).toString(),
         "Content-Type": `multipart/form-data; boundary=${boundary}`,
-        Host: "2an.ru",
-        Origin: "https://2an.ru",
+        Host: "my.7811178.ru",
+        Origin: "https://my.7811178.ru",
         Pragma: "no-cache",
-        Referer: "https://2an.ru/new_order.aspx",
+        Referer: "https://my.7811178.ru/new_order.aspx",
         "Sec-Fetch-Dest": "document",
         "Sec-Fetch-Mode": "navigate",
         "Sec-Fetch-Site": "same-origin",
