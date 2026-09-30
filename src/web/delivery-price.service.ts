@@ -172,7 +172,7 @@ export class DeliveryPriceService implements OnModuleInit {
         }),
       );
 
-      message = `стоимость доставки ${total}₽ для тарифа "${data.delivery_tariff}"`;
+      message = `стоимость доставки ${total}₽ для тарифа "${data.delivery_tariff}" (${picked_tariff.period_min}-${picked_tariff.period_max}д)`;
     } else {
       promises.push(
         this.amo.client.lead.updateLeadById(data.lead_id, {
