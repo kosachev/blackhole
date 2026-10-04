@@ -19,6 +19,7 @@ import {
   type RequestFirstTimeInteraction,
 } from "./first-lead-interaction.service";
 import { PaymentCancelService, type RequestPaymentCancel } from "./payment-cancel.service";
+import { SmsUserScriptService, type RequestSms } from "./sms.service";
 
 @Controller("web")
 @UseFilters(GlobalExceptionFilter)
@@ -34,6 +35,7 @@ export class WebController {
     private readonly clone_lead: CloneLeadService,
     private readonly first_lead_interaction: FirstLeadInteractionService,
     private readonly payment_cancel: PaymentCancelService,
+    private readonly sms: SmsUserScriptService,
   ) {}
 
   @Post("partial_return")
@@ -98,5 +100,10 @@ export class WebController {
   @Post("payment_cancel")
   async paymentCancel(@Body() data: RequestPaymentCancel) {
     return this.payment_cancel.handler(data);
+  }
+
+  @Post("sms")
+  async sendSms(@Body() data: RequestSms) {
+    return this.sms.handler(data);
   }
 }
