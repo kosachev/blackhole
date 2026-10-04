@@ -18,6 +18,7 @@ import { PostModule } from "./post/post.module";
 import { TildaModule } from "./tilda/tilda.module";
 import { AnalyticsModule } from "./analytics/analytics.module";
 import { TBankModule } from "./tbank/tbank.module";
+import { SmsModule } from "./sms/sms.module";
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { TBankModule } from "./tbank/tbank.module";
     }),
     TildaModule,
     TBankModule,
+    SmsModule,
     AnalyticsModule,
     TelegramModule,
     CronModule,

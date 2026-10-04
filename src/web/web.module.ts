@@ -12,6 +12,7 @@ import { ConfigModule } from "@nestjs/config";
 import { CloneLeadService } from "./clone-lead.service";
 import { FirstLeadInteractionService } from "./first-lead-interaction.service";
 import { PaymentCancelService } from "./payment-cancel.service";
+import { SmsUserScriptService } from "./sms.service";
 
 @Module({
   imports: [ConfigModule],
@@ -26,6 +27,7 @@ import { PaymentCancelService } from "./payment-cancel.service";
     CloneLeadService,
     FirstLeadInteractionService,
     PaymentCancelService,
+    SmsUserScriptService,
   ],
   controllers: [WebController, StaticController],
 })
