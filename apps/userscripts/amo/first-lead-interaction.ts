@@ -1,8 +1,9 @@
-import { BACKEND_BASE_URL, card, CFV } from "../common";
+import { BACKEND_BASE_URL, card, CFV, contactId } from "../common";
 import { AMO } from "../../../src/amo/amo.constants";
 
 type RequestData = {
   leadId: number;
+  contactId?: number;
   userName: string;
   userId: number;
   dateCreate: number;
@@ -55,8 +56,10 @@ export class FirstLeadInteraction extends Plugin {
       .find((item) => item.textContent?.match(userSourcePattern) !== null)
       ?.textContent.match(userSourcePattern);
 
+    const contact_id = Number(contactId().val());
     const data = {
       leadId: this.lead_id,
+      ...(Number.isSafeInteger(contact_id) && contact_id > 0 ? { contactId: contact_id } : {}),
       userName: card().user.name,
       userId: card().user.id,
       dateCreate,

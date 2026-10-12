@@ -6,6 +6,7 @@ import { UtmService } from "../analytics/utm.service";
 
 export type RequestFirstTimeInteraction = {
   leadId: number;
+  contactId?: number;
   userName: string;
   userId: number;
   dateCreate: number;
@@ -49,6 +50,12 @@ export class FirstLeadInteractionService {
       throw new BadRequestException("Invalid data");
     }
 
+    if (data.contactId !== undefined && (!Number.isSafeInteger(data.contactId) || data.contactId <= 0)) {
+      throw new BadRequestException("Invalid contactId");
+    }
+
+    const isManager = [AMO.USER.MANAGER1, AMO.USER.MANAGER2, AMO.USER.MANAGER3].includes(data.userId);
+
     const now = timestampToDateTimeString(Date.now());
     const tti = humanizeDuration(Date.now() - data.dateCreate);
 
@@ -62,10 +69,11 @@ export class FirstLeadInteractionService {
       this.amo.client.lead.updateLeadById(data.leadId, {
         tags_to_add,
         custom_fields_values,
-        ...([AMO.USER.MANAGER1, AMO.USER.MANAGER2, AMO.USER.MANAGER3].includes(data.userId)
-          ? { responsible_user_id: data.userId }
-          : {}),
+        ...(isManager ? { responsible_user_id: data.userId } : {}),
       }),
+      ...(isManager && data.contactId !== undefined
+        ? [this.amo.client.contact.updateContactById(data.contactId, { responsible_user_id: data.userId })]
+        : []),
       this.amo.client.note.addNotes("leads", [
         {
           entity_id: data.leadId,
