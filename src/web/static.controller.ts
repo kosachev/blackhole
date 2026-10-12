@@ -8,10 +8,19 @@ import gerda_userscript from "../../public/gerda_userscript.js" with { type: "te
 import gerdacollection_userscript from "../../public/gerdacollection_userscript.js" with { type: "text" };
 import shop_userscript from "../../public/shop_userscript.js" with { type: "text" };
 
+import db_ui from "../../public/db-ui.html" with { type: "text" };
+
 @Controller("public")
 @UseFilters(GlobalExceptionFilter)
 export class StaticController {
   constructor(private readonly config: ConfigService) {}
+
+  @Get("db-ui.html")
+  @Header("Content-Type", "text/html; charset=utf-8")
+  dbUiHtml(): string {
+    // @ts-expect-error db_ui is a string because of with
+    return db_ui;
+  }
 
   @Get("pvz.html")
   @Header("Content-Type", "text/html")

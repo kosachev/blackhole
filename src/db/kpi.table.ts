@@ -3,6 +3,15 @@ import type { Database } from "bun:sqlite";
 export class KpiTable {
   constructor(private readonly database: Database) {}
 
+  getKpi(): KpiRow[] {
+    return this.database.query<KpiRow, []>(`
+      SELECT id, kpi_reached_at AS kpiReachedAt, lead_created_at AS leadCreatedAt,
+        lead_id AS leadId, responsible_user AS responsibleUser,
+        status_user AS statusUser, kpi_type AS kpiType, price
+      FROM kpi ORDER BY kpi_reached_at DESC, id DESC
+    `).all();
+  }
+
   addKpi(kpi: KpiEntry[]): KpiAddResult {
     if (kpi.length === 0) {
       return { addedRows: 0 };
@@ -54,3 +63,14 @@ export type KpiEntry = Partial<{
 }>;
 
 export type KpiAddResult = { addedRows: number };
+
+export type KpiRow = {
+  id: number;
+  kpiReachedAt: number | null;
+  leadCreatedAt: number | null;
+  leadId: string;
+  responsibleUser: string;
+  statusUser: string;
+  kpiType: string;
+  price: number | null;
+};

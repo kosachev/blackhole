@@ -42,6 +42,29 @@ const buildTasks = TARGETS.map(async (target) => {
   return target.outfile;
 });
 
+async function buildDbUi(): Promise<string> {
+  const result = await Bun.build({
+    entrypoints: ["./apps/db-ui/main.ts"],
+    target: "browser",
+    minify: false,
+  });
+  if (!result.success || result.outputs.length !== 1) {
+    throw new Error(`DB UI build failed: ${result.logs.join("\n")}`);
+  }
+  const [template, css, script] = await Promise.all([
+    Bun.file("./apps/db-ui/index.html").text(),
+    Bun.file("./apps/db-ui/style.css").text(),
+    result.outputs[0].text(),
+  ]);
+  const html = template
+    .replace("<!-- APP_STYLE -->", () => `<style>${css}</style>`)
+    .replace("<!-- APP_SCRIPT -->", () => `<script type="module">${script.replaceAll("</script", "<\\/script")}</script>`);
+  await Bun.write(`${OUT_DIR}/db-ui.html`, html);
+  return "db-ui.html";
+}
+
+buildTasks.push(buildDbUi());
+
 try {
   const builtFiles = await Promise.all(buildTasks);
   console.log(`✅ Build successful! Created:`);

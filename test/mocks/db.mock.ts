@@ -14,6 +14,7 @@ export const createDbServiceMock = () => ({
     addSpendings: mock(() => ({ addedRows: 0 })),
   },
   kpi: {
+    getKpi: mock(() => []),
     addKpi: mock(() => ({ addedRows: 0 })),
   },
 });

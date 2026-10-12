@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GERDA · KPI менеджеров</title>
+  <!-- APP_STYLE -->
+</head>
+<body>
+  <main>
+    <section id="login-panel">
+      <p class="eyebrow">GERDA · Отчеты</p><h1>Вход</h1>
+      <form id="login-form" class="filters">
+        <label>Пароль<input id="password" type="password" autocomplete="current-password" required maxlength="1024"></label>
+        <button id="login-button" type="submit">Войти</button>
+      </form>
+      <p id="login-error" role="alert"></p>
+    </section>
+    <div id="workspace" hidden>
+    <header><div><p class="eyebrow">GERDA · Отчеты</p><h1>KPI менеджеров</h1></div><button id="logout" class="secondary" type="button">Выйти</button><button id="reload" class="secondary" type="button">Обновить данные</button></header>
+    <p class="muted">Даты по Москве. Период включает оба выбранных дня и определяется временем KPI, сохраненным в базе.</p>
+    <form id="filters" class="filters">
+      <label>С даты<input id="from" type="date" required></label>
+      <label>По дату<input id="to" type="date" required></label>
+      <label>Менеджер / ID<input id="manager" list="managers" placeholder="Все менеджеры" autocomplete="off"><datalist id="managers"></datalist></label>
+      <button type="submit">Показать</button>
+    </form>
+    <p id="status" role="status" aria-live="polite">Загрузка данных…</p>
+    <p id="error" role="alert" hidden></p>
+    <details id="settings"><summary>Настройки имен и ставок KPI</summary>
+      <p class="muted">Сохраняются только в этом браузере. Ставки применяются ко всему выбранному периоду, включая прошлые даты. Данные на сервере не изменяются.</p>
+      <form id="settings-form">
+        <h2>Менеджеры</h2><div class="table-scroll"><table><thead><tr><th>ID</th><th>Обозначение в базе</th><th>Имя</th></tr></thead><tbody id="manager-settings"></tbody></table></div>
+        <h2>Этапы и ставки</h2><div class="table-scroll"><table><thead><tr><th>Код этапа</th><th>Название</th><th>За запись, ₽</th></tr></thead><tbody id="stage-settings"></tbody></table></div>
+        <div class="actions"><button type="submit">Сохранить настройки</button><button id="reset" type="button" class="secondary">Сбросить настройки</button></div>
+        <p id="settings-status" role="status"></p>
+      </form>
+    </details>
+    <section id="report" hidden>
+      <div class="section-heading"><div><h2>Начисления за период</h2><p id="report-period" class="muted"></p></div><div class="actions"><button id="summary-csv" class="secondary" type="button">Сводка CSV</button><button id="detail-csv" class="secondary" type="button">Детализация CSV</button></div></div>
+      <p id="total" class="total"></p><p id="warning" class="muted"></p>
+      <div class="table-scroll"><table><caption class="sr-only">Сводка KPI по менеджерам и этапам</caption><thead><tr><th>Менеджер</th><th>Этап</th><th class="number">Количество</th><th class="number">Сумма, ₽</th></tr></thead><tbody id="summary-body"></tbody></table></div>
+      <h2>Сделки и начисления</h2>
+      <p class="muted">Каждая запись базы считается отдельным начислением. Повторные записи не объединяются. «Время KPI» для новых записей — время обработки события сервером.</p>
+      <div class="table-scroll"><table><caption class="sr-only">Детализация начислений</caption><thead><tr><th>ID записи</th><th>ID сделки</th><th>Ответственный</th><th>Изменил статус</th><th>Этап</th><th class="number">Сумма сделки, ₽</th><th class="number">KPI, ₽</th><th>Создана (МСК)</th><th>Время KPI (МСК)</th></tr></thead><tbody id="detail-body"></tbody></table></div>
+      <div class="pagination"><button id="previous" type="button" class="secondary">Назад</button><span id="page"></span><button id="next" type="button" class="secondary">Далее</button></div>
+    </section>
+    </div>
+  </main>
+  <!-- APP_SCRIPT -->
+</body>
+</html>

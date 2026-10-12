@@ -23,24 +23,27 @@ export class LoggerMiddleware implements NestMiddleware {
     };
 
     res.on("finish", () => {
-      for (const [key, value] of Object.entries(req.headers)) {
-        if (typeof value !== "string") continue;
-        req.headers[key] = value.replaceAll('"', "");
-      }
+      const dbUi = /^\/web\/db_ui(?:\/|$)/i.test(req.path);
+      const headers = Object.fromEntries(Object.entries(req.headers).map(([key, value]) => [
+        key,
+        ["authorization", "cookie"].includes(key.toLowerCase())
+          ? "[redacted]"
+          : typeof value === "string" ? value.replaceAll('"', "") : value,
+      ]));
       this.logger.debug({
         data: {
           request: {
             method: req.method,
             originalUrl: req.originalUrl,
-            headers: req.headers,
+            headers,
             ip: req.ip,
-            body: req.body ?? null,
+            body: dbUi ? "[redacted]" : req.body ?? null,
           },
           response: {
             statusCode: res.statusCode,
             contentLength: res.get("content-length"),
             responseTime: Date.now() - start,
-            body: res.locals.body && res.locals.body.length < 1000 ? res.locals.body : "too long",
+            body: dbUi ? "[redacted]" : res.locals.body && res.locals.body.length < 1000 ? res.locals.body : "too long",
           },
         },
       });

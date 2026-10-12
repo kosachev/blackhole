@@ -1,3 +1,4 @@
+import { ConfigService } from "@nestjs/config";
 import { spec } from "pactum";
 
 import { describe, test, beforeAll, afterAll } from "bun:test";
@@ -9,13 +10,44 @@ describe("App e2e", () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    ({ app } = await createTestApp());
+    const result = await createTestApp();
+    app = result.app;
+    const config = result.moduleRef.get(ConfigService);
+    config.set("DB_UI_PASSWORD_HASH", await Bun.password.hash("test-only-password"));
+    config.set("DB_UI_TOKEN_SECRET", "test-only-signing-secret-with-32-bytes");
 
     await app.listen(process.env.PORT ?? 6969);
   });
 
   afterAll(async () => {
     await app.close();
+  });
+
+  describe("DB UI", () => {
+    test("requires authentication for KPI data", async () => {
+      await spec().get(`http://localhost:${process.env.PORT}/web/db_ui/kpi`).expectStatus(401);
+    });
+
+    test("returns KPI data after login with caching disabled", async () => {
+      const response = await spec()
+        .post(`http://localhost:${process.env.PORT}/web/db_ui/login`)
+        .withBody({ password: "test-only-password" })
+        .expectStatus(200)
+        .expectHeader("cache-control", "no-store");
+      await spec()
+        .get(`http://localhost:${process.env.PORT}/web/db_ui/kpi`)
+        .withHeaders("Authorization", `Bearer ${response.body.token}`)
+        .expectStatus(200)
+        .expectHeader("cache-control", "no-store")
+        .expectJson([]);
+    });
+
+    test("has no write route for KPI data", async () => {
+      await spec()
+        .post(`http://localhost:${process.env.PORT}/web/db_ui/kpi`)
+        .withBody({ price: 999 })
+        .expectStatus(404);
+    });
   });
 
   // describe("CDEK", () => {

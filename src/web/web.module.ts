@@ -1,3 +1,6 @@
+import { DbUiAuthService } from "./db-ui-auth.service";
+import { DbUiAuthGuard } from "./db-ui-auth.guard";
+import { DbUiAuthController } from "./db-ui-auth.controller";
 import { Module } from "@nestjs/common";
 import { WebController } from "./web.controller";
 import { StaticController } from "./static.controller";
@@ -14,9 +17,15 @@ import { FirstLeadInteractionService } from "./first-lead-interaction.service";
 import { PaymentCancelService } from "./payment-cancel.service";
 import { SmsUserScriptService } from "./sms.service";
 
+import { DbUiController } from "./db-ui.controller";
+import { DbUiService } from "./db-ui.service";
+
 @Module({
   imports: [ConfigModule],
   providers: [
+    DbUiAuthService,
+    DbUiAuthGuard,
+    DbUiService,
     PartialReturnService,
     CdekPickupService,
     PrintPdfService,
@@ -29,6 +38,6 @@ import { SmsUserScriptService } from "./sms.service";
     PaymentCancelService,
     SmsUserScriptService,
   ],
-  controllers: [WebController, StaticController],
+  controllers: [DbUiAuthController, WebController, StaticController, DbUiController],
 })
 export class WebModule {}

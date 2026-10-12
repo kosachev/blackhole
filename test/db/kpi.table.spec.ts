@@ -64,6 +64,22 @@ describe("KpiTable", () => {
     ]);
   });
 
+  test("reads report rows with stable ordering, nulls and without modifying data", () => {
+    kpi.addKpi([
+      { kpiReachedAt: 100, leadId: "42", responsibleUser: "Manager-2", kpiType: "visit", price: 50000 },
+      { kpiReachedAt: 200, leadId: "43" },
+      { kpiReachedAt: 200, leadId: "44" },
+      {},
+    ]);
+    const before = database.query("SELECT * FROM kpi ORDER BY id").all();
+    const rows = kpi.getKpi();
+    expect(rows.map((row) => row.id)).toEqual([3, 2, 1, 4]);
+    expect(rows[2]).toEqual({ id: 1, kpiReachedAt: 100, leadCreatedAt: null, leadId: "42",
+      responsibleUser: "Manager-2", statusUser: "", kpiType: "visit", price: 50000 });
+    expect(rows[3].kpiReachedAt).toBeNull();
+    expect(database.query("SELECT * FROM kpi ORDER BY id").all()).toEqual(before);
+  });
+
   test("returns zero for an empty batch", async () => {
     expect(kpi.addKpi([])).toEqual({ addedRows: 0 });
   });

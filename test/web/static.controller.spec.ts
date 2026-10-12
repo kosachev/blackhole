@@ -30,6 +30,17 @@ describe("StaticController", () => {
     expect(html).not.toContain("tile.openstreetmap.org");
   });
 
+  test("serves a self-contained KPI application", () => {
+    const html = new StaticController({} as ConfigService).dbUiHtml();
+    expect(html).toContain("KPI менеджеров");
+    expect(html).toContain("<style>");
+    expect(html).toContain('<script type="module">');
+    expect(html).toContain("/web/db_ui/kpi");
+    expect(html).not.toContain("<!-- APP_");
+    expect(html).not.toMatch(/<script[^>]+src=/);
+    expect(html).not.toMatch(/<link[^>]+stylesheet/);
+  });
+
   test("serves the official Yandex map logo", () => {
     const controller = new StaticController({} as ConfigService);
 
