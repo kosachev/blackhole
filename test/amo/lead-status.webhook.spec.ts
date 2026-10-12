@@ -11,7 +11,10 @@ import migration from "../../src/db/migration.sql" with { type: "text" };
 import { type SalesLead, SalesTable } from "../../src/db/sales.table";
 import { SpendingsTable } from "../../src/db/spendings.table";
 import { GoogleSheetsService } from "../../src/google-sheets/google-sheets.service";
+import { MailService } from "../../src/mail/mail.service";
+import { PDFService } from "../../src/pdf/pdf.service";
 import { stringDate, stringDateTime } from "../../src/utils/timestamp.function";
+import { YandexDiskService } from "../../src/yandex-disk/yandex-disk.service";
 import { createTestApp } from "../helpers/create-test-app";
 import { createGoogleSheetsServiceMock } from "../mocks/google-sheets.mock";
 
@@ -34,6 +37,9 @@ type GoogleSalesEntry = Omit<SalesLead, "shippingDate"> & {
 
 type LeadStatusInternals = {
   logger: { error: (...args: unknown[]) => void };
+  mail: MailService;
+  pdf: PDFService;
+  yadisk: YandexDiskService;
   addLeadToGoogleSheets(lead: LeadHelper, status?: string, color?: unknown): Promise<void>;
   addKpiToGoogleSheets(lead: LeadHelper, kpiType: string): Promise<void>;
 };
@@ -48,6 +54,8 @@ function leadFixture(options: LeadFixtureOptions): LeadHelper {
     [AMO.CUSTOM_FIELD.DISCOUNT, "10%"],
     [AMO.CUSTOM_FIELD.DELIVERY_COST, "350"],
     [AMO.CUSTOM_FIELD.CITY, "Москва"],
+    [AMO.CUSTOM_FIELD.STREET, "Тестовая"],
+    [AMO.CUSTOM_FIELD.BUILDING, "1"],
     [AMO.CUSTOM_FIELD.PAY_TYPE, "CARD"],
   ]);
   if (options.deliveryType) {
@@ -56,6 +64,7 @@ function leadFixture(options: LeadFixtureOptions): LeadHelper {
   }
 
   const contactFields = new Map<number, string>();
+  contactFields.set(AMO.CONTACT.PHONE, "79990000000");
   if (options.email) {
     contactFields.set(AMO.CONTACT.EMAIL, options.email);
   }
@@ -86,8 +95,16 @@ function leadFixture(options: LeadFixtureOptions): LeadHelper {
     errors: [],
     warnings: [],
     note: () => undefined,
+    error(this: { errors: string[] }, text: string) {
+      this.errors.push(text);
+    },
+    warning(this: { warnings: string[] }, text: string) {
+      this.warnings.push(text);
+    },
     saveToAmo: async () => undefined,
     getAdsString: () => "utm_source=test",
+    getFullAddress: () => "Москва, Тестовая, 1",
+    getDiscountMultiplyier: () => 0.9,
   } as unknown as LeadHelper;
 }
 
@@ -336,6 +353,115 @@ describe("AMO LeadStatusWebhook", () => {
         { kpi_type: "delivery" },
       ]);
     });
+
+    test.each(["success", "SMTP", "IMAP", "no email"])(
+      "PAYMENT records KPI once with mail result: %s",
+      async (result) => {
+        const lead = leadFixture({
+          statusId: AMO.STATUS.PAYMENT,
+          email: result === "no email" ? undefined : "test@example.test",
+        });
+        const internals = service as unknown as LeadStatusInternals;
+        const originalMail = internals.mail;
+        let smtpSent = false;
+        internals.mail = Object.assign(Object.create(MailService.prototype), {
+          config: { get: () => "test" },
+          templates: new Map([["./prepayment-confirm-v2.hbs", () => "<p>Test</p>"]]),
+          mailer: {
+            async sendMail() {
+              if (result === "SMTP") throw new Error("SMTP failed");
+              smtpSent = true;
+            },
+          },
+          async imap() {
+            if (result === "IMAP") throw new Error("IMAP failed");
+          },
+        });
+        const createFromWebhook = spyOn(LeadHelper, "createFromWebhook").mockResolvedValue(lead);
+        const note = spyOn(lead, "note");
+        const loggerError = spyOn(internals.logger, "error").mockImplementation(() => undefined);
+
+        try {
+          await service.handle(webhookData());
+          expect(database.query("SELECT lead_id, kpi_type FROM kpi").all()).toEqual([
+            { lead_id: "1001", kpi_type: "payment" },
+          ]);
+          expect(getCalls(googleSheets.kpi.addKpi)).toHaveLength(1);
+          expect(getCalls(googleSheets.kpi.addKpi)[0][0]).toEqual([
+            expect.objectContaining({ leadId: "1001", kpiType: "payment" }),
+          ]);
+          expect(smtpSent).toBe(result === "success" || result === "IMAP");
+          if (result === "SMTP" || result === "IMAP") {
+            expect(note).toHaveBeenCalledWith("❌ email: ошибка при отправке письма с подтверждением оплаты");
+          }
+        } finally {
+          internals.mail = originalMail;
+          createFromWebhook.mockRestore();
+          note.mockRestore();
+          loggerError.mockRestore();
+        }
+      },
+    );
+
+    test.each(["success", "PDF", "upload", "publish", "empty URL"])(
+      "DELIVERY records KPI once with invoice result: %s",
+      async (result) => {
+        const lead = leadFixture({
+          statusId: AMO.STATUS.DELIVERY,
+          deliveryType: "Курьером (в пределах МКАД)",
+        });
+        const internals = service as unknown as LeadStatusInternals;
+        const originalPdf = internals.pdf;
+        const originalYadisk = internals.yadisk;
+        internals.pdf = {
+          async invoice() {
+            if (result === "PDF") throw new Error("PDF failed");
+            return new Uint8Array([1]);
+          },
+        } as unknown as PDFService;
+        internals.yadisk = Object.assign(Object.create(YandexDiskService.prototype), {
+          config: { get: () => "/test/" },
+          client: {
+            async getUploadUrl() {
+              return "https://example.test/upload";
+            },
+            async uploadFile() {
+              if (result === "upload") throw new Error("Upload failed");
+            },
+            async publishFile() {
+              if (result === "publish") throw new Error("Publish failed");
+              return "https://example.test/invoice";
+            },
+          },
+        });
+        if (result === "empty URL") {
+          internals.yadisk.upload = async () => "";
+        }
+        const createFromWebhook = spyOn(LeadHelper, "createFromWebhook").mockResolvedValue(lead);
+        const note = spyOn(lead, "note");
+        const loggerError = spyOn(internals.logger, "error").mockImplementation(() => undefined);
+
+        try {
+          await service.handle(webhookData());
+          expect(database.query("SELECT lead_id, kpi_type FROM kpi").all()).toEqual([
+            { lead_id: "1001", kpi_type: "delivery" },
+          ]);
+          expect(getCalls(googleSheets.kpi.addKpi)).toHaveLength(1);
+          expect(getCalls(googleSheets.kpi.addKpi)[0][0]).toEqual([
+            expect.objectContaining({ leadId: "1001", kpiType: "delivery" }),
+          ]);
+          if (result !== "success") {
+            expect(note).toHaveBeenCalledWith("❌ Товарный чек: ошибка при создании");
+          }
+        } finally {
+          internals.pdf = originalPdf;
+          internals.yadisk = originalYadisk;
+          createFromWebhook.mockRestore();
+          note.mockRestore();
+          loggerError.mockRestore();
+        }
+      },
+    );
 
     test("VISIT writes matching KPI data to DB and Google Sheets", async () => {
       const lead = leadFixture({ statusId: AMO.STATUS.VISIT });

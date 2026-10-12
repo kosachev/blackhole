@@ -203,7 +203,6 @@ OrderId: ${payment.OrderId}
       const email = lead.contact.custom_fields.get(AMO.CONTACT.EMAIL);
       if (!email) {
         lead.note("⚠️ email: письмо с подтверждением оплаты не отправлено, нет email");
-        await this.addKpiToGoogleSheets(lead, "payment");
         return;
       }
 
@@ -215,11 +214,11 @@ OrderId: ${payment.OrderId}
 
       lead.note("✅ email: письмо с подтверждением оплаты отправлено");
       this.logger.log(`STATUS_PAYMENT, lead_id: ${lead.data.id}, mail sent`);
-
-      await this.addKpiToGoogleSheets(lead, "payment");
     } catch (err) {
       this.logger.error(err);
       lead.note("❌ email: ошибка при отправке письма с подтверждением оплаты");
+    } finally {
+      await this.addKpiToGoogleSheets(lead, "payment");
     }
   }
 
@@ -277,11 +276,11 @@ OrderId: ${payment.OrderId}
 
       lead.note(`✎ Сформирован товарный чек: ${yadisk_url}`);
       this.logger.log(`STATUS_DELIVERY, lead_id: ${lead.data.id}, pdf: ${yadisk_url}`);
-
-      await this.addKpiToGoogleSheets(lead, "delivery");
     } catch (err) {
       this.logger.error(err);
       lead.note("❌ Товарный чек: ошибка при создании");
+    } finally {
+      await this.addKpiToGoogleSheets(lead, "delivery");
     }
   }
 
