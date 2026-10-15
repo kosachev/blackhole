@@ -63,7 +63,16 @@ function addButton() {
     "color:#ffffff;background-color:#4C8BF7;border-radius:0px;-moz-border-radius:0px;-webkit-border-radius:0px;font-family:Manrope;font-weight:500;";
 
   button.addEventListener("click", async () => {
-    await sendData();
+    if (button.disabled) return;
+
+    button.disabled = true;
+    button.textContent = "Отправка…";
+    try {
+      await sendData();
+    } finally {
+      button.disabled = false;
+      button.textContent = "В АМО";
+    }
   });
 
   const addToBasket = document.querySelector(
@@ -88,35 +97,38 @@ async function sendData(): Promise<void> {
     return;
   }
 
-  if (tildaProduct.size && tildaProduct.size.length > 0) {
-    tildaProduct.name += " размер: " + tildaProduct.size;
-  }
+  const product = {
+    ...tildaProduct,
+    name: tildaProduct.size
+      ? `${tildaProduct.name} размер: ${tildaProduct.size}`
+      : tildaProduct.name,
+  };
 
   try {
     const res = await fetch(`${BACKEND_BASE_URL}/amo/good_emplace`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: tildaProduct.name,
-        sku: tildaProduct.sku,
-        price: tildaProduct.price,
+        name: product.name,
+        sku: product.sku,
+        price: product.price,
         quantity: 0,
       }),
     });
 
     if (!res.ok) {
       console.error("ERROR");
-      alert(tildaProductToString(tildaProduct, false));
+      alert(tildaProductToString(product, false));
       return;
     }
   } catch (err) {
     console.error("ERROR", err);
-    alert(tildaProductToString(tildaProduct, false));
+    alert(tildaProductToString(product, false));
     return;
   }
 
-  await navigator.clipboard.writeText(tildaProduct.sku);
-  alert(tildaProductToString(tildaProduct, true));
+  await navigator.clipboard.writeText(product.sku);
+  alert(tildaProductToString(product, true));
 }
 
 function tildaProductToString({ name, sku, price }: TildaProduct, result?: boolean): string {
