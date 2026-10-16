@@ -34,4 +34,13 @@ describe("CdekPriceTable", () => {
     database.run("UPDATE cdek_price SET delta = -50 WHERE id = 1");
     expect(cdekPrice.getCdekDelta()).toBe(-50);
   });
+
+  test("creates and overwrites delta with a single row", async () => {
+    cdekPrice.setCdekDelta(42.5);
+    expect(cdekPrice.getCdekDelta()).toBe(42.5);
+
+    cdekPrice.setCdekDelta(-10);
+    expect(cdekPrice.getCdekDelta()).toBe(-10);
+    expect(database.query("SELECT COUNT(*) AS count FROM cdek_price").get()).toEqual({ count: 1 });
+  });
 });
