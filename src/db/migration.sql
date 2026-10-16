@@ -29,6 +29,7 @@ CREATE INDEX IF NOT EXISTS idx_sales_return_lead_id ON sales(return_lead_id);
 CREATE INDEX IF NOT EXISTS idx_sales_cdek_number ON sales(cdek_number);
 CREATE INDEX IF NOT EXISTS idx_sales_return_cdek_number ON sales(return_cdek_number);
 CREATE INDEX IF NOT EXISTS idx_sales_good_sku ON sales(good_sku);
+CREATE INDEX IF NOT EXISTS idx_sales_shipping_date ON sales(shipping_date);
 
 CREATE TABLE IF NOT EXISTS spendings (
   id INTEGER PRIMARY KEY,

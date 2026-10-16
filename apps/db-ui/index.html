@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>GERDA · KPI менеджеров</title>
+  <title>GERDA · Отчёты</title>
   <!-- APP_STYLE -->
 </head>
 <body>
@@ -17,7 +17,13 @@
       <p id="login-error" role="alert"></p>
     </section>
     <div id="workspace" hidden>
-    <header><div><p class="eyebrow">GERDA · Отчеты</p><h1>KPI менеджеров</h1></div><button id="logout" class="secondary" type="button">Выйти</button><button id="reload" class="secondary" type="button">Обновить данные</button></header>
+    <header><div><p class="eyebrow">GERDA · Отчеты</p><h1>Отчёты</h1></div><button id="logout" class="secondary" type="button">Выйти</button></header>
+    <nav class="tabs" aria-label="Разделы отчётов">
+      <button id="tab-kpi-btn" type="button">KPI менеджеров</button>
+      <button id="tab-cdek-btn" type="button" class="secondary">Стоимость СДЭК</button>
+    </nav>
+    <section id="tab-kpi" aria-label="KPI менеджеров">
+    <div class="actions"><button id="reload" class="secondary" type="button">Обновить данные</button></div>
     <p class="muted">Даты по Москве. Период включает оба выбранных дня и определяется временем KPI, сохраненным в базе.</p>
     <form id="filters" class="filters">
       <label>С даты<input id="from" type="date" required></label>
@@ -44,6 +50,25 @@
       <p class="muted">Каждая запись базы считается отдельным начислением. Повторные записи не объединяются. «Время KPI» для новых записей — время обработки события сервером.</p>
       <div class="table-scroll"><table><caption class="sr-only">Детализация начислений</caption><thead><tr><th>ID записи</th><th>ID сделки</th><th>Ответственный</th><th>Изменил статус</th><th>Этап</th><th class="number">Сумма сделки, ₽</th><th class="number">KPI, ₽</th><th>Создана (МСК)</th><th>Время KPI (МСК)</th></tr></thead><tbody id="detail-body"></tbody></table></div>
       <div class="pagination"><button id="previous" type="button" class="secondary">Назад</button><span id="page"></span><button id="next" type="button" class="secondary">Далее</button></div>
+    </section>
+    </section>
+    <section id="tab-cdek" aria-label="Стоимость СДЭК" hidden>
+      <p id="cdek-status" role="status" aria-live="polite"></p>
+      <p id="cdek-error" role="alert" hidden></p>
+      <div id="cdek-report" hidden>
+        <h2>Средняя дельта в БД</h2>
+        <p id="cdek-stored" class="total"></p>
+        <h2>Расчёт дельты за период</h2>
+        <form id="cdek-filters" class="filters">
+          <label>С даты<input id="cdek-from" type="date" required></label>
+          <label>По дату<input id="cdek-to" type="date" required></label>
+          <button type="submit">Рассчитать</button>
+        </form>
+        <p id="cdek-period" class="muted"></p>
+        <h2>Средняя дельта за период</h2>
+        <p id="cdek-total" class="total"></p>
+        <div class="table-scroll"><table><caption class="sr-only">Дельта СДЭК по месяцам</caption><thead><tr><th>Период</th><th class="number">Сделок</th><th class="number">Клиент, ₽</th><th class="number">Нам, ₽</th><th class="number">Нам возврат, ₽</th><th class="number">Расходы СДЭК, ₽</th><th class="number">Дельта, ₽</th><th class="number">Средняя, ₽</th></tr></thead><tbody id="cdek-months-body"></tbody></table></div>
+      </div>
     </section>
     </div>
   </main>

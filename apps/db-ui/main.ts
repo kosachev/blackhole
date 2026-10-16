@@ -3,6 +3,7 @@ import {
   filterRows, summarize, dateTime, detailCsv, summaryCsv,
   type Settings, type KpiRow,
 } from "./kpi";
+import { validCdekDeltaResponse, defaultCdekRange, type CdekDeltaResponse } from "./cdek";
 
 const STORAGE_KEY = "gerda.db-ui.settings.v1";
 const TOKEN_KEY = "gerda.db-ui.token.v1";
@@ -19,10 +20,96 @@ let filtered: KpiRow[] = [];
 let page = 0;
 let loaded = false;
 let filters = { from: "", to: "", manager: "" };
+let cdekLoaded = false;
+let cdekLoading = false;
 
 function error(message = "") {
   element("error").textContent = message;
   element("error").hidden = !message;
+}
+function cdekError(message = "") {
+  element("cdek-error").textContent = message;
+  element("cdek-error").hidden = !message;
+}
+function showTab(name: "kpi" | "cdek") {
+  element("tab-kpi").hidden = name !== "kpi";
+  element("tab-cdek").hidden = name !== "cdek";
+  element<HTMLButtonElement>("tab-kpi-btn").className = name === "kpi" ? "" : "secondary";
+  element<HTMLButtonElement>("tab-cdek-btn").className = name === "cdek" ? "" : "secondary";
+  if (name === "cdek" && !cdekLoaded && !cdekLoading) {
+    const range = defaultCdekRange();
+    input("cdek-from").value = range.from;
+    input("cdek-to").value = range.to;
+    void loadCdek();
+  }
+}
+function showCdek(data: CdekDeltaResponse) {
+  element("cdek-report").hidden = false;
+  element("cdek-stored").textContent = data.storedDelta === null ? "Не рассчитана" : `${money(data.storedDelta)} ₽`;
+  const { calculation } = data;
+  element("cdek-period").textContent =
+    `${calculation.months.map((month) => month.label).join(" — ")} · Сделок: ${calculation.total.dealsCount}`;
+  element("cdek-total").textContent = `${money(calculation.total.averageDelta)} ₽`;
+  const body = element<HTMLTableSectionElement>("cdek-months-body");
+  body.replaceChildren();
+  if (!calculation.months.length) emptyRow(body, 8);
+  for (const month of calculation.months) {
+    const tr = body.insertRow();
+    cell(tr, month.label);
+    cell(tr, month.dealsCount, true);
+    cell(tr, money(month.clientDelivery), true);
+    cell(tr, money(month.companyDelivery), true);
+    cell(tr, money(month.companyReturn), true);
+    cell(tr, money(month.companyTotal), true);
+    cell(tr, money(month.delta), true);
+    cell(tr, money(month.averageDelta), true);
+  }
+  const total = calculation.total;
+  const subtotal = body.insertRow();
+  subtotal.className = "subtotal";
+  cell(subtotal, "Итого");
+  cell(subtotal, total.dealsCount, true);
+  cell(subtotal, money(total.clientDelivery), true);
+  cell(subtotal, money(total.companyDelivery), true);
+  cell(subtotal, money(total.companyReturn), true);
+  cell(subtotal, money(total.companyTotal), true);
+  cell(subtotal, money(total.delta), true);
+  cell(subtotal, money(total.averageDelta), true);
+}
+async function loadCdek() {
+  if (!token || cdekLoading) return;
+  const currentSession = session;
+  const from = input("cdek-from").value;
+  const to = input("cdek-to").value;
+  if (!from || !to) {
+    cdekError("Укажите обе даты.");
+    return;
+  }
+  if (from > to) {
+    cdekError("Дата начала должна быть не позже даты окончания.");
+    return;
+  }
+  cdekLoading = true;
+  cdekError();
+  element("cdek-status").textContent = "Расчёт дельты…";
+  try {
+    const response = await fetch(`/web/db_ui/cdek-delta?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`, { cache: "no-store", headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(30000) });
+    if (currentSession !== session) return;
+    if (response.status === 401) { logout("Сессия недействительна. Войдите снова."); return; }
+    if (!response.ok) throw new Error(`Не удалось загрузить данные (HTTP ${response.status}).`);
+    const data: unknown = await response.json();
+    if (!validCdekDeltaResponse(data)) throw new Error("Сервер вернул данные в неожиданном формате.");
+    if (currentSession !== session) return;
+    cdekLoaded = true;
+    showCdek(data);
+    element("cdek-status").textContent = `Рассчитано ${dateTime(Math.floor(Date.now() / 1000))} МСК`;
+  } catch (err) {
+    if (currentSession !== session) return;
+    cdekError(err instanceof Error ? err.message : "Ошибка загрузки данных.");
+    element("cdek-status").textContent = cdekLoaded ? "Не удалось обновить данные. Показан предыдущий расчёт." : "Данные не загружены. Повторите попытку.";
+  } finally {
+    cdekLoading = false;
+  }
 }
 try {
   const saved = localStorage.getItem(STORAGE_KEY);
@@ -233,9 +320,15 @@ function logout(message = "", clearStorage = true) {
   rows = [];
   filtered = [];
   loaded = false;
+  cdekLoaded = false;
   element("summary-body").replaceChildren();
   element("detail-body").replaceChildren();
+  element("cdek-months-body").replaceChildren();
   element("report").hidden = true;
+  element("cdek-report").hidden = true;
+  element("cdek-status").textContent = "";
+  cdekError();
+  showTab("kpi");
   element("workspace").hidden = true;
   element("login-panel").hidden = false;
   element("login-error").textContent = message;
@@ -311,5 +404,11 @@ async function load() {
   } finally { button.disabled = false; }
 }
 element("reload").addEventListener("click", load);
+element("tab-kpi-btn").addEventListener("click", () => showTab("kpi"));
+element("tab-cdek-btn").addEventListener("click", () => showTab("cdek"));
+element("cdek-filters").addEventListener("submit", (event) => {
+  event.preventDefault();
+  void loadCdek();
+});
 showSettings();
 void load();

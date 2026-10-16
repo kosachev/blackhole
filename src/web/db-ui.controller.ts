@@ -1,4 +1,4 @@
-import { Controller, Get, Header, UseFilters, UseGuards } from "@nestjs/common";
+import { Controller, Get, Header, Query, UseFilters, UseGuards } from "@nestjs/common";
 import { GlobalExceptionFilter } from "../utils/global-exception.filter";
 import { DbUiService } from "./db-ui.service";
 
@@ -14,5 +14,11 @@ export class DbUiController {
   @Header("Cache-Control", "no-store")
   getKpi() {
     return this.dbUi.getKpi();
+  }
+
+  @Get("cdek-delta")
+  @Header("Cache-Control", "no-store")
+  getCdekDelta(@Query("from") from?: string, @Query("to") to?: string) {
+    return this.dbUi.getCdekDelta(from, to);
   }
 }

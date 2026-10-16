@@ -27,6 +27,7 @@ Build the client before starting or compiling the backend, as with userscripts.
 
 - Page: `/public/db-ui.html`
 - Data: `GET /web/db_ui/kpi`
+- Data: `GET /web/db_ui/cdek-delta`
 
 The page calls the API on the same origin. It does not use the userscripts'
 `--backend` setting or depend on amoCRM browser globals. The HTML/login form is public; the data API requires authentication.
@@ -34,6 +35,14 @@ The page calls the API on the same origin. It does not use the userscripts'
 The API delegates through `DbUiService` to `DbService.kpi.getKpi()` and returns
 all stored KPI rows, ordered by time and row ID descending. It only reads data;
 no report settings, rates, names or calculated amounts are written to the server.
+
+`GET /web/db_ui/cdek-delta` returns the stored CDEK delta alongside a fresh
+server-side calculation for a requested period:
+`{ storedDelta: number | null, calculation: CdekDeltaResult }`, where the result
+holds period totals plus a per-month breakdown. Optional `from`/`to` query
+parameters take Moscow calendar days (`YYYY-MM-DD`, both days included); without
+them the two closed months are calculated. The page fetches it lazily, only
+when the CDEK tab is opened, and never preloads it with the KPI snapshot.
 
 ## Authentication
 
