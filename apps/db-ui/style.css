@@ -132,6 +132,12 @@ table {
   text-align:left;
   font-size:14px
 }
+table.equal {
+  table-layout:fixed
+}
+table.equal th,table.equal td {
+  width:33.333%
+}
 th {
   background:#e6eee8;
   font-weight:650

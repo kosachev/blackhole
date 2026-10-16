@@ -69,9 +69,11 @@ export class DeliveryPriceService implements OnModuleInit {
 
   getCdekPriceAddition(): number {
     const dynamic = this.cdekDymanicPriceAddition;
-    const max = this.config.get<number>("CDEK_MAX_PRICE_ADDITION");
+    const max = Number(this.config.get("CDEK_MAX_PRICE_ADDITION"));
+    const safeMax = Number.isFinite(max) ? max : undefined;
+    const base = Number.isFinite(dynamic) ? dynamic : (safeMax ?? 0);
 
-    return Math.min(dynamic ?? max ?? 0, max ?? Infinity);
+    return Math.min(base, safeMax ?? Infinity);
   }
 
   // every day at 7:25 AM
@@ -86,10 +88,7 @@ export class DeliveryPriceService implements OnModuleInit {
         origin = "sheet";
       }
 
-      if (
-        (cdekPrice !== undefined && Number.isFinite(cdekPrice)) ||
-        this.cdekDymanicPriceAddition === undefined
-      ) {
+      if (cdekPrice !== undefined && Number.isFinite(cdekPrice)) {
         this.cdekDymanicPriceAddition = cdekPrice * -1;
       }
 

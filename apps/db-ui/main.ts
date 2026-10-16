@@ -46,6 +46,8 @@ function showTab(name: "kpi" | "cdek") {
 function showCdek(data: CdekDeltaResponse) {
   element("cdek-report").hidden = false;
   element("cdek-stored").textContent = data.storedDelta === null ? "Не рассчитана" : `${money(data.storedDelta)} ₽`;
+  element("cdek-max").textContent = data.maxAddition === null ? "Не задан" : `${money(data.maxAddition)} ₽`;
+  element("cdek-final").textContent = `${money(data.finalAddition)} ₽`;
   const { calculation } = data;
   element("cdek-period").textContent =
     `${calculation.months.map((month) => month.label).join(" — ")} · Сделок: ${calculation.total.dealsCount}`;
@@ -327,6 +329,9 @@ function logout(message = "", clearStorage = true) {
   element("report").hidden = true;
   element("cdek-report").hidden = true;
   element("cdek-status").textContent = "";
+  element("cdek-stored").textContent = "";
+  element("cdek-max").textContent = "";
+  element("cdek-final").textContent = "";
   cdekError();
   showTab("kpi");
   element("workspace").hidden = true;

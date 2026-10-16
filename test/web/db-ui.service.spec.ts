@@ -12,6 +12,7 @@ import { CdekPriceTable } from "../../src/db/cdek-price.table";
 import migration from "../../src/db/migration.sql" with { type: "text" };
 import { DbUiService } from "../../src/web/db-ui.service";
 import { DbUiController } from "../../src/web/db-ui.controller";
+import { DeliveryPriceService } from "../../src/web/delivery-price.service";
 
 test("web report delegates to the table getter and works with writes prohibited", async () => {
   const database = new Database(":memory:");
@@ -25,6 +26,7 @@ test("web report delegates to the table getter and works with writes prohibited"
       DbUiService, DbUiAuthService, DbUiAuthGuard,
       { provide: ConfigService, useValue: new ConfigService({}) },
       { provide: DbService, useValue: { kpi } },
+      { provide: DeliveryPriceService, useValue: {} },
     ],
   }).compile();
   try {
@@ -56,13 +58,16 @@ test("cdek delta returns stored value and fresh two-month calculation", async ()
     controllers: [DbUiController],
     providers: [
       DbUiService, DbUiAuthService, DbUiAuthGuard,
-      { provide: ConfigService, useValue: new ConfigService({}) },
+      { provide: ConfigService, useValue: { get: () => "400" } },
       { provide: DbService, useValue: { kpi, sales, cdekPrice } },
+      { provide: DeliveryPriceService, useValue: { getCdekPriceAddition: () => 350 } },
     ],
   }).compile();
   try {
     const result = module.get(DbUiController).getCdekDelta();
     expect(result.storedDelta).toBe(12.5);
+    expect(result.maxAddition).toBe(400);
+    expect(result.finalAddition).toBe(350);
     expect(result.calculation.months).toHaveLength(2);
 
     const august = module.get(DbUiController).getCdekDelta("2026-08-01", "2026-08-31");

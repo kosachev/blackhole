@@ -38,8 +38,10 @@ no report settings, rates, names or calculated amounts are written to the server
 
 `GET /web/db_ui/cdek-delta` returns the stored CDEK delta alongside a fresh
 server-side calculation for a requested period:
-`{ storedDelta: number | null, calculation: CdekDeltaResult }`, where the result
-holds period totals plus a per-month breakdown. Optional `from`/`to` query
+`{ storedDelta: number | null, maxAddition: number | null, finalAddition: number,
+calculation: CdekDeltaResult }`, where the result holds period totals plus a
+per-month breakdown. `maxAddition` is the configured cap and `finalAddition` is
+the live pricing value from the delivery service. Optional `from`/`to` query
 parameters take Moscow calendar days (`YYYY-MM-DD`, both days included); without
 them the two closed months are calculated. The page fetches it lazily, only
 when the CDEK tab is opened, and never preloads it with the KPI snapshot.

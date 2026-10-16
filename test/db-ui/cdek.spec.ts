@@ -17,6 +17,8 @@ const metrics = {
 
 const response = (): CdekDeltaResponse => ({
   storedDelta: -25.5,
+  maxAddition: 400,
+  finalAddition: 25.5,
   calculation: {
     from: 1786741200,
     to: 1788987600,
@@ -32,12 +34,15 @@ describe("CDEK delta response", () => {
   test("accepts stored delta and monthly calculation", () => {
     expect(validCdekDeltaResponse(response())).toBe(true);
     expect(validCdekDeltaResponse({ ...response(), storedDelta: null })).toBe(true);
+    expect(validCdekDeltaResponse({ ...response(), maxAddition: null })).toBe(true);
   });
 
   test("rejects malformed payloads", () => {
     expect(validCdekDeltaResponse(null)).toBe(false);
     expect(validCdekDeltaResponse({ ...response(), storedDelta: "12" })).toBe(false);
     expect(validCdekDeltaResponse({ ...response(), storedDelta: Infinity })).toBe(false);
+    expect(validCdekDeltaResponse({ ...response(), maxAddition: "400" })).toBe(false);
+    expect(validCdekDeltaResponse({ ...response(), finalAddition: undefined })).toBe(false);
     expect(validCdekDeltaResponse({ storedDelta: 1 })).toBe(false);
     const noMonths = response();
     (noMonths.calculation as unknown as Record<string, unknown>)["months"] = {};

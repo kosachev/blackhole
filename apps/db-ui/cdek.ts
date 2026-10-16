@@ -24,6 +24,8 @@ export type CdekDeltaResult = {
 
 export type CdekDeltaResponse = {
   storedDelta: number | null;
+  maxAddition: number | null;
+  finalAddition: number;
   calculation: CdekDeltaResult;
 };
 
@@ -61,8 +63,14 @@ function validMonth(value: unknown): value is CdekDeltaMonth {
 
 export function validCdekDeltaResponse(value: unknown): value is CdekDeltaResponse {  if (!value || typeof value !== "object") return false;
   const record = value as Record<string, unknown>;
-  const { storedDelta, calculation } = record;
+  const { storedDelta, maxAddition, finalAddition, calculation } = record;
   if (storedDelta !== null && (typeof storedDelta !== "number" || !Number.isFinite(storedDelta))) {
+    return false;
+  }
+  if (maxAddition !== null && (typeof maxAddition !== "number" || !Number.isFinite(maxAddition))) {
+    return false;
+  }
+  if (typeof finalAddition !== "number" || !Number.isFinite(finalAddition)) {
     return false;
   }
   if (!calculation || typeof calculation !== "object") return false;
