@@ -5,6 +5,7 @@ import { AmoService } from "../amo/amo.service";
 import { CdekService } from "../cdek/cdek.service";
 
 import { postCalculator } from "@shevernitskiy/post-calculator";
+import { DbService } from "../db/db.service";
 import { GoogleSheetsService } from "../google-sheets/google-sheets.service";
 import { Cron } from "@nestjs/schedule";
 
@@ -45,6 +46,7 @@ export class DeliveryPriceService implements OnModuleInit {
     private readonly config: ConfigService,
     private readonly amo: AmoService,
     private readonly cdek: CdekService,
+    private readonly db: DbService,
     private readonly googleSheets: GoogleSheetsService,
   ) {}
 
@@ -62,31 +64,36 @@ export class DeliveryPriceService implements OnModuleInit {
   }
 
   async onModuleInit(): Promise<void> {
-    await this.fetchCdekPriceAdditionFromGS();
+    await this.fetchCdekPriceAddition();
   }
 
   getCdekPriceAddition(): number {
     const dynamic = this.cdekDymanicPriceAddition;
-    const max = this.config.get<number>("CDEK_MAX_PRICE_ADDITION");
+    const max = Number(this.config.get("CDEK_MAX_PRICE_ADDITION"));
+    const safeMax = Number.isFinite(max) ? max : undefined;
+    const base = Number.isFinite(dynamic) ? dynamic : (safeMax ?? 0);
 
-    return Math.min(dynamic ?? max ?? 0, max ?? Infinity);
+    return Math.min(base, safeMax ?? Infinity);
   }
 
   // every day at 7:25 AM
   @Cron("0 25 7 * * *")
-  async fetchCdekPriceAdditionFromGS(): Promise<void> {
+  async fetchCdekPriceAddition(): Promise<void> {
     try {
-      const sheetCdekPrice = await this.googleSheets.cdekPrice.getCdekDelta();
+      let cdekPrice = this.db.cdekPrice.getCdekDelta();
+      let origin = "db";
 
-      if (
-        (sheetCdekPrice !== undefined && Number.isFinite(sheetCdekPrice)) ||
-        this.cdekDymanicPriceAddition === undefined
-      ) {
-        this.cdekDymanicPriceAddition = sheetCdekPrice * -1;
+      if (cdekPrice === undefined || !Number.isFinite(cdekPrice)) {
+        cdekPrice = await this.googleSheets.cdekPrice.getCdekDelta();
+        origin = "sheet";
+      }
+
+      if (cdekPrice !== undefined && Number.isFinite(cdekPrice)) {
+        this.cdekDymanicPriceAddition = cdekPrice * -1;
       }
 
       this.logger.log(
-        `DELIVERY_PRICE, CDEK price addition fetched ${sheetCdekPrice}, current ${this.cdekDymanicPriceAddition}`,
+        `DELIVERY_PRICE, CDEK price addition fetched ${cdekPrice} from ${origin}, current ${this.cdekDymanicPriceAddition}`,
       );
     } catch (error) {
       this.logger.error(`DELIVERY_PRICE, failed to fetch CDEK price addition`, error);

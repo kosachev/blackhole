@@ -6,6 +6,7 @@ import { OrderStatusWebhook } from "./webhooks/order-status.webhook";
 import { DownloadPhotoWebhook } from "./webhooks/download-photo.webhook";
 import { PrealertCloseWebhook } from "./webhooks/prealert-close.webhook";
 import { PrintFormWebhook } from "./webhooks/print-form.webhook";
+import { CdekDeltaService } from "./cdek-delta.service";
 import { CdekPvzCheckService } from "./cdek-pvz-check.service";
 import { CdekRegistryCheckService } from "./cdek-registry-check.service";
 import { CdekWebhookCheckService } from "./cdek-webhook-check.service";
@@ -15,6 +16,7 @@ import { CdekWebhookCheckService } from "./cdek-webhook-check.service";
   imports: [ConfigModule],
   providers: [
     CdekService,
+    CdekDeltaService,
     OrderStatusWebhook,
     DownloadPhotoWebhook,
     PrealertCloseWebhook,
@@ -24,6 +26,6 @@ import { CdekWebhookCheckService } from "./cdek-webhook-check.service";
     CdekWebhookCheckService,
   ],
   controllers: [CdekController],
-  exports: [CdekService],
+  exports: [CdekService, CdekDeltaService],
 })
 export class CdekModule {}

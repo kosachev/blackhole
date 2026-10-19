@@ -224,6 +224,24 @@ export class SalesTable {
     return this.updateEntry({ returnLeadId: [returnLeadId] }, { status: "Возврат получен" });
   }
 
+  findByShippingDateRange(from: number, to: number): SalesRangeRow[] {
+    return this.database
+      .query<SalesRangeRow, [number, number]>(
+        `SELECT
+          lead_id AS leadId,
+          shipping_date AS shippingDate,
+          delivery_type AS deliveryType,
+          closed_by_register AS closedByRegister,
+          customer_delivery_price AS customerDeliveryPrice,
+          owner_delivery_price AS ownerDeliveryPrice,
+          owner_return_delivery_price AS ownerReturnDeliveryPrice
+        FROM sales
+        WHERE shipping_date >= ? AND shipping_date <= ?
+        ORDER BY shipping_date, lead_id`,
+      )
+      .all(from, to);
+  }
+
   private buildSearch(search: SalesSearch): { clause: string; bindings: string[] } | undefined {
     const identifierSearches = [
       ["lead_id", search.leadId],
@@ -318,6 +336,16 @@ export type SalesSearch = {
   cdekNumber?: string[];
   returnCdekNumber?: string[];
   goodSku?: string[];
+};
+
+export type SalesRangeRow = {
+  leadId: string;
+  shippingDate: number;
+  deliveryType: string;
+  closedByRegister: string;
+  customerDeliveryPrice: number | null;
+  ownerDeliveryPrice: number | null;
+  ownerReturnDeliveryPrice: number | null;
 };
 
 export type SalesUpdate = Omit<SalesEntry, "site">;

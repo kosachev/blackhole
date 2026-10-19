@@ -90,13 +90,13 @@ button:focus-visible,input:focus-visible,summary:focus-visible {
   outline:3px solid #79b69a;
   outline-offset:3px
 }
-#error {
+#error,#cdek-error {
   background:#fff0ed;
   color:#922d20;
   padding:14px;
   border-radius:5px
 }
-#status,#settings-status {
+#status,#settings-status,#cdek-status {
   font-size:13px;
   color:#60736a;
   min-height:20px
@@ -132,6 +132,12 @@ table {
   text-align:left;
   font-size:14px
 }
+table.equal {
+  table-layout:fixed
+}
+table.equal th,table.equal td {
+  width:33.333%
+}
 th {
   background:#e6eee8;
   font-weight:650
@@ -164,6 +170,12 @@ th.number,td.number {
 }
 .actions {
   justify-content:flex-end
+}
+.tabs {
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin:24px 0 12px
 }
 a {
   color:#245341
