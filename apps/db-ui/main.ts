@@ -1,22 +1,55 @@
 import {
   DEFAULT_SETTINGS, validSettings, managerId, managerName, stageName, rateKopecks,
-  filterRows, summarize, dateTime, detailCsv, summaryCsv,
-  type Settings, type KpiRow,
+  filterRows, summarize, dateTime, detailCsv, summaryCsv, applyDedupe, dedupeMode,
+  type Settings, type KpiReportRow, type DedupeMode,
 } from "./kpi";
 import { validCdekDeltaResponse, defaultCdekRange, type CdekDeltaResponse } from "./cdek";
 
 const STORAGE_KEY = "gerda.db-ui.settings.v1";
 const TOKEN_KEY = "gerda.db-ui.token.v1";
+const GUEST_PARAM = "g";
 let token = "";
 let session = 0;
+let guestMode = false;
+let guestLabel = "";
 try { token = localStorage.getItem(TOKEN_KEY) ?? ""; } catch {}
+
+function decodeBase64Url(value: string): string {
+  const padded = value.replaceAll("-", "+").replaceAll("_", "/").padEnd(Math.ceil(value.length / 4) * 4, "=");
+  const binary = atob(padded);
+  return new TextDecoder().decode(Uint8Array.from(binary, (char) => char.charCodeAt(0)));
+}
+
+function guestPayload(value: string): { manager: string; settings: unknown } | null {
+  const parts = value.split(".");
+  if (parts.length !== 3 || parts[0] !== "g1") return null;
+  try {
+    const parsed: unknown = JSON.parse(decodeBase64Url(parts[1]));
+    if (!parsed || typeof parsed !== "object") return null;
+    const { m, s } = parsed as { m?: unknown; s?: unknown };
+    if (typeof m !== "string" || m === "") return null;
+    return { manager: m, settings: s };
+  } catch {
+    return null;
+  }
+}
+
+const guestParam = new URLSearchParams(location.search).get(GUEST_PARAM) ?? "";
+const guestInfo = guestParam ? guestPayload(guestParam) : null;
+if (guestInfo) {
+  guestMode = true;
+  token = guestParam;
+}
 const PAGE_SIZE = 50;
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const input = (id: string) => element<HTMLInputElement>(id);
 const money = (amount: number) => new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(amount);
 let settings: Settings = structuredClone(DEFAULT_SETTINGS);
-let rows: KpiRow[] = [];
-let filtered: KpiRow[] = [];
+let rows: KpiReportRow[] = [];
+let filtered: KpiReportRow[] = [];
+let counted: KpiReportRow[] = [];
+let duplicates = new Set<number>();
+let shadowed = 0;
 let page = 0;
 let loaded = false;
 let filters = { from: "", to: "", manager: "" };
@@ -113,15 +146,21 @@ async function loadCdek() {
     cdekLoading = false;
   }
 }
-try {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    const parsed: unknown = JSON.parse(saved);
-    if (!validSettings(parsed)) throw new Error("Invalid settings");
-    settings = parsed;
+if (guestMode && guestInfo) {
+  const snapshot = guestInfo.settings;
+  settings = validSettings(snapshot) ? structuredClone(snapshot) : structuredClone(DEFAULT_SETTINGS);
+  guestLabel = managerName(guestInfo.manager, settings);
+} else {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed: unknown = JSON.parse(saved);
+      if (!validSettings(parsed)) throw new Error("Invalid settings");
+      settings = parsed;
+    }
+  } catch {
+    element("settings-status").textContent = "Не удалось прочитать настройки браузера. Используются исходные значения.";
   }
-} catch {
-  element("settings-status").textContent = "Не удалось прочитать настройки браузера. Используются исходные значения.";
 }
 
 const today = new Intl.DateTimeFormat("sv-SE", {
@@ -144,15 +183,29 @@ function emptyRow(body: HTMLTableSectionElement, columns: number) {
 }
 function showReport() {
   filtered = filterRows(rows, filters.from, filters.to, filters.manager, settings);
-  const groups = summarize(filtered, settings);
+  const dedupe = applyDedupe(filtered, dedupeMode(settings));
+  filtered = dedupe.rows;
+  counted = dedupe.counted;
+  duplicates = dedupe.duplicates;
+  shadowed = dedupe.shadowed;
+  const groups = summarize(counted, settings);
   element("report").hidden = false;
-  element("report-period").textContent = `${filters.from} — ${filters.to} · ${filters.manager ? managerName(filters.manager, settings) : "Все менеджеры"}`;
+  element("report-period").textContent = `${filters.from} — ${filters.to} · ${filters.manager
+    ? managerName(filters.manager, settings)
+    : guestMode ? guestLabel : "Все менеджеры"}`;
   element("total").textContent = `${money(groups.reduce((sum, g) => sum + g.amount, 0) / 100)} ₽`;
   const missing = groups.reduce((sum, g) => sum + g.unrated, 0);
   const undated = rows.filter((r) => r.kpiReachedAt === null).length;
+  const mode = dedupeMode(settings);
+  element("detail-note").textContent = mode === "remove"
+    ? "Дубликаты сделок убраны: в таблице и в расчётах остаётся только последнее значение KPI по сделке. «Время KPI» — время обработки события сервером."
+    : mode === "highlight"
+      ? "Дубликаты сделок подсвечены: в расчётах сумм участвует только последнее значение KPI по сделке. «Время KPI» — время обработки события сервером."
+      : "Каждая запись базы считается отдельным начислением. Повторные записи не объединяются. «Время KPI» для новых записей — время обработки события сервером.";
   element("warning").textContent = [
     missing ? `Без ставки: ${missing}. Эти записи не включены в сумму; задайте ставки в настройках.` : "",
     undated ? `В базе есть записи без даты KPI: ${undated}. В отчет по периоду они не входят.` : "",
+    shadowed ? `Дубликаты сделок: ${shadowed}. В расчеты включено по одной последней записи на сделку.` : "",
   ].filter(Boolean).join(" ");
   const body = element<HTMLTableSectionElement>("summary-body");
   body.replaceChildren();
@@ -182,6 +235,7 @@ function showDetails() {
   if (!filtered.length) emptyRow(body, 9);
   for (const r of filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)) {
     const tr = body.insertRow();
+    if (duplicates.has(r.id)) tr.className = "duplicate";
     cell(tr, r.id);
     const lead = cell(tr, r.leadId || "—");
     if (/^\d+$/.test(r.leadId)) {
@@ -201,7 +255,9 @@ function showDetails() {
     cell(tr, dateTime(r.leadCreatedAt) || "—");
     cell(tr, dateTime(r.kpiReachedAt) || "—");
   }
-  element("page").textContent = `Страница ${page + 1} из ${pages} · Записей: ${filtered.length}`;
+  element("page").textContent = `Страница ${page + 1} из ${pages} · Записей: ${filtered.length}${counted.length === filtered.length
+    ? ""
+    : ` · В расчёте: ${counted.length}`}`;
   element<HTMLButtonElement>("previous").disabled = page === 0;
   element<HTMLButtonElement>("next").disabled = page + 1 >= pages;
 }
@@ -233,6 +289,13 @@ function showSettings() {
     alias.readOnly = true;
     alias.required = false;
     editInput(tr, manager.name, `Имя менеджера ${manager.id}`);
+    const action = tr.insertCell();
+    const link = document.createElement("button");
+    link.type = "button";
+    link.className = "secondary";
+    link.textContent = "Скопировать";
+    link.addEventListener("click", () => void copyGuestLink(manager.id));
+    action.append(link);
   }
   const knownStages: { id: string; name: string; rate: number | null }[] = settings.stages.map((s) => ({ ...s }));
   for (const value of new Set(rows.map((r) => r.kpiType).filter(Boolean))) {
@@ -248,14 +311,21 @@ function showSettings() {
     rate.required = false;
     rate.placeholder = "Без ставки";
   }
-  const list = element<HTMLDataListElement>("managers");
+  const list = element<HTMLSelectElement>("manager");
+  const selected = filters.manager || list.value;
   list.replaceChildren();
+  const all = document.createElement("option");
+  all.value = "";
+  all.textContent = "Все менеджеры";
+  list.append(all);
   for (const m of knownManagers) {
     const option = document.createElement("option");
     option.value = m.id;
-    option.label = m.name;
+    option.textContent = m.name === m.id ? m.id : `${m.name} (${m.id})`;
     list.append(option);
   }
+  list.value = selected;
+  element<HTMLSelectElement>("dedupe").value = dedupeMode(settings);
 }
 function saveSettings(next: Settings) {
   if (!validSettings(next)) {
@@ -273,6 +343,44 @@ function saveSettings(next: Settings) {
   showSettings();
   if (loaded) showReport();
 }
+async function copyGuestLink(targetId: string) {
+  const manager = settings.managers.find((m) => m.id === targetId) ?? { id: targetId, alias: "", name: targetId };
+  const users = [...new Set([
+    manager.id,
+    manager.alias,
+    ...rows.filter((r) => managerId(r.responsibleUser, settings) === manager.id).map((r) => r.responsibleUser),
+  ].filter((value) => value !== ""))];
+  try {
+    const response = await fetch("/web/db_ui/guest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ manager: manager.id, users, settings }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(30000),
+    });
+    if (response.status === 401) { logout("Сессия недействительна. Войдите снова."); return; }
+    if (!response.ok) throw new Error(`Не удалось создать ссылку (HTTP ${response.status}).`);
+    const data: unknown = await response.json();
+    const issued = (data as { token?: unknown } | null)?.token;
+    if (typeof issued !== "string" || !issued) throw new Error("Некорректный ответ сервера.");
+    const url = `${location.origin}${location.pathname}?${GUEST_PARAM}=${encodeURIComponent(issued)}`;
+    if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(url);
+    else window.prompt("Скопируйте ссылку:", url);
+    element("settings-status").textContent = `Ссылка для ${manager.name} скопирована.`;
+  } catch (err) {
+    element("settings-status").textContent = err instanceof Error ? err.message : "Не удалось создать ссылку.";
+  }
+}
+function readDedupe(): DedupeMode {
+  const value = element<HTMLSelectElement>("dedupe").value;
+  return value === "highlight" || value === "remove" ? value : "off";
+}
+element("dedupe").addEventListener("change", () => {
+  settings = { ...settings, dedupe: readDedupe() };
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(settings)); } catch {}
+  element("settings-status").textContent = "Режим дедупликации применен.";
+  if (loaded) showReport();
+});
 element("settings-form").addEventListener("submit", (event) => {
   event.preventDefault();
   const managers = [...element<HTMLTableSectionElement>("manager-settings").rows].map((tr) => {
@@ -283,13 +391,14 @@ element("settings-form").addEventListener("submit", (event) => {
     const fields = tr.querySelectorAll("input");
     return { id: fields[0].value, name: fields[1].value.trim(), rate: fields[2].value === "" ? null : Number(fields[2].value) };
   });
-  saveSettings({ managers, stages });
+  const dedupe = readDedupe();
+  saveSettings({ managers, stages, dedupe });
 });
 element("reset").addEventListener("click", () => saveSettings(structuredClone(DEFAULT_SETTINGS)));
 element("filters").addEventListener("submit", (event) => {
   event.preventDefault();
   if (!loaded) return;
-  const next = { from: input("from").value, to: input("to").value, manager: input("manager").value.trim() };
+  const next = { from: input("from").value, to: input("to").value, manager: element<HTMLSelectElement>("manager").value };
   try {
     filterRows([], next.from, next.to, next.manager, settings);
     filters = next;
@@ -311,12 +420,12 @@ function download(content: string, kind: string) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-element("summary-csv").addEventListener("click", () => download(summaryCsv(filtered, settings), "summary"));
-element("detail-csv").addEventListener("click", () => download(detailCsv(filtered, settings), "details"));
+element("summary-csv").addEventListener("click", () => download(summaryCsv(counted, settings), "summary"));
+element("detail-csv").addEventListener("click", () => download(detailCsv(counted, settings), "details"));
 function logout(message = "", clearStorage = true) {
   session++;
   token = "";
-  if (clearStorage) {
+  if (clearStorage && !guestMode) {
     try { localStorage.removeItem(TOKEN_KEY); } catch {}
   }
   rows = [];
@@ -340,7 +449,10 @@ function logout(message = "", clearStorage = true) {
   input("password").value = "";
   showSettings();
 }
-element("logout").addEventListener("click", () => logout());
+element("logout").addEventListener("click", () => {
+  if (guestMode) { location.href = location.pathname; return; }
+  logout();
+});
 element("login-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const button = element<HTMLButtonElement>("login-button");
@@ -373,6 +485,7 @@ element("login-form").addEventListener("submit", async (event) => {
   } finally { button.disabled = false; }
 });
 window.addEventListener("storage", (event) => {
+  if (guestMode) return;
   if (event.key === TOKEN_KEY || event.key === null) logout("Войдите снова.", false);
 });
 async function load() {
@@ -387,11 +500,15 @@ async function load() {
   try {
     const response = await fetch("/web/db_ui/kpi", { cache: "no-store", headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(30000) });
     if (currentSession !== session) return;
-    if (response.status === 401) { logout("Сессия недействительна. Войдите снова."); return; }
+    if (response.status === 401) {
+      logout(guestMode ? "Ссылка доступа недействительна." : "Сессия недействительна. Войдите снова.");
+      return;
+    }
     if (!response.ok) throw new Error(`Не удалось загрузить данные (HTTP ${response.status}).`);
     const data: unknown = await response.json();
     if (!Array.isArray(data) || !data.every((r) => r && Number.isInteger(r.id) &&
       [r.leadId, r.responsibleUser, r.statusUser, r.kpiType].every((v) => typeof v === "string") &&
+      typeof r.latest === "boolean" && typeof r.duplicate === "boolean" &&
       [r.kpiReachedAt, r.leadCreatedAt, r.price].every((v) => v === null || typeof v === "number" && Number.isFinite(v)))) {
       throw new Error("Сервер вернул данные в неожиданном формате.");
     }
@@ -415,5 +532,14 @@ element("cdek-filters").addEventListener("submit", (event) => {
   event.preventDefault();
   void loadCdek();
 });
+if (guestMode) {
+  element("login-panel").hidden = true;
+  element("tab-cdek-btn").hidden = true;
+  element("tab-cdek").hidden = true;
+  element("settings").hidden = true;
+  element("manager-filter").hidden = true;
+  element("guest-info").hidden = false;
+  element("guest-info").textContent = `Гостевой доступ: ${guestLabel}`;
+}
 showSettings();
 void load();

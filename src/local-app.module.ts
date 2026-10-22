@@ -6,12 +6,18 @@ import { ConfigModule } from "@nestjs/config";
 import { DbModule } from "./db/db.module";
 import { DbUiController } from "./web/db-ui.controller";
 import { DbUiService } from "./web/db-ui.service";
+import { DeliveryPriceService } from "./web/delivery-price.service";
 import { StaticController } from "./web/static.controller";
 
 // Local reports require neither production configuration nor external integrations.
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true, envFilePath: [".env.dev"], expandVariables: false }), DbModule],
   controllers: [DbUiAuthController, DbUiController, StaticController],
-  providers: [DbUiAuthService, DbUiAuthGuard, DbUiService],
+  providers: [
+    DbUiAuthService,
+    DbUiAuthGuard,
+    DbUiService,
+    { provide: DeliveryPriceService, useValue: { getCdekPriceAddition: () => 0 } },
+  ],
 })
 export class LocalAppModule {}
