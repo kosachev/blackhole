@@ -51,4 +51,27 @@ describe("DB UI authentication", () => {
     }
     expect((await service.login(password, "other-ip")).token).toBeString();
   });
+  test("issues guest links that only grant access to the listed users", () => {
+    const service = auth();
+    const token = service.issueGuest("1109421", ["1109421", "Manager-1"], { managers: [], stages: [] });
+    expect(token).toStartWith("g1.");
+    expect(service.verify(`Bearer ${token}`)).toEqual({ admin: false, users: ["1109421", "Manager-1"] });
+  });
+  test("rejects forged, empty and oversized guest links", () => {
+    const service = auth();
+    const token = service.issueGuest("1109421", ["1109421"], null);
+    const [prefix, payload, signature] = token.split(".");
+    const forged = Buffer.from(JSON.stringify({ m: "1092156", u: ["1092156"], s: null }), "utf8").toString("base64url");
+    expect(() => service.verify(`Bearer ${prefix}.${forged}.${signature}`)).toThrow();
+    expect(() => service.verify(`Bearer ${prefix}.${payload}.${signature}x`)).toThrow();
+    expect(() => service.verify(`Bearer ${prefix}.${payload}`)).toThrow();
+    expect(() => service.issueGuest("", ["1109421"], null)).toThrow();
+    expect(() => service.issueGuest("1109421", [], null)).toThrow();
+    expect(() => service.issueGuest("1109421", ["1109421"], { big: "x".repeat(9000) })).toThrow();
+  });
+  test("rotating the signing secret invalidates guest links", () => {
+    const token = auth().issueGuest("1109421", ["1109421"], null);
+    expect(() => auth({ DB_UI_TOKEN_SECRET: "other-test-only-signing-secret-32bytes" })
+      .verify(`Bearer ${token}`)).toThrow();
+  });
 });

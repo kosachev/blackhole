@@ -24,6 +24,7 @@ export class LoggerMiddleware implements NestMiddleware {
 
     res.on("finish", () => {
       const dbUi = /^\/web\/db_ui(?:\/|$)/i.test(req.path);
+      const dbUiPage = /^\/public\/db-ui\.html$/i.test(req.path);
       const headers = Object.fromEntries(Object.entries(req.headers).map(([key, value]) => [
         key,
         ["authorization", "cookie"].includes(key.toLowerCase())
@@ -34,7 +35,7 @@ export class LoggerMiddleware implements NestMiddleware {
         data: {
           request: {
             method: req.method,
-            originalUrl: req.originalUrl,
+            originalUrl: dbUiPage ? req.path : req.originalUrl,
             headers,
             ip: req.ip,
             body: dbUi ? "[redacted]" : req.body ?? null,

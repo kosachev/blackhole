@@ -55,14 +55,14 @@ label {
   gap:8px;
   font-size:14px
 }
-input,button {
+input,select,button {
   font:inherit;
   border:1px solid #b9c8c0;
   border-radius:5px;
   min-height:44px;
   padding:10px 12px
 }
-input {
+input,select {
   background:#fff;
   color:#25332e;
   max-width:100%
@@ -86,7 +86,7 @@ button.secondary {
   color:#245341;
   border-color:#b9c8c0
 }
-button:focus-visible,input:focus-visible,summary:focus-visible {
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible {
   outline:3px solid #79b69a;
   outline-offset:3px
 }
@@ -163,6 +163,12 @@ th.number,td.number {
 .subtotal {
   font-weight:700;
   background:#edf2ee
+}
+tr.duplicate td {
+  background:#fdecea
+}
+tr.duplicate:hover td {
+  background:#fbe2df
 }
 .pagination {
   justify-content:center;
