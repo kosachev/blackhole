@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   DEFAULT_SETTINGS, dateRange, filterRows, summarize, detailCsv, summaryCsv,
-  csv, validSettings, type KpiRow,
+  csv, validSettings, applyDedupe, dedupeMode, type KpiRow, type KpiReportRow,
 } from "../../apps/db-ui/kpi";
 
 const settings = structuredClone(DEFAULT_SETTINGS);
@@ -10,6 +10,9 @@ const entry = (overrides: Partial<KpiRow> = {}): KpiRow => ({
   id: 1, kpiReachedAt: start, leadCreatedAt: start - 100,
   leadId: "42", responsibleUser: "Manager-2", statusUser: "Manager-1",
   kpiType: "visit", price: 50000, ...overrides,
+});
+const report = (overrides: Partial<KpiReportRow> = {}): KpiReportRow => ({
+  ...entry(), latest: true, duplicate: false, ...overrides,
 });
 
 describe("KPI report", () => {
@@ -60,5 +63,51 @@ describe("KPI report", () => {
       expect(validSettings({ ...settings, stages: [{ id: "visit", name: "Визит", rate }] })).toBe(false);
     }
     expect(validSettings({ ...settings, managers: [...settings.managers, settings.managers[0]] })).toBe(false);
+  });
+  test("keeps settings without a dedupe mode valid and defaults it to off", () => {
+    const { dedupe, ...withoutDedupe } = settings;
+    expect(dedupeMode(settings)).toBe("off");
+    expect(validSettings(withoutDedupe)).toBe(true);
+    expect(dedupeMode(withoutDedupe)).toBe("off");
+    expect(validSettings({ ...settings, dedupe: "broken" })).toBe(false);
+    expect(validSettings({ ...settings, dedupe: "highlight" })).toBe(true);
+  });
+  test("counts only the latest KPI record of every deal and marks duplicates", () => {
+    const rows = [
+      report({ id: 1, leadId: "42", kpiReachedAt: start + 300, kpiType: "payment", latest: true, duplicate: true }),
+      report({ id: 2, leadId: "42", kpiReachedAt: start + 200, kpiType: "visit", latest: false, duplicate: true }),
+      report({ id: 3, leadId: "42", kpiReachedAt: start + 100, kpiType: "visit", latest: false, duplicate: true }),
+      report({ id: 4, leadId: "43", kpiReachedAt: start + 50, kpiType: "delivery", latest: true, duplicate: false }),
+    ];
+    const off = applyDedupe(rows, "off");
+    expect(off.rows).toHaveLength(4);
+    expect(off.counted).toHaveLength(4);
+    expect(off.shadowed).toBe(0);
+    expect(off.duplicates.size).toBe(0);
+
+    const highlight = applyDedupe(rows, "highlight");
+    expect(highlight.rows).toHaveLength(4);
+    expect(highlight.counted.map((r) => r.id)).toEqual([1, 4]);
+    expect(highlight.shadowed).toBe(2);
+    expect([...highlight.duplicates].sort()).toEqual([1, 2, 3]);
+    expect(summarize(highlight.counted, settings).reduce((sum, g) => sum + g.amount, 0)).toBe(30000);
+
+    const remove = applyDedupe(rows, "remove");
+    expect(remove.rows.map((r) => r.id)).toEqual([1, 4]);
+    expect(remove.counted.map((r) => r.id)).toEqual([1, 4]);
+    expect(remove.shadowed).toBe(2);
+    expect(remove.duplicates.size).toBe(3);
+    expect(summarize(remove.counted, settings).reduce((sum, g) => sum + g.amount, 0)).toBe(30000);
+    expect(summarize(highlight.counted, settings)).toEqual(summarize(remove.counted, settings));
+  });
+  test("keeps records of other managers out of the counted rows", () => {
+    const rows = [
+      report({ id: 1, leadId: "42", responsibleUser: "Manager-1", latest: false, duplicate: true }),
+      report({ id: 2, leadId: "42", responsibleUser: "Manager-1", latest: false, duplicate: true }),
+      report({ id: 3, leadId: "42", responsibleUser: "Manager-2", latest: true, duplicate: true }),
+    ];
+    const counted = applyDedupe(rows, "remove").counted;
+    expect(counted.map((r) => r.id)).toEqual([3]);
+    expect(summarize(counted, settings).reduce((sum, g) => sum + g.amount, 0)).toBe(10000);
   });
 });

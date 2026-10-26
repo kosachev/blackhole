@@ -1,7 +1,7 @@
 import { ConfigService } from "@nestjs/config";
 import { spec } from "pactum";
 
-import { describe, test, beforeAll, afterAll } from "bun:test";
+import { describe, test, beforeAll, afterAll, expect } from "bun:test";
 
 import { type INestApplication } from "@nestjs/common";
 import { createTestApp } from "./helpers/create-test-app";
@@ -47,6 +47,33 @@ describe("App e2e", () => {
         .post(`http://localhost:${process.env.PORT}/web/db_ui/kpi`)
         .withBody({ price: 999 })
         .expectStatus(404);
+    });
+
+    test("issues guest links that only read the manager's KPI rows", async () => {
+      const login = await spec()
+        .post(`http://localhost:${process.env.PORT}/web/db_ui/login`)
+        .withBody({ password: "test-only-password" })
+        .expectStatus(200);
+      const guest = await spec()
+        .post(`http://localhost:${process.env.PORT}/web/db_ui/guest`)
+        .withHeaders("Authorization", `Bearer ${login.body.token}`)
+        .withBody({ manager: "1109421", users: ["1109421", "Manager-1"], settings: null })
+        .expectStatus(200);
+      expect(guest.body.token).toStartWith("g1.");
+      await spec()
+        .get(`http://localhost:${process.env.PORT}/web/db_ui/kpi`)
+        .withHeaders("Authorization", `Bearer ${guest.body.token}`)
+        .expectStatus(200)
+        .expectJson([]);
+      await spec()
+        .get(`http://localhost:${process.env.PORT}/web/db_ui/cdek-delta`)
+        .withHeaders("Authorization", `Bearer ${guest.body.token}`)
+        .expectStatus(403);
+      await spec()
+        .post(`http://localhost:${process.env.PORT}/web/db_ui/guest`)
+        .withHeaders("Authorization", `Bearer ${guest.body.token}`)
+        .withBody({ manager: "1109421", users: ["1109421"] })
+        .expectStatus(403);
     });
   });
 

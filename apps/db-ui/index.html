@@ -29,6 +29,7 @@
           <div>
             <p class="eyebrow">GERDA · Отчеты</p>
             <h1>Отчёты</h1>
+            <p id="guest-info" class="muted" hidden></p>
           </div>
           <button id="logout" class="secondary" type="button">Выйти</button>
         </header>
@@ -47,13 +48,8 @@
           <form id="filters" class="filters">
             <label>С даты<input id="from" type="date" required /></label>
             <label>По дату<input id="to" type="date" required /></label>
-            <label
-              >Менеджер / ID<input
-                id="manager"
-                list="managers"
-                placeholder="Все менеджеры"
-                autocomplete="off" /><datalist id="managers"></datalist
-            ></label>
+            <label id="manager-filter"
+              >Менеджер<select id="manager"></select></label>
             <button type="submit">Показать</button>
           </form>
           <p id="status" role="status" aria-live="polite">Загрузка данных…</p>
@@ -65,6 +61,18 @@
               включая прошлые даты. Данные на сервере не изменяются.
             </p>
             <form id="settings-form">
+              <h2>Дедупликация</h2>
+              <label
+                >Режим<select id="dedupe">
+                  <option value="off">Выключено</option>
+                  <option value="highlight">Подсвечивать дубликаты</option>
+                  <option value="remove">Убирать дубликаты</option>
+                </select></label
+              >
+              <p class="muted">
+                Записи с одинаковым ID сделки считаются одной записью: в суммах участвует
+                только последнее значение KPI по сделке.
+              </p>
               <h2>Менеджеры</h2>
               <div class="table-scroll">
                 <table>
@@ -73,6 +81,7 @@
                       <th>ID</th>
                       <th>Обозначение в базе</th>
                       <th>Имя</th>
+                      <th>Гостевая ссылка</th>
                     </tr>
                   </thead>
                   <tbody id="manager-settings"></tbody>
@@ -128,7 +137,7 @@
               </table>
             </div>
             <h2>Сделки и начисления</h2>
-            <p class="muted">
+            <p id="detail-note" class="muted">
               Каждая запись базы считается отдельным начислением. Повторные записи не объединяются.
               «Время KPI» для новых записей — время обработки события сервером.
             </p>

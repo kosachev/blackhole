@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   ServiceUnavailableException,
   UnauthorizedException,
@@ -8,6 +9,12 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { LRUCache } from "lru-cache";
+
+export type DbUiScope = { admin: boolean; users: string[] | null };
+
+const GUEST_PREFIX = "g1.";
+const GUEST_DOMAIN = "gerda-db-ui-guest\n";
+const GUEST_PAYLOAD_LIMIT = 8000;
 
 @Injectable()
 export class DbUiAuthService {
@@ -45,15 +52,61 @@ export class DbUiAuthService {
     return { token: `${payload}.${this.signature(payload, hash, secret).toString("base64url")}` };
   }
 
-  verify(authorization: string | undefined): void {
+  issueGuest(manager: unknown, users: unknown, settings: unknown): string {
+    const { secret } = this.credentials();
+    if (typeof manager !== "string" || manager.trim() === "" || manager.length > 64) {
+      throw new BadRequestException("Invalid guest manager");
+    }
+    const list = this.guestUsers(users, () => new BadRequestException("Invalid guest users"));
+    const payload = Buffer.from(JSON.stringify({ m: manager.trim(), u: list, s: settings ?? null }), "utf8")
+      .toString("base64url");
+    if (payload.length > GUEST_PAYLOAD_LIMIT) throw new BadRequestException("Guest payload is too large");
+    const signature = createHmac("sha256", secret).update(`${GUEST_DOMAIN}${payload}`).digest("base64url");
+    return `${GUEST_PREFIX}${payload}.${signature}`;
+  }
+
+  verify(authorization: string | undefined): DbUiScope {
+    const header = authorization ?? "";
+    if (header.startsWith(`Bearer ${GUEST_PREFIX}`)) {
+      return this.verifyGuest(header.slice(`Bearer ${GUEST_PREFIX}`.length));
+    }
     const { hash, secret } = this.credentials();
-    const match = authorization?.match(/^Bearer (v1\.[A-Za-z0-9_-]{43})\.([A-Za-z0-9_-]{43})$/);
+    const match = header.match(/^Bearer (v1\.[A-Za-z0-9_-]{43})\.([A-Za-z0-9_-]{43})$/);
     if (!match) throw new UnauthorizedException();
     const expected = this.signature(match[1], hash, secret);
     const actual = Buffer.from(match[2], "base64url");
     if (actual.toString("base64url") !== match[2] || !timingSafeEqual(expected, actual)) {
       throw new UnauthorizedException();
     }
+    return { admin: true, users: null };
+  }
+
+  private verifyGuest(token: string): DbUiScope {
+    const { secret } = this.credentials();
+    const parts = token.split(".");
+    if (parts.length !== 2) throw new UnauthorizedException();
+    const [payload, signature] = parts;
+    const expected = createHmac("sha256", secret).update(`${GUEST_DOMAIN}${payload}`).digest();
+    const actual = Buffer.from(signature, "base64url");
+    if (actual.toString("base64url") !== signature || actual.length !== expected.length ||
+      !timingSafeEqual(expected, actual)) {
+      throw new UnauthorizedException();
+    }
+    let data: unknown;
+    try {
+      data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+    } catch {
+      throw new UnauthorizedException();
+    }
+    const users = this.guestUsers((data as { u?: unknown } | null)?.u, () => new UnauthorizedException());
+    return { admin: false, users };
+  }
+
+  private guestUsers(value: unknown, fail: () => Error): string[] {
+    if (!Array.isArray(value) || value.length === 0 || value.length > 20) throw fail();
+    const users = value.map((item) => (typeof item === "string" ? item.trim() : ""));
+    if (users.some((item) => item === "" || item.length > 64)) throw fail();
+    return users;
   }
 
   private signature(payload: string, hash: string, secret: string): Buffer {
