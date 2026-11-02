@@ -64,11 +64,12 @@ export class NotificationPaymentWebhook {
         break;
       }
       case "CONFIRMED": {
+        const lead = await this.amo.client.lead.getLeadById(leadId);
         await this.proccessPaymentNotification({
           leadId,
           data,
           level: "✅",
-          statusId: AMO.STATUS.PAYMENT,
+          statusId: lead.status_id === AMO.STATUS.REQUISITE ? AMO.STATUS.PAYMENT : undefined,
           tag: AMO.TAG.DELIVERY_PAID,
         });
         await this.telegram.textToManager(
