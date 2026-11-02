@@ -3,6 +3,7 @@ import { convert } from "number-to-words-ru";
 import { Injectable, type OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PDFBuilder } from "./lib/pdf-builder.lib";
+import { postMoney } from "./lib/post-money";
 
 import { wordWrap } from "../utils/word-wrap.function";
 
@@ -105,9 +106,7 @@ export class PDFService implements OnModuleInit {
 
   async post112p(params: Post112ep): Promise<Uint8Array> {
     return this.builder.fillPost112ep({
-      sum: params.sum.toString(),
-      kop: "00",
-      sum_words: convert(params.sum).toLocaleLowerCase(),
+      ...postMoney(params.sum),
       recipient_phone:
         params.recipient_phone?.toString() ?? this.config.get<string>("OWNER_NOTIFICATION_PHONE"),
       recipient: params.recipient ?? this.config.get<string>("OWNER_IP_NAME"),
@@ -127,6 +126,8 @@ export class PDFService implements OnModuleInit {
   }
 
   async post7p112ep(params: Post7p112ep): Promise<Uint8Array> {
+    const money = postMoney(params.sum_cash_on_delivery);
+    const cash_on_delivery = Number(`${money.sum}.${money.kop}`);
     const recipient_address = wordWrap(params.recipient_address, 55);
     const pdfs = await Promise.all([
       this.builder.fillPost7pDoc({
@@ -144,14 +145,10 @@ export class PDFService implements OnModuleInit {
           " " +
           convert(params.sum, { showNumberParts: { fractional: false } }).toLocaleLowerCase(),
         sum_cash_on_delivery:
-          params.sum_cash_on_delivery.toString() +
-          " " +
-          convert(params.sum_cash_on_delivery).toLocaleLowerCase(),
+          cash_on_delivery.toString() + " " + money.sum_words,
       }),
       this.builder.fillPost112epDoc({
-        sum: params.sum_cash_on_delivery.toString(),
-        kop: "00",
-        sum_words: convert(params.sum_cash_on_delivery).toLocaleLowerCase(),
+        ...money,
         recipient_phone: this.config.get<string>("OWNER_NOTIFICATION_PHONE"),
         recipient: this.config.get<string>("OWNER_IP_NAME"),
         recipient_address: this.config.get<string>("OWNER_TOWN"),
