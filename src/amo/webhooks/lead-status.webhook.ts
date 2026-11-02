@@ -300,6 +300,7 @@ OrderId: ${payment.OrderId}
     const price = lead.totalPrice();
 
     try {
+      const fully_paid = Number(lead.custom_fields.get(AMO.CUSTOM_FIELD.FULLPAY) ?? "0") > 0;
       const pdf = await this.pdf.post7p112ep({
         recipient: lead.contact.name,
         recipient_address: lead.getFullAddress(),
@@ -307,16 +308,18 @@ OrderId: ${payment.OrderId}
         recipient_phone: isNaN(phone) ? undefined : phone,
         sum: price,
         sum_cash_on_delivery:
-          price -
-          lead.getAbsoluteDiscount() +
-          Number(
-            ((lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_COST) as string) ?? "0").split(
-              ",",
-            )[0],
-          ) -
-          Number(
-            ((lead.custom_fields.get(AMO.CUSTOM_FIELD.PREPAY) as string) ?? "0").split(",")[0],
-          ),
+          fully_paid
+            ? 0
+            : price -
+              lead.getAbsoluteDiscount() +
+              Number(
+                ((lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_COST) as string) ?? "0").split(
+                  ",",
+                )[0],
+              ) -
+              Number(
+                ((lead.custom_fields.get(AMO.CUSTOM_FIELD.PREPAY) as string) ?? "0").split(",")[0],
+              ),
       });
 
       const yadisk_url = await this.yadisk.upload(
