@@ -5,41 +5,44 @@ console.warn("TEMPER MONKEY SCRIPT LOADED");
 type Data = {
   name: string;
   product_id: string;
-  category_id: string;
+  code: string;
   size: string;
   price: number;
 };
 
 (($: JQueryStatic) => {
   function parseData(): Data {
-    $('input[name="jshop_attr_id[2]"]');
-    let size: string;
-    const sizes = document.querySelectorAll('input[name="jshop_attr_id[2]"]').values();
-    for (const item of sizes) {
-      if ((item as any).checked === true) {
-        size = $(`#${item.id}`).next()?.text();
-      }
+    const heading = document.querySelector("#name_product")?.cloneNode(true) as HTMLElement | undefined;
+    heading?.querySelectorAll(".jshop_code_prod").forEach((element) => element.remove());
+    const selectedSize = document.querySelector<HTMLInputElement | HTMLSelectElement>(
+      'input[name="jshop_attr_id[2]"]:checked, select[name="jshop_attr_id[2]"]',
+    );
+    let size = "";
+    if (selectedSize && selectedSize.value !== "0" && selectedSize.value !== "") {
+      size = selectedSize.tagName === "SELECT"
+        ? (selectedSize as HTMLSelectElement).selectedOptions[0]?.textContent?.trim() ?? ""
+        : (selectedSize as HTMLInputElement).labels?.[0]?.textContent?.trim() ?? "";
     }
 
     return {
-      name: $("#name_product")?.text()?.trim(),
+      name: heading?.textContent?.trim() ?? "",
       product_id: ($("input#product_id")?.val() as string) ?? "",
-      category_id: ($("input#category_id")?.val() as string) ?? "",
-      size: size ?? "",
+      code: $("#product_code").text().trim(),
+      size,
       price: Number($("span.prod_price_span")?.text()?.replaceAll(" ", "").trim() ?? "0"),
     };
   }
 
-  function generateSku(category_id: string, product_id: string, size: string): string {
-    return `${category_id.padStart(3, "0")}${product_id.padStart(6, "0")}${size.padStart(3, "0")}`;
+  function generateSku(code: string, size: string): string {
+    return code.trim() + size.trim();
   }
 
   function check(data: Data): boolean {
-    return data.name.length > 0 && data.product_id.length > 0 && !isNaN(data.price);
+    return data.name.length > 0 && data.product_id.length > 0 && data.code.length > 0 && !isNaN(data.price);
   }
 
   async function sendData(data: Data) {
-    const sku = generateSku(data.category_id, data.product_id, data.size);
+    const sku = generateSku(data.code, data.size);
     const name = `${data.name}${data.size ? " размер: " + data.size : ""}`.trim();
     console.debug("SEND DATA", data, sku, name);
 
@@ -84,12 +87,11 @@ type Data = {
 
   $(document).ready(() => {
     const data = parseData();
-    if (!check(data)) return;
+    if (!data.name || !data.product_id) return;
 
     $(".productRight .extra_fields").prepend(
       `<div><span class="extra_fields_name">Артикул</span>: <span class="extra_fields_value" id="sku">${generateSku(
-        data.category_id,
-        data.product_id,
+        data.code,
         data.size,
       )}</span></div>`,
     );
@@ -100,19 +102,34 @@ type Data = {
 
     $("#send_data").click(async () => {
       const data = parseData();
+      if (!data.code) {
+        alert("Не указан код товара. Заполните поле «Код» в админке и обновите страницу.");
+        return;
+      }
       if (!check(data)) return;
       await sendData(data);
     });
 
-    $('.productRight input[name="jshop_attr_id[2]"]').click((el) => {
-      const size = (el.target as HTMLInputElement).labels[0]?.textContent;
-      if (size && size.length > 0) {
-        $(".extra_fields #sku").text(generateSku(data.category_id, data.product_id, size));
-      }
+    const updateSku = () => {
+      const current = parseData();
+      $(".extra_fields #sku").text(
+        current.code ? generateSku(current.code, current.size) : "Не указан код товара",
+      );
+    };
+
+    // Delegated events also cover size controls replaced by JoomShopping AJAX.
+    document.addEventListener("change", (event) => {
+      if ((event.target as Element).matches('[name="jshop_attr_id[2]"]')) updateSku();
     });
+    const observer = new MutationObserver(updateSku);
+    for (const selector of ["#product_code", "#block_attr_sel_2"]) {
+      const element = document.querySelector(selector);
+      if (element) observer.observe(element, { childList: true, subtree: true, characterData: true });
+    }
+    updateSku();
 
     $(".productRight .extra_fields").append(
-      `<div><span class="extra_fields_name" id="name>Название</span>: <span class="extra_fields_value">${data.name}</span></div>`,
+      `<div><span class="extra_fields_name" id="name">Название</span>: <span class="extra_fields_value">${data.name}</span></div>`,
     );
   });
 })(window["jQuery"] || window["$"]);
