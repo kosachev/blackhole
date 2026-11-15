@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { AbstractWebhook } from "./abstract.webhook";
 import { LeadHelper } from "../helpers/lead.helper";
+import { AMO } from "../amo.constants";
 
 @Injectable()
 export class LeadAddWebhook extends AbstractWebhook {
@@ -19,6 +20,13 @@ export class LeadAddWebhook extends AbstractWebhook {
     if (lead.goods.size > 0) {
       message += `\n\n${[...lead.goods.values()].map((item) => `${item.name} - ${item.quantity}шт`).join("\n")}`;
     }
+
+    const deliveryType = lead.custom_fields.get(AMO.CUSTOM_FIELD.DELIVERY_TYPE) || "не указан";
+    const deliveryTypeHtml = deliveryType
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
+    message += `\n\nТип доставки: ${deliveryTypeHtml}`;
 
     await Promise.all([this.telegram.textToAdmin(message), this.telegram.textToManager(message)]);
     this.logger.log(`LEAD_ADD, lead_id: ${lead.data.id}`);
