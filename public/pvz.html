@@ -447,6 +447,13 @@
               "Примерочная",
             ],
             [
+              item.phones[0]?.number,
+              "https://www.cdek.ru/assets/static/phone.8ee42289.svg",
+              item.phones[0]?.number,
+            ],
+          ];
+          const paymentMethods = [
+            [
               item.have_cash,
               "https://www.cdek.ru/assets/static/payment-cash.b9fdf3f7.svg",
               "Наличные",
@@ -457,22 +464,23 @@
               "Терминал",
             ],
             [
+              item.allowed_cod,
+              "https://www.cdek.ru/assets/static/payment-cash.b9fdf3f7.svg",
+              "Наложенный платёж",
+            ],
+            [
               item.have_fast_payment_system,
               "https://www.cdek.ru/assets/static/payment-haveterminal.b7117aff.svg",
               "СБП",
             ],
-            [
-              item.phones[0]?.number,
-              "https://www.cdek.ru/assets/static/phone.8ee42289.svg",
-              item.phones[0]?.number,
-            ],
           ];
 
-          const list = features.map((feature) => {
-            if (feature[0]) {
-              return featureItem(feature[1], feature[2]);
-            }
-          });
+          const list = features
+            .filter((feature) => feature[0])
+            .map((feature) => featureItem(feature[1], feature[2]));
+          const paymentList = paymentMethods
+            .filter((method) => method[0])
+            .map((method) => featureItem(method[1], method[2]));
           const days = [
             "Понедельник",
             "Вторник",
@@ -510,6 +518,11 @@
             <h2>Услуги</h2>
             <ul>
               ${list.join("")}
+            </ul>
+
+            <h2>Способы оплаты</h2>
+            <ul>
+              ${paymentList.join("")}
             </ul>
           </div>
           <button id="send" onclick="window.choosePoint()">Выбрать</button>

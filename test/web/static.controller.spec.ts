@@ -30,6 +30,21 @@ describe("StaticController", () => {
     expect(html).not.toContain("tile.openstreetmap.org");
   });
 
+  test("shows supported payment methods in the PVZ card", () => {
+    const config = {
+      getOrThrow: (name: string) => `${name}-test-key`,
+    } as ConfigService;
+
+    const html = new StaticController(config).pvzHtml();
+
+    expect(html).toContain("<h2>Способы оплаты</h2>");
+    expect(html).toContain("item.have_cash");
+    expect(html).toContain("item.have_cashless");
+    expect(html).toContain("item.allowed_cod");
+    expect(html).toContain("item.have_fast_payment_system");
+    expect(html).toContain("Наложенный платёж");
+  });
+
   test("serves a self-contained KPI application", () => {
     const html = new StaticController({} as ConfigService).dbUiHtml();
     expect(html).toContain("KPI менеджеров");
